@@ -1,14 +1,20 @@
-import { PrismaClient } from '../src/generated/prisma';
-import bcrypt from 'bcryptjs';
+require('dotenv/config');
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Database seeding başladı...');
 
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com';
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-me-123';
+  const ADMIN_FIRST_NAME = process.env.ADMIN_FIRST_NAME || 'Admin';
+  const ADMIN_LAST_NAME = process.env.ADMIN_LAST_NAME || 'User';
+
   // Super Admin kullanıcısını kontrol et
   const existingAdmin = await prisma.user.findUnique({
-    where: { email: 'fatihtunali@gmail.com' },
+    where: { email: ADMIN_EMAIL },
   });
 
   if (existingAdmin) {
@@ -17,15 +23,15 @@ async function main() {
   }
 
   // Şifreyi hashle
-  const hashedPassword = await bcrypt.hash('Dlr235672.-Yt', 10);
+  const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
 
   // Super Admin oluştur
   const admin = await prisma.user.create({
     data: {
-      email: 'fatihtunali@gmail.com',
+      email: ADMIN_EMAIL,
       password: hashedPassword,
-      firstName: 'Fatih',
-      lastName: 'TUNALI',
+      firstName: ADMIN_FIRST_NAME,
+      lastName: ADMIN_LAST_NAME,
       role: 'SUPER_ADMIN',
       isActive: true,
     },

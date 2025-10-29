@@ -6,7 +6,11 @@
       "Bash(npm install:*)",
       "Bash(npx tsc --init)",
       "Bash(npx prisma init)",
-      "Bash(npm create:*)"
+      "Bash(npm create:*)",
+      "Bash(ssh root@134.209.137.11 \"cp /etc/postgresql/14/main/postgresql.conf /etc/postgresql/14/main/postgresql.conf.backup && sed -i \"\"s/#listen_addresses = ''localhost''/listen_addresses = ''*''/\"\" /etc/postgresql/14/main/postgresql.conf && grep listen_addresses /etc/postgresql/14/main/postgresql.conf | grep -v ''^#''\")",
+      "Bash(npx prisma db push:*)",
+      "Bash(npm run prisma:seed:*)",
+      "Bash(npx prisma generate:*)"
     ],
     "deny": [],
     "ask": []

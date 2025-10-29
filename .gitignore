@@ -30,3 +30,10 @@ Thumbs.db
 
 # Prisma
 backend/src/generated/
+
+# TypeScript build outputs
+*.d.ts
+*.d.ts.map
+*.js.map
+backend/prisma/*.js
+backend/prisma.config.js
