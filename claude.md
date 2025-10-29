@@ -228,7 +228,7 @@ npx prisma init
 ### Environment Variables (.env)
 ```env
 # Backend .env
-DATABASE_URL="postgresql://crm:Dlr235672.-Yt@134.209.137.11:5432/crm?schema=public"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
 JWT_SECRET="your-secret-key"
 PORT=5000
 NODE_ENV=development
@@ -496,10 +496,10 @@ cd ../frontend && npm run build
 
 **Connection String:**
 ```
-postgresql://crm:Dlr235672.-Yt@134.209.137.11:5432/crm?schema=public
+postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public
 ```
 
-**Not:** Şu anda sunucu kapalı/erişilebilir değil. Ofiste çalıştırılacak.
+**Not:** Database bilgileri .env dosyasında saklanmalıdır. Bu bilgiler asla Git'e eklenmemelidir.
 
 ---
 
