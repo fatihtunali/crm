@@ -670,3 +670,555 @@ plugins: [
 - Modern, premium görünüm
 
 **NOT:** Bu sorun Tailwind v3'ten v4'e geçişte çok yaygın. Plugin syntax değişikliğini unutma!
+
+---
+
+## 🚀 PORT YÖNETİMİ (CRITICAL!)
+
+### ⚠️ ASLA KULLANILMAMASI GEREKEN KOMUT
+
+```bash
+taskkill /F /IM node.exe  # ❌❌❌ ASLA KULLANMA - HER ŞEYİ KAPATIR!
+```
+
+**NEDEN:** Bu komut TÜM node process'lerini öldürür, Claude dahil!
+
+### ✅ DOĞRU YÖNETİM
+
+**Fixed Port Konfigürasyonu:**
+- Backend: **5000** (sabit)
+- Frontend: **5173** (sabit)
+
+#### start-dev.sh
+```bash
+#!/bin/bash
+
+BACKEND_PORT=5000
+FRONTEND_PORT=5173
+
+echo "🚀 CRM Development Environment Başlatılıyor..."
+
+# Backend başlat
+echo "🟢 Backend başlatılıyor (Port $BACKEND_PORT)..."
+cd "C:\Users\fatih\Desktop\CRM\backend"
+npm start > ../logs/backend.log 2>&1 &
+BACKEND_PID=$!
+
+# Frontend başlat
+echo "🟢 Frontend başlatılıyor (Port $FRONTEND_PORT)..."
+cd "C:\Users\fatih\Desktop\CRM\frontend"
+npm run dev > ../logs/frontend.log 2>&1 &
+FRONTEND_PID=$!
+
+echo ""
+echo "✅ Servisler başlatıldı!"
+echo "📍 Backend:  http://localhost:$BACKEND_PORT"
+echo "📍 Frontend: http://localhost:$FRONTEND_PORT"
+echo ""
+echo "🔍 Backend PID: $BACKEND_PID"
+echo "🔍 Frontend PID: $FRONTEND_PID"
+```
+
+#### stop-dev.sh
+```bash
+#!/bin/bash
+
+BACKEND_PORT=5000
+FRONTEND_PORT=5173
+
+echo "🔴 CRM Development Environment Durduruluyor..."
+
+# Backend durdur (PORT bazlı - güvenli)
+echo "🔴 Stopping Backend (Port $BACKEND_PORT)..."
+netstat -ano | grep ":$BACKEND_PORT " | grep LISTENING | awk '{print $5}' | while read pid; do
+    if [ -n "$pid" ]; then
+        taskkill //F //PID $pid >nul 2>&1
+        echo "   ✓ Backend durduruldu (PID: $pid)"
+    fi
+done
+
+# Frontend durdur (PORT bazlı - güvenli)
+echo "🔴 Stopping Frontend (Port $FRONTEND_PORT)..."
+netstat -ano | grep ":$FRONTEND_PORT " | grep LISTENING | awk '{print $5}' | while read pid; do
+    if [ -n "$pid" ]; then
+        taskkill //F //PID $pid >nul 2>&1
+        echo "   ✓ Frontend durduruldu (PID: $pid)"
+    fi
+done
+
+echo ""
+echo "✅ Tüm servisler durduruldu!"
+```
+
+#### Kullanım
+```bash
+# Servisleri başlat
+./start-dev.sh
+
+# Servisleri durdur
+./stop-dev.sh
+
+# Restart
+./stop-dev.sh && ./start-dev.sh
+```
+
+#### Vite strictPort Konfigürasyonu
+```typescript
+// frontend/vite.config.ts
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    strictPort: true,  // ✅ Port değişmesin, hata versin
+  },
+})
+```
+
+---
+
+## 📋 OTEL MODÜLÜ (TAMAMLANDI - 2025-10-29)
+
+### ✅ Tamamlanan İşler
+
+#### 1. Database Schema
+```prisma
+model Hotel {
+  id            Int      @id @default(autoincrement())
+  name          String
+  address       String
+  city          String
+  country       String   @default("Turkey")
+  phone         String?
+  email         String?
+  stars         Int?     // 1-5 yıldız
+  contactPerson String?  @map("contact_person")
+  facilities    String[] // ["Pool", "Spa", "WiFi", "Restaurant"]
+  notes         String?  @db.Text
+  isActive      Boolean  @default(true) @map("is_active")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  createdBy     Int      @map("created_by")
+
+  pricings      HotelPricing[]
+
+  @@map("hotels")
+}
+
+model HotelPricing {
+  id           Int      @id @default(autoincrement())
+  hotelId      Int      @map("hotel_id")
+  hotel        Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  seasonName   String   @map("season_name") // "Yaz Sezonu", "Kış Sezonu", "Bayram"
+  startDate    DateTime @map("start_date")
+  endDate      DateTime @map("end_date")
+
+  // Per Person Pricing (Kritik!)
+  doubleRoomPrice  Decimal  @map("double_room_price") @db.Decimal(10, 2)  // Per person in DBL
+  singleSupplement Decimal  @map("single_supplement") @db.Decimal(10, 2)  // Single Supplement
+  tripleRoomPrice  Decimal  @map("triple_room_price") @db.Decimal(10, 2)  // Per person in TRP
+
+  // Child Age Groups
+  child0to2Price   Decimal  @map("child_0_to_2_price") @db.Decimal(10, 2)   // 0-2.99 yaş
+  child3to5Price   Decimal  @map("child_3_to_5_price") @db.Decimal(10, 2)   // 3-5.99 yaş
+  child6to11Price  Decimal  @map("child_6_to_11_price") @db.Decimal(10, 2)  // 6-11.99 yaş
+
+  notes        String?  @db.Text
+  isActive     Boolean  @default(true) @map("is_active")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdBy    Int      @map("created_by")
+
+  @@map("hotel_pricings")
+}
+```
+
+**ÖNEMLİ NOTLAR:**
+- **Per Person Pricing**: Oda fiyatı DEĞİL, kişi başı fiyat!
+- **Label'lar açık olmalı**: "Per Person in DBL" / "Per Person in TRP" / "Single Supplement"
+- **Child Slabs**: CHD 0-2 / CHD 3-5 / CHD 6-11 (yaş aralıkları açık)
+
+#### 2. Backend API
+
+**Dosyalar:**
+- `backend/src/controllers/hotel.controller.ts` - Hotel CRUD
+- `backend/src/controllers/hotelPricing.controller.ts` - Pricing CRUD
+- `backend/src/routes/hotel.routes.ts` - Routes
+
+**Endpoints:**
+```
+GET    /api/v1/hotels                    - Tüm oteller (with pricings)
+GET    /api/v1/hotels/:id                - Tek otel
+POST   /api/v1/hotels                    - Yeni otel
+PUT    /api/v1/hotels/:id                - Otel güncelle
+DELETE /api/v1/hotels/:id                - Otel sil (soft delete)
+
+GET    /api/v1/hotels/:hotelId/pricings  - Otelin tüm fiyatları
+POST   /api/v1/hotels/:hotelId/pricings  - Yeni fiyat ekle
+PUT    /api/v1/hotels/pricings/:id       - Fiyat güncelle
+DELETE /api/v1/hotels/pricings/:id       - Fiyat sil (soft delete)
+```
+
+#### 3. Frontend UI
+
+**Dosyalar:**
+- `frontend/src/pages/Hotels.tsx` - Otel listesi
+- `frontend/src/pages/HotelForm.tsx` - Otel ekleme/düzenleme
+- `frontend/src/pages/HotelPricing.tsx` - Sezonsal fiyat yönetimi
+
+**Routes:**
+```
+/resources/hotels              - Liste
+/resources/hotels/new          - Yeni otel
+/resources/hotels/:id/edit     - Otel düzenle
+/resources/hotels/:id/pricing  - Fiyatlandırma
+```
+
+**Tasarım Özellikleri:**
+- **List Format**: Kompakt liste görünümü (grid değil)
+- **Inline Pricing**: Her otelin altında fiyatları görünür
+- **Color-Coded Cards**: Farklı oda tipleri için farklı renkler
+  - Blue: Per Person in DBL
+  - Purple: Single Supplement
+  - Indigo: Per Person in TRP
+  - Pink/Rose/Amber: CHD 0-2 / 3-5 / 6-11
+- **Compact Spacing**: Aralar fazla açık değil, optimize
+- **Clear Labels**: Fiyat etiketleri tam açık (oda fiyatı karışıklığı olmasın)
+
+---
+
+## 🚗 ARAÇ MODÜLÜ (DATABASE HAZIR - 2025-10-29)
+
+### ✅ Database Schema Tamamlandı
+
+#### Turkish Cities (81 İl)
+```typescript
+// backend/src/constants/cities.ts
+export const TURKISH_CITIES = [
+  'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray',
+  'Amasya', 'Ankara', 'Antalya', 'Ardahan', 'Artvin',
+  'Aydın', 'Balıkesir', 'Bartın', 'Batman', 'Bayburt',
+  // ... 81 şehir
+];
+
+export const CITIES_WITH_CODES = [
+  { code: '01', name: 'Adana' },
+  { code: '06', name: 'Ankara' },
+  { code: '07', name: 'Antalya' },
+  { code: '34', name: 'İstanbul' },
+  // ... plaka kodları ile
+];
+```
+
+#### Vehicle Types
+```prisma
+enum VehicleType {
+  VITO      // Vito (max 4 pax)
+  SPRINTER  // Sprinter (max 12 pax)
+  ISUZU     // Isuzu (max 20 pax)
+  COACH     // Coach (max 46 pax)
+  CAR       // Araba (3-4 kişi)
+  VAN       // Minivan (6-8 kişi)
+  MINIBUS   // Minibüs (14-16 kişi)
+  MIDIBUS   // Midibüs (25-30 kişi)
+  BUS       // Otobüs (45-50 kişi)
+  LUXURY    // Lüks araç
+}
+```
+
+#### Vehicle Supplier
+```prisma
+model VehicleSupplier {
+  id            Int      @id @default(autoincrement())
+  name          String
+  contactPerson String?  @map("contact_person")
+  phone         String?
+  email         String?
+  address       String?
+  city          String?
+  taxNumber     String?  @map("tax_number")
+
+  notes         String?  @db.Text
+  isActive      Boolean  @default(true) @map("is_active")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  createdBy     Int      @map("created_by")
+
+  // Relations
+  transferPricings    TransferPricing[]
+  allocationPricings  VehicleAllocationPricing[]
+
+  @@map("vehicle_suppliers")
+}
+```
+
+#### Transfer Pricing (Airport-Hotel, City-City)
+```prisma
+model TransferPricing {
+  id                Int             @id @default(autoincrement())
+  supplierId        Int             @map("supplier_id")
+  supplier          VehicleSupplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  vehicleType       VehicleType     @map("vehicle_type")
+  fromLocation      String          @map("from_location")  // "Istanbul Airport", "Hotel"
+  toLocation        String          @map("to_location")    // "Hotel", "Cappadocia"
+  fromCity          String          @map("from_city")      // Şehir dropdown'dan
+  toCity            String          @map("to_city")        // Şehir dropdown'dan
+
+  price             Decimal         @db.Decimal(10, 2)
+  currency          String          @default("EUR")
+
+  notes             String?         @db.Text
+  isActive          Boolean         @default(true) @map("is_active")
+
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  createdBy         Int             @map("created_by")
+
+  @@map("transfer_pricings")
+}
+```
+
+#### Vehicle Allocation Pricing (Disposal - Tam Gün, Yarım Gün, Gece, Paket)
+```prisma
+model VehicleAllocationPricing {
+  id                Int             @id @default(autoincrement())
+  supplierId        Int             @map("supplier_id")
+  supplier          VehicleSupplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  vehicleType       VehicleType     @map("vehicle_type")
+  city              String          // Şehir
+  allocationType    AllocationType  @map("allocation_type")
+
+  // Günlük kullanım için (FULL_DAY, HALF_DAY, NIGHT_SERVICE)
+  basePrice         Decimal?        @map("base_price") @db.Decimal(10, 2)       // Ana fiyat
+  baseHours         Int?            @map("base_hours")                           // Kaç saat (8, 4, vs)
+  extraHourPrice    Decimal?        @map("extra_hour_price") @db.Decimal(10, 2) // Ekstra saat fiyatı
+
+  // Paket tur için (PACKAGE_TOUR)
+  packageDays       Int?            @map("package_days")                         // Kaç gün (7, 10, 15, 20...)
+  packagePrice      Decimal?        @map("package_price") @db.Decimal(10, 2)    // Paket toplam fiyat
+  extraDayPrice     Decimal?        @map("extra_day_price") @db.Decimal(10, 2)  // Ekstra gün fiyatı
+
+  currency          String          @default("EUR")
+
+  notes             String?         @db.Text
+  isActive          Boolean         @default(true) @map("is_active")
+
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  createdBy         Int             @map("created_by")
+
+  @@map("vehicle_allocation_pricings")
+}
+
+enum AllocationType {
+  FULL_DAY       // Tam Gün (8 saat + ekstra saat fiyatı)
+  HALF_DAY       // Yarım Gün (4 saat + ekstra saat fiyatı)
+  NIGHT_SERVICE  // Gece Kullanımı (18:00 sonrası - yemek vs için)
+  PACKAGE_TOUR   // Paket Tur (7, 10, 15, 20 gün... flexible)
+}
+```
+
+**ÖNEMLİ NOTLAR:**
+- **Transfer**: Airport↔Hotel, City↔City (nokta-nokta)
+- **Allocation**: Tam gün, yarım gün, gece, paket tur (tahsis)
+- **Package Tour**: Flexible gün sayısı (7, 10, 15, 20, 30 gün... hepsi girilebilmeli)
+- **Cities**: 81 Turkish city dropdown'dan seçilecek
+
+### ⏳ Yapılacaklar (YARIN OFİSTE)
+
+#### 1. Backend API Controllers
+```bash
+backend/src/controllers/
+├── vehicleSupplier.controller.ts      # CRUD for suppliers
+├── transferPricing.controller.ts      # CRUD for transfers
+└── vehicleAllocationPricing.controller.ts  # CRUD for allocations
+```
+
+#### 2. Backend Routes
+```bash
+backend/src/routes/
+└── vehicleSupplier.routes.ts
+```
+
+**Endpoints (Planlandı):**
+```
+# Suppliers
+GET    /api/v1/vehicle-suppliers
+POST   /api/v1/vehicle-suppliers
+PUT    /api/v1/vehicle-suppliers/:id
+DELETE /api/v1/vehicle-suppliers/:id
+
+# Transfer Pricing
+GET    /api/v1/vehicle-suppliers/:supplierId/transfers
+POST   /api/v1/vehicle-suppliers/:supplierId/transfers
+PUT    /api/v1/transfer-pricings/:id
+DELETE /api/v1/transfer-pricings/:id
+
+# Allocation Pricing
+GET    /api/v1/vehicle-suppliers/:supplierId/allocations
+POST   /api/v1/vehicle-suppliers/:supplierId/allocations
+PUT    /api/v1/allocation-pricings/:id
+DELETE /api/v1/allocation-pricings/:id
+
+# Cities
+GET    /api/v1/cities  # 81 Turkish cities
+```
+
+#### 3. Frontend UI
+```bash
+frontend/src/pages/
+├── VehicleSuppliers.tsx        # Tedarikçi listesi
+├── VehicleSupplierForm.tsx     # Tedarikçi ekle/düzenle
+└── VehiclePricing.tsx          # 2 Tab: Transfers & Allocations
+```
+
+**UI Yapısı:**
+```
+Vehicles Page
+├── Tab 1: TRANSFERLER
+│   ├── Supplier seçimi
+│   ├── Vehicle Type (Vito/Sprinter/Isuzu/Coach)
+│   ├── From City (81 şehir dropdown)
+│   ├── To City (81 şehir dropdown)
+│   ├── From Location (text - "Airport", "Hotel" vs)
+│   ├── To Location (text)
+│   ├── Price (EUR)
+│   └── Liste görünümü (tüm transfer fiyatları)
+│
+└── Tab 2: TAHSİS (ALLOCATION/DISPOSAL)
+    ├── Supplier seçimi
+    ├── Vehicle Type (Vito/Sprinter/Isuzu/Coach)
+    ├── City (81 şehir dropdown)
+    ├── Allocation Type:
+    │   ├── Tam Gün (8 saat + ekstra saat fiyatı)
+    │   ├── Yarım Gün (4 saat + ekstra saat fiyatı)
+    │   ├── Gece Kullanımı (18:00+)
+    │   └── Paket Tur (flexible gün sayısı + total price + extra day price)
+    └── Liste görünümü (tüm tahsis fiyatları)
+```
+
+**Tasarım:**
+- Hotels.tsx ile aynı stil (compact list)
+- Color-coded cards (transfer=blue, allocation=green)
+- Inline pricing display
+- Filter: Supplier, City, Vehicle Type
+
+---
+
+## 📍 NEREDE KALDIK? (2025-10-29 23:30)
+
+### ✅ Tamamlanan
+1. ✅ Hotel modülü tamamen bitti (UI + Backend + Database)
+2. ✅ Hotel pricing sistemi (seasonal, per person)
+3. ✅ Port management scripts (start-dev.sh, stop-dev.sh)
+4. ✅ Tailwind v4 fix (plugin syntax hatası çözüldü)
+5. ✅ Turkish cities constants (81 şehir)
+6. ✅ Vehicle module database schema (VehicleSupplier, Transfer, Allocation)
+7. ✅ Git commit & push
+
+### ⏳ Yarın Yapılacaklar (OFİSTE)
+1. **Vehicle Backend API** (3-4 controller)
+   - vehicleSupplier.controller.ts
+   - transferPricing.controller.ts
+   - vehicleAllocationPricing.controller.ts
+   - cities API endpoint (GET /api/v1/cities)
+
+2. **Vehicle Routes** (backend/src/routes/)
+   - vehicleSupplier.routes.ts
+   - index.ts'e ekle
+
+3. **Vehicle Frontend UI**
+   - VehicleSuppliers.tsx (liste)
+   - VehicleSupplierForm.tsx (form)
+   - VehiclePricing.tsx (2 tab: Transfers & Allocations)
+   - Routing ekle (App.tsx)
+
+4. **Test**
+   - Supplier ekleme
+   - Transfer pricing ekleme
+   - Allocation pricing ekleme (4 tip test et)
+   - Package tour (flexible days) test
+
+### 🎯 Öncelik Sırası
+1. Backend API controllers (hızlı - hotel pattern'i kopyala)
+2. Routes configuration
+3. Frontend UI (Hotels.tsx pattern'i kullan)
+4. End-to-end test
+5. Git commit
+
+### 📂 Hazır Dosyalar (Referans Olarak Kullan)
+```
+backend/src/controllers/hotel.controller.ts           → vehicleSupplier.controller.ts
+backend/src/controllers/hotelPricing.controller.ts    → transferPricing.controller.ts
+backend/src/routes/hotel.routes.ts                    → vehicleSupplier.routes.ts
+frontend/src/pages/Hotels.tsx                         → VehicleSuppliers.tsx
+frontend/src/pages/HotelPricing.tsx                   → VehiclePricing.tsx
+```
+
+### 💾 Git Status
+```
+Last Commit: "feat: Otel modülü tamamlandı ve araç modülü database yapısı hazırlandı"
+Branch: main
+Files Changed: 36
+Insertions: 4589+
+Deletions: 171-
+```
+
+---
+
+## 🔄 DEV WORKFLOW
+
+### Servisleri Başlatma
+```bash
+# Her zaman bu script'i kullan
+./start-dev.sh
+
+# Backend: http://localhost:5000
+# Frontend: http://localhost:5173
+```
+
+### Servisleri Durdurma
+```bash
+# Port bazlı güvenli durdurma
+./stop-dev.sh
+```
+
+### Restart
+```bash
+./stop-dev.sh && ./start-dev.sh
+```
+
+### Migration (Database değişikliği yapınca)
+```bash
+cd backend
+npx prisma migrate dev --name your_migration_name
+npx prisma generate
+```
+
+### Git İşlemleri
+```bash
+# Status
+git status
+
+# Stage & Commit
+git add .
+git commit -m "feat: açıklama"
+
+# Push
+git push origin main
+
+# Pull (yarın sabah ofiste ilk iş)
+git pull origin main
+```
+
+---
+
+**Son Güncelleme**: 2025-10-29 23:30
+**Durum**: ✅ Hotel modülü tamamlandı, Vehicle database hazır
+**Yarın İlk İş**: Vehicle backend API controllers (3-4 dosya)
+- memorize all add to claude.md - don't forget where to start tomorrow you will be in different computer
