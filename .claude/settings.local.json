@@ -10,7 +10,19 @@
       "Bash(ssh root@134.209.137.11 \"cp /etc/postgresql/14/main/postgresql.conf /etc/postgresql/14/main/postgresql.conf.backup && sed -i \"\"s/#listen_addresses = ''localhost''/listen_addresses = ''*''/\"\" /etc/postgresql/14/main/postgresql.conf && grep listen_addresses /etc/postgresql/14/main/postgresql.conf | grep -v ''^#''\")",
       "Bash(npx prisma db push:*)",
       "Bash(npm run prisma:seed:*)",
-      "Bash(npx prisma generate:*)"
+      "Bash(npx prisma generate:*)",
+      "WebSearch",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm start)",
+      "Bash(curl:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(npm run dev:*)",
+      "Bash(./stop-dev.sh)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(./start-dev.sh:*)"
     ],
     "deny": [],
     "ask": []

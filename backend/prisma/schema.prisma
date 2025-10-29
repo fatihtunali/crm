@@ -39,3 +39,266 @@ enum UserRole {
   ACCOUNTING   // Muhasebe
   SALES        // Satış
 }
+
+// ============================================
+// RESOURCE MANAGEMENT MODELS
+// ============================================
+
+// Otel Yönetimi
+model Hotel {
+  id            Int      @id @default(autoincrement())
+  name          String
+  address       String
+  city          String
+  country       String   @default("Turkey")
+  phone         String?
+  email         String?
+  stars         Int?     // 1-5 yıldız
+  contactPerson String?  @map("contact_person")
+  facilities    String[] // ["Pool", "Spa", "WiFi", "Restaurant"]
+  notes         String?  @db.Text
+  isActive      Boolean  @default(true) @map("is_active")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  createdBy     Int      @map("created_by")
+
+  // Relations
+  pricings      HotelPricing[]
+
+  @@map("hotels")
+  @@index([city])
+  @@index([isActive])
+}
+
+// Otel Fiyatlandırma (Sezonsal)
+model HotelPricing {
+  id           Int      @id @default(autoincrement())
+  hotelId      Int      @map("hotel_id")
+  hotel        Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  seasonName   String   @map("season_name") // "Yaz Sezonu", "Kış Sezonu", "Bayram"
+  startDate    DateTime @map("start_date")
+  endDate      DateTime @map("end_date")
+
+  // Oda Tipleri Fiyatları (per person)
+  doubleRoomPrice  Decimal  @map("double_room_price") @db.Decimal(10, 2) // Per person in Double Room
+  singleSupplement Decimal  @map("single_supplement") @db.Decimal(10, 2) // Single Supplement
+  tripleRoomPrice  Decimal  @map("triple_room_price") @db.Decimal(10, 2) // Per person in Triple Room
+
+  // Çocuk Yaş Grupları (% indirim veya sabit fiyat)
+  child0to2Price   Decimal  @map("child_0_to_2_price") @db.Decimal(10, 2)   // 0-2.99 yaş
+  child3to5Price   Decimal  @map("child_3_to_5_price") @db.Decimal(10, 2)   // 3-5.99 yaş
+  child6to11Price  Decimal  @map("child_6_to_11_price") @db.Decimal(10, 2)  // 6-11.99 yaş
+
+  notes        String?  @db.Text
+  isActive     Boolean  @default(true) @map("is_active")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdBy    Int      @map("created_by")
+
+  @@map("hotel_pricings")
+  @@index([hotelId])
+  @@index([startDate, endDate])
+  @@index([isActive])
+}
+
+// Araç Yönetimi
+model Vehicle {
+  id              Int         @id @default(autoincrement())
+  plate           String      @unique // Plaka numarası
+  brand           String      // Marka (Mercedes, Ford, etc.)
+  model           String      // Model
+  year            Int?        // Yıl
+  type            VehicleType // Araç tipi
+  capacity        Int         // Kapasite (kişi)
+  color           String?     // Renk
+
+  driverName      String?     @map("driver_name")
+  driverPhone     String?     @map("driver_phone")
+
+  insuranceExpiry DateTime?   @map("insurance_expiry")
+  maintenanceDate DateTime?   @map("maintenance_date")
+
+  notes           String?     @db.Text
+  isActive        Boolean     @default(true) @map("is_active")
+
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  createdBy       Int         @map("created_by")
+
+  @@map("vehicles")
+  @@index([type])
+  @@index([isActive])
+}
+
+enum VehicleType {
+  VITO      // Vito (max 4 pax)
+  SPRINTER  // Sprinter (max 12 pax)
+  ISUZU     // Isuzu (max 20 pax)
+  COACH     // Coach (max 46 pax)
+  CAR       // Araba (3-4 kişi)
+  VAN       // Minivan (6-8 kişi)
+  MINIBUS   // Minibüs (14-16 kişi)
+  MIDIBUS   // Midibüs (25-30 kişi)
+  BUS       // Otobüs (45-50 kişi)
+  LUXURY    // Lüks araç
+}
+
+// Rehber Yönetimi
+model Guide {
+  id              Int      @id @default(autoincrement())
+  firstName       String   @map("first_name")
+  lastName        String   @map("last_name")
+  phone           String
+  email           String?
+  languages       String[] // ["TR", "EN", "DE", "RU", "AR"]
+  specializations String[] // ["History", "Museums", "Nature"]
+  licenseNumber   String?  @map("license_number")
+  dailyRate       Decimal? @map("daily_rate") @db.Decimal(10, 2)
+  commission      Decimal? @db.Decimal(5, 2) // Yüzde
+  rating          Decimal? @db.Decimal(3, 2) // 0-5
+
+  notes           String?  @db.Text
+  isActive        Boolean  @default(true) @map("is_active")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdBy       Int      @map("created_by")
+
+  @@map("guides")
+  @@index([isActive])
+}
+
+// Tedarikçi Yönetimi
+model Supplier {
+  id            Int          @id @default(autoincrement())
+  name          String
+  type          SupplierType
+  address       String?
+  city          String?
+  phone         String?
+  email         String?
+  contactPerson String?      @map("contact_person")
+  taxNumber     String?      @map("tax_number")
+
+  notes         String?      @db.Text
+  isActive      Boolean      @default(true) @map("is_active")
+
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  createdBy     Int          @map("created_by")
+
+  @@map("suppliers")
+  @@index([type])
+  @@index([isActive])
+}
+
+enum SupplierType {
+  RESTAURANT  // Restoran
+  MUSEUM      // Müze
+  ACTIVITY    // Aktivite (balon, dalış vb.)
+  TRANSFER    // Transfer hizmeti
+  VEHICLE     // Araç tedarikçisi
+  OTHER       // Diğer
+}
+
+// Araç Tedarikçisi (Transfer & Allocation)
+model VehicleSupplier {
+  id            Int      @id @default(autoincrement())
+  name          String
+  contactPerson String?  @map("contact_person")
+  phone         String?
+  email         String?
+  address       String?
+  city          String?
+  taxNumber     String?  @map("tax_number")
+
+  notes         String?  @db.Text
+  isActive      Boolean  @default(true) @map("is_active")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  createdBy     Int      @map("created_by")
+
+  // Relations
+  transferPricings    TransferPricing[]
+  allocationPricings  VehicleAllocationPricing[]
+
+  @@map("vehicle_suppliers")
+  @@index([isActive])
+}
+
+// Transfer Fiyatlandırma (Airport-Hotel, City-City)
+model TransferPricing {
+  id                Int             @id @default(autoincrement())
+  supplierId        Int             @map("supplier_id")
+  supplier          VehicleSupplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  vehicleType       VehicleType     @map("vehicle_type")
+  fromLocation      String          @map("from_location")  // "Istanbul Airport", "Hotel", "Antalya"
+  toLocation        String          @map("to_location")    // "Hotel", "Istanbul Airport", "Cappadocia"
+  fromCity          String          @map("from_city")      // Şehir dropdown'dan
+  toCity            String          @map("to_city")        // Şehir dropdown'dan
+
+  price             Decimal         @db.Decimal(10, 2)
+  currency          String          @default("EUR")
+
+  notes             String?         @db.Text
+  isActive          Boolean         @default(true) @map("is_active")
+
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  createdBy         Int             @map("created_by")
+
+  @@map("transfer_pricings")
+  @@index([supplierId])
+  @@index([vehicleType])
+  @@index([fromCity, toCity])
+  @@index([isActive])
+}
+
+// Araç Tahsis Fiyatlandırma (Disposal - Tam Gün, Yarım Gün, Gece, Paket Tur)
+model VehicleAllocationPricing {
+  id                Int             @id @default(autoincrement())
+  supplierId        Int             @map("supplier_id")
+  supplier          VehicleSupplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  vehicleType       VehicleType     @map("vehicle_type")
+  city              String          // Şehir
+  allocationType    AllocationType  @map("allocation_type")
+
+  // Günlük kullanım için (FULL_DAY, HALF_DAY, NIGHT_SERVICE)
+  basePrice         Decimal?        @map("base_price") @db.Decimal(10, 2)       // Ana fiyat
+  baseHours         Int?            @map("base_hours")                           // Kaç saat (8, 4, vs)
+  extraHourPrice    Decimal?        @map("extra_hour_price") @db.Decimal(10, 2) // Ekstra saat fiyatı
+
+  // Paket tur için (PACKAGE_TOUR)
+  packageDays       Int?            @map("package_days")                         // Kaç gün (7, 10, 15, 20...)
+  packagePrice      Decimal?        @map("package_price") @db.Decimal(10, 2)    // Paket toplam fiyat
+  extraDayPrice     Decimal?        @map("extra_day_price") @db.Decimal(10, 2)  // Ekstra gün fiyatı
+
+  currency          String          @default("EUR")
+
+  notes             String?         @db.Text
+  isActive          Boolean         @default(true) @map("is_active")
+
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  createdBy         Int             @map("created_by")
+
+  @@map("vehicle_allocation_pricings")
+  @@index([supplierId])
+  @@index([vehicleType])
+  @@index([city])
+  @@index([allocationType])
+  @@index([isActive])
+}
+
+enum AllocationType {
+  FULL_DAY       // Tam Gün (8 saat)
+  HALF_DAY       // Yarım Gün (4 saat)
+  NIGHT_SERVICE  // Gece Kullanımı (18:00 sonrası)
+  PACKAGE_TOUR   // Paket Tur (7 gün, 10 gün, 15 gün...)
+}

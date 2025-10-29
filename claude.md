@@ -559,3 +559,114 @@ postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public
 **Son Güncelleme**: 2025-10-29 23:00
 **Durum**: ✅ Authentication modülü tamamlandı, GitHub'a yüklendi
 **Sonraki**: Veritabanı migration ve ilk kullanıcı oluşturma
+
+---
+
+## ⚠️ ÖNEMLİ: TAILWIND CSS V4 KONFIGÜRASYONU
+
+### Kritik Sorun ve Çözümü (2025-10-29)
+
+**SORUN:** Tailwind CSS v4 kullanırken, eski v3 syntax'ı ile plugin'ler tanımlandığında CSS'ler uygulanmıyor. Kartlar, gradient'ler, shadow'lar çalışmıyor gibi görünüyor.
+
+### ✅ DOĞRU KONFIGÜRASYON (Tailwind v4)
+
+#### 1. postcss.config.js
+```javascript
+export default {
+  plugins: {
+    '@tailwindcss/postcss': {},  // ✅ DOĞRU - v4 için @tailwindcss/postcss
+    autoprefixer: {},
+  },
+}
+```
+
+#### 2. tailwind.config.js
+```javascript
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {
+      // custom tema...
+    },
+  },
+  plugins: [
+    '@tailwindcss/forms',          // ✅ DOĞRU - String format (v4)
+    '@tailwindcss/typography',
+  ],
+}
+
+// ❌ YANLIŞ (v3 syntax):
+plugins: [
+  require('@tailwindcss/forms'),      // Çalışmaz!
+  require('@tailwindcss/typography'),
+]
+```
+
+#### 3. index.css
+```css
+@import "tailwindcss";
+
+@layer base {
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  }
+
+  #root {
+    width: 100%;
+    height: 100vh;
+  }
+}
+```
+
+**ÖNEMLİ:** CSS resetleri `@layer base` içinde olmalı, `@import "tailwindcss"` satırından SONRA gelmelidir.
+
+### 🔧 Sorun Giderme Adımları
+
+1. **Konfigürasyon hatası varsa:**
+   ```bash
+   cd frontend
+   npm run build  # Hataları görmek için
+   ```
+
+2. **Düzeltme sonrası:**
+   ```bash
+   ./stop-dev.sh
+   ./start-dev.sh
+   ```
+
+3. **Tarayıcıda:**
+   - Hard refresh: `Ctrl + Shift + R` (Windows) veya `Cmd + Shift + R` (Mac)
+   - Cache temizle
+   - DevTools > Network tab > "Disable cache" aktif et
+
+### 📦 Gerekli Paketler
+```json
+{
+  "tailwindcss": "^4.1.16",
+  "@tailwindcss/postcss": "^4.1.16",
+  "@tailwindcss/forms": "latest",
+  "@tailwindcss/typography": "latest",
+  "autoprefixer": "^10.4.20",
+  "postcss": "^8.4.49"
+}
+```
+
+### 🎯 Belirtiler (CSS Çalışmıyorsa)
+
+- Kartlar düz, beyaz, styling yok
+- Gradient'ler görünmüyor
+- Shadow'lar eksik
+- Rounded corner'lar yok
+- Renkler default
+- Yazılar sol üst köşede sıkışık
+
+### ✅ Çözüm Sonrası
+
+- Build başarılı (48+ KB CSS oluşur)
+- Kartlar renkli, gradient'li
+- Glass morphism çalışır
+- Animasyonlar aktif
+- Modern, premium görünüm
+
+**NOT:** Bu sorun Tailwind v3'ten v4'e geçişte çok yaygın. Plugin syntax değişikliğini unutma!

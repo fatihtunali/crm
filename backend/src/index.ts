@@ -2,6 +2,10 @@ import 'dotenv/config';
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.routes';
+import hotelRoutes from './routes/hotel.routes';
+import vehicleRoutes from './routes/vehicle.routes';
+import guideRoutes from './routes/guide.routes';
+import supplierRoutes from './routes/supplier.routes';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -25,6 +29,10 @@ app.get('/', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/hotels', hotelRoutes);
+app.use('/api/v1/vehicles', vehicleRoutes);
+app.use('/api/v1/guides', guideRoutes);
+app.use('/api/v1/suppliers', supplierRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
