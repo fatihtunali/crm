@@ -16,6 +16,11 @@ import EntranceFeePricing from './pages/EntranceFeePricing';
 import SupplierServicePricing from './pages/SupplierServicePricing';
 import AllEntranceFees from './pages/AllEntranceFees';
 import EntranceFeeForm from './pages/EntranceFeeForm';
+import Agents from './pages/Agents';
+import AgentForm from './pages/AgentForm';
+import AgentDetail from './pages/AgentDetail';
+import DirectClients from './pages/DirectClients';
+import ClientForm from './pages/ClientForm';
 import AppLayout from './components/layout/AppLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { authService } from './services/auth.service';
@@ -75,6 +80,15 @@ function App() {
           <Route path="/resources/suppliers" element={<Suppliers />} />
           <Route path="/entrance-fees/new" element={<EntranceFeeForm />} />
           <Route path="/entrance-fees" element={<AllEntranceFees />} />
+
+          {/* Customer Management Routes */}
+          <Route path="/customers/agents" element={<Agents />} />
+          <Route path="/customers/agents/new" element={<AgentForm />} />
+          <Route path="/customers/agents/:id" element={<AgentDetail />} />
+          <Route path="/customers/agents/:id/edit" element={<AgentForm />} />
+          <Route path="/customers/direct" element={<DirectClients />} />
+          <Route path="/customers/direct/new" element={<ClientForm />} />
+          <Route path="/customers/direct/:id/edit" element={<ClientForm />} />
         </Route>
       </Routes>
     </BrowserRouter>

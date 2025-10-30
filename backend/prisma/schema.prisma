@@ -433,3 +433,138 @@ enum AllocationType {
   NIGHT_SERVICE // Gece Kullanımı (18:00 sonrası)
   PACKAGE_TOUR // Paket Tur (7 gün, 10 gün, 15 gün...)
 }
+
+// ============================================
+// CUSTOMER MANAGEMENT (B2B + B2C)
+// ============================================
+
+// Acenteler (B2B - Travel Agencies, Tour Operators)
+model Agent {
+  id            Int      @id @default(autoincrement())
+  companyName   String   @map("company_name")
+  taxNumber     String?  @map("tax_number")
+  contactPerson String   @map("contact_person")
+  email         String
+  phone         String
+  address       String?
+  city          String?
+  country       String?  @default("Turkey")
+
+  // İş Koşulları
+  paymentTerms   String?   @map("payment_terms") // "30 days", "60 days", "Prepaid"
+  creditLimit    Decimal?  @map("credit_limit") @db.Decimal(10, 2)
+  commissionRate Decimal?  @map("commission_rate") @db.Decimal(5, 2) // % komisyon
+  contractStart  DateTime? @map("contract_start")
+  contractEnd    DateTime? @map("contract_end")
+
+  notes    String?  @db.Text
+  isActive Boolean  @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy Int      @map("created_by")
+
+  // Relations
+  customers      Customer[]
+  contactHistory AgentContactHistory[]
+
+  @@index([isActive])
+  @@index([companyName])
+  @@map("agents")
+}
+
+// Acente İletişim Geçmişi
+model AgentContactHistory {
+  id      Int   @id @default(autoincrement())
+  agentId Int   @map("agent_id")
+  agent   Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  contactType ContactType @map("contact_type")
+  subject     String
+  notes       String      @db.Text
+  contactDate DateTime    @map("contact_date") @default(now())
+
+  createdBy Int      @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([agentId])
+  @@index([contactDate])
+  @@map("agent_contact_history")
+}
+
+// Müşteriler (Hem B2B acente müşterileri, hem de B2C direkt müşteriler)
+model Customer {
+  id Int @id @default(autoincrement())
+
+  // B2B Bağlantısı (NULL ise B2C - direkt müşteri)
+  agentId Int?   @map("agent_id")
+  agent   Agent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  // Kişisel Bilgiler
+  firstName String @map("first_name")
+  lastName  String @map("last_name")
+  email     String
+  phone     String
+
+  dateOfBirth    DateTime? @map("date_of_birth")
+  nationality    String?
+  passportNumber String?   @map("passport_number")
+  passportExpiry DateTime? @map("passport_expiry")
+
+  // Adres
+  address String?
+  city    String?
+  country String? @default("Turkey")
+
+  // Seyahat Tercihleri
+  preferences      Json?   // {"dietary": "vegetarian", "accessibility": "wheelchair"}
+  emergencyContact String? @map("emergency_contact")
+  emergencyPhone   String? @map("emergency_phone")
+
+  // Pazarlama & Sadakat (genelde B2C için)
+  marketingConsent Boolean @default(false) @map("marketing_consent")
+  loyaltyPoints    Int     @default(0) @map("loyalty_points")
+
+  notes    String?  @db.Text
+  tags     String[] // ["VIP", "Repeat", "Family", "Solo"]
+  isActive Boolean  @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy Int      @map("created_by")
+
+  // Relations
+  contactHistory CustomerContactHistory[]
+
+  @@index([agentId])
+  @@index([isActive])
+  @@index([email])
+  @@map("customers")
+}
+
+// Müşteri İletişim Geçmişi
+model CustomerContactHistory {
+  id         Int      @id @default(autoincrement())
+  customerId Int      @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  contactType ContactType @map("contact_type")
+  subject     String
+  notes       String      @db.Text
+  contactDate DateTime    @map("contact_date") @default(now())
+
+  createdBy Int      @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([customerId])
+  @@index([contactDate])
+  @@map("customer_contact_history")
+}
+
+enum ContactType {
+  PHONE
+  EMAIL
+  WHATSAPP
+  MEETING
+  OTHER
+}

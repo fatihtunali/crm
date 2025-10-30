@@ -15,6 +15,7 @@ import {
   Activity,
   Truck,
   Ticket,
+  Building2,
 } from 'lucide-react';
 import { authService } from '../services/auth.service';
 import { cn } from '../lib/utils';
@@ -95,6 +96,20 @@ const Dashboard = () => {
       icon: Ticket,
       link: '/entrance-fees',
       gradient: 'from-rose-500 to-rose-600',
+    },
+    {
+      title: 'Acenteler (B2B)',
+      description: 'Acente ve tur operatörleri',
+      icon: Building2,
+      link: '/customers/agents',
+      gradient: 'from-indigo-500 to-indigo-600',
+    },
+    {
+      title: 'Direkt Müşteriler',
+      description: 'Bireysel müşteriler (B2C)',
+      icon: Users,
+      link: '/customers/direct',
+      gradient: 'from-green-500 to-green-600',
     },
   ];
 
@@ -229,7 +244,7 @@ const Dashboard = () => {
               <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {quickActions.map((action, index) => {
                 const Icon = action.icon;
                 const colors = [
@@ -275,8 +290,22 @@ const Dashboard = () => {
                     shadow: 'shadow-rose-500/20 hover:shadow-rose-500/40',
                     glow: 'group-hover:shadow-2xl'
                   },
+                  {
+                    bg: 'from-indigo-500 via-indigo-600 to-indigo-700',
+                    light: 'from-indigo-50 via-indigo-50 to-indigo-100',
+                    border: 'border-indigo-200/50',
+                    shadow: 'shadow-indigo-500/20 hover:shadow-indigo-500/40',
+                    glow: 'group-hover:shadow-2xl'
+                  },
+                  {
+                    bg: 'from-green-500 via-green-600 to-green-700',
+                    light: 'from-green-50 via-green-50 to-green-100',
+                    border: 'border-green-200/50',
+                    shadow: 'shadow-green-500/20 hover:shadow-green-500/40',
+                    glow: 'group-hover:shadow-2xl'
+                  },
                 ];
-                const color = colors[index];
+                const color = colors[index % colors.length];
 
                 return (
                   <Link
