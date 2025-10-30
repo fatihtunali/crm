@@ -11,6 +11,8 @@ import entranceFeeRoutes from './routes/entranceFee.routes';
 import agentRoutes from './routes/agent.routes';
 import customerRoutes from './routes/customer.routes';
 import reservationRoutes from './routes/reservation.routes';
+import tourPackageRoutes from './routes/tourPackage.routes';
+import tourTemplateRoutes from './routes/tourTemplate.routes';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -43,6 +45,8 @@ app.use('/api/v1/entrance-fees', entranceFeeRoutes);
 app.use('/api/v1/agents', agentRoutes);
 app.use('/api/v1/customers', customerRoutes);
 app.use('/api/v1/reservations', reservationRoutes);
+app.use('/api/v1', tourPackageRoutes);
+app.use('/api/v1', tourTemplateRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

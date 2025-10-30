@@ -91,10 +91,10 @@ export const createSupplier = async (req: AuthRequest, res: Response): Promise<v
     }
 
     // Geçerli supplier type'ları kontrol et
-    const validTypes = ['RESTAURANT', 'MUSEUM', 'ACTIVITY', 'ATTRACTION', 'OTHER'];
+    const validTypes = ['RESTAURANT', 'MUSEUM', 'ACTIVITY', 'TOUR_OPERATOR', 'OTHER'];
     if (!validTypes.includes(type)) {
       res.status(400).json({
-        error: 'Geçersiz tedarikçi tipi. Seçenekler: RESTAURANT, MUSEUM, ACTIVITY, ATTRACTION, OTHER'
+        error: 'Geçersiz tedarikçi tipi. Seçenekler: RESTAURANT, MUSEUM, ACTIVITY, TOUR_OPERATOR, OTHER'
       });
       return;
     }

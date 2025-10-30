@@ -16,6 +16,7 @@ import {
   Tag,
   Ticket,
   Utensils,
+  Package,
 } from 'lucide-react';
 
 interface Supplier {
@@ -36,6 +37,7 @@ interface Supplier {
 const SUPPLIER_TYPES = [
   { value: 'RESTAURANT', label: 'Restoran', icon: Utensils, color: 'blue' },
   { value: 'ACTIVITY', label: 'Aktivite', icon: Tag, color: 'green' },
+  { value: 'TOUR_OPERATOR', label: 'Tur Operatörü', icon: Package, color: 'purple' },
   { value: 'OTHER', label: 'Diğer', icon: FileText, color: 'slate' },
 ];
 
@@ -243,20 +245,32 @@ const Suppliers: React.FC = () => {
 
                   {/* Right: Action Buttons */}
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => navigate(`/resources/suppliers/${supplier.id}/entrance-fees`)}
-                      className="flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all"
-                    >
-                      <Ticket className="h-4 w-4" />
-                      Giriş Ücretleri
-                    </button>
-                    <button
-                      onClick={() => navigate(`/resources/suppliers/${supplier.id}/service-pricing`)}
-                      className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all"
-                    >
-                      <DollarSign className="h-4 w-4" />
-                      Hizmet Fiyatları
-                    </button>
+                    {supplier.type === 'TOUR_OPERATOR' ? (
+                      <button
+                        onClick={() => navigate(`/resources/suppliers/${supplier.id}/tour-packages`)}
+                        className="flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all"
+                      >
+                        <Package className="h-4 w-4" />
+                        Tur Paketleri
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => navigate(`/resources/suppliers/${supplier.id}/entrance-fees`)}
+                          className="flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all"
+                        >
+                          <Ticket className="h-4 w-4" />
+                          Giriş Ücretleri
+                        </button>
+                        <button
+                          onClick={() => navigate(`/resources/suppliers/${supplier.id}/service-pricing`)}
+                          className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all"
+                        >
+                          <DollarSign className="h-4 w-4" />
+                          Hizmet Fiyatları
+                        </button>
+                      </>
+                    )}
                     <button
                       onClick={() => navigate(`/resources/suppliers/${supplier.id}/edit`)}
                       className="p-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all"

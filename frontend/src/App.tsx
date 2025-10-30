@@ -16,6 +16,9 @@ import EntranceFeePricing from './pages/EntranceFeePricing';
 import SupplierServicePricing from './pages/SupplierServicePricing';
 import AllEntranceFees from './pages/AllEntranceFees';
 import EntranceFeeForm from './pages/EntranceFeeForm';
+import TourPackagePricing from './pages/TourPackagePricing';
+import TourTemplates from './pages/TourTemplates';
+import TourTemplateForm from './pages/TourTemplateForm';
 import Customers from './pages/Customers';
 import Agents from './pages/Agents';
 import AgentForm from './pages/AgentForm';
@@ -80,10 +83,17 @@ function App() {
           <Route path="/resources/suppliers/new" element={<SupplierForm />} />
           <Route path="/resources/suppliers/:id/entrance-fees" element={<EntranceFeePricing />} />
           <Route path="/resources/suppliers/:id/service-pricing" element={<SupplierServicePricing />} />
+          <Route path="/resources/suppliers/:id/tour-packages" element={<TourPackagePricing />} />
           <Route path="/resources/suppliers/:id/edit" element={<SupplierForm />} />
           <Route path="/resources/suppliers" element={<Suppliers />} />
           <Route path="/entrance-fees/new" element={<EntranceFeeForm />} />
           <Route path="/entrance-fees" element={<AllEntranceFees />} />
+
+          {/* Tour Template Routes */}
+          <Route path="/tour-templates" element={<TourTemplates />} />
+          <Route path="/tour-templates/new" element={<TourTemplateForm />} />
+          <Route path="/tour-templates/:id" element={<TourTemplates />} />
+          <Route path="/tour-templates/:id/edit" element={<TourTemplateForm />} />
 
           {/* Reservation Routes */}
           <Route path="/reservations" element={<Reservations />} />

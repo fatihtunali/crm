@@ -23,7 +23,9 @@
       "Bash(./stop-dev.sh)",
       "Bash(npx prisma migrate:*)",
       "Bash(./start-dev.sh:*)",
-      "Bash(ssh root@134.209.137.11 \"cat /root/crm/backend/.env\")"
+      "Bash(ssh root@134.209.137.11 \"cat /root/crm/backend/.env\")",
+      "Bash(npx ts-node:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImVtYWlsIjoiYWRtaW5AdG91cmNybS5jb20iLCJyb2xlIjoiU1VQRVJfQURNSU4iLCJpYXQiOjE3NjE4MTk1MTgsImV4cCI6MTc2MjQyNDMxOH0.VsyFt4soJ8BtZnkINF8I5i7FgX9MnH8tdF0LmENkE0A\")"
     ],
     "deny": [],
     "ask": []

@@ -195,7 +195,7 @@ export const createReservation = async (req: AuthRequest, res: Response): Promis
         notes,
         internalNotes,
         remainingAmount: totalPrice, // Initially, all unpaid
-        createdBy: (req.user as any).id,
+        createdBy: req.user!.userId,
         ...(participants && {
           participants: {
             create: participants.map((p: any) => ({
@@ -351,7 +351,7 @@ export const addPayment = async (req: AuthRequest, res: Response): Promise<void>
         paymentMethod,
         paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
         notes,
-        createdBy: (req.user as any).id,
+        createdBy: req.user!.userId,
       },
     });
 

@@ -29,6 +29,7 @@ interface SupplierFormData {
 const SUPPLIER_TYPES = [
   { value: 'RESTAURANT', label: 'Restoran' },
   { value: 'ACTIVITY', label: 'Aktivite' },
+  { value: 'TOUR_OPERATOR', label: 'Tur Operatörü' },
   { value: 'OTHER', label: 'Diğer' },
 ];
 
