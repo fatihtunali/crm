@@ -45,13 +45,31 @@
 - **Endpoints**: `/api/v1/suppliers/*`
 - **NOTE**: MUSEUM suppliers only visible in Entrance Fees page
 
-### 5. Vehicle Suppliers (DATABASE READY - UI PENDING)
+### 5. Vehicle Suppliers (COMPLETE)
 **Schema**: VehicleSupplier + TransferPricing + VehicleAllocationPricing
 - Vehicle types: VITO, SPRINTER, ISUZU, COACH, CAR, VAN, MINIBUS, MIDIBUS, BUS, LUXURY
 - TransferPricing: Airport↔Hotel, City↔City transfers
 - AllocationPricing: FULL_DAY, HALF_DAY, NIGHT_SERVICE, PACKAGE_TOUR
 - Turkish cities: 81 cities in `backend/src/constants/cities.ts`
-- **TODO**: Backend controllers + Frontend UI
+- **Routes**: `/resources/vehicle-suppliers`, `/resources/vehicle-suppliers/:id/pricing`
+- **Endpoints**: `/api/v1/vehicle-suppliers/*`
+
+### 6. Customer Management (B2B + B2C) - COMPLETE
+**Schema**: Agent + Customer + AgentContactHistory + CustomerContactHistory
+
+**B2B (Agents)**:
+- Travel agencies and tour operators we work with
+- Business terms: payment terms, credit limits, commission rates
+- Each agent can have multiple customers
+- **Routes**: `/customers/agents`, `/customers/agents/:id`, `/customers/agents/:id/edit`
+- **Endpoints**: `/api/v1/agents/*`
+
+**B2C (Direct Clients)**:
+- Individual travelers booking directly
+- Personal info, passport details, travel preferences
+- Linked to agent if B2B, or standalone if B2C
+- **Routes**: `/customers/direct`, `/customers/direct/:id/edit`
+- **Endpoints**: `/api/v1/customers/*` (with `?type=b2c` or `?type=b2b`)
 
 ---
 
@@ -125,23 +143,26 @@ git push origin main
 ## 📍 MEVCUT DURUM (2025-10-30)
 
 ### ✅ Tamamlanan
-1. Authentication + Dashboard
-2. Hotels modülü (full)
-3. Guides modülü (full)
-4. Suppliers modülü (full)
-5. Entrance Fees modülü (separate page)
-6. Vehicle database schema (ready)
+1. ✅ Authentication + Dashboard
+2. ✅ Hotels modülü (full)
+3. ✅ Guides modülü (full)
+4. ✅ Suppliers modülü (full)
+5. ✅ Entrance Fees modülü (separate page)
+6. ✅ Vehicle Suppliers modülü (full)
+7. ✅ Customer Management (B2B Agents + B2C Direct Clients)
 
-### ⏳ Yapılacaklar (ÖNCELİK SIRASI)
-1. **Vehicle Module UI** (Backend + Frontend)
-   - vehicleSupplier.controller.ts
-   - transferPricing.controller.ts
-   - vehicleAllocationPricing.controller.ts
-   - VehicleSuppliers.tsx, VehicleSupplierForm.tsx, VehiclePricing.tsx
+### ⏳ Sıradaki Modüller (ÖNCELİK SIRASI)
+1. **Reservations** - Ana modül (tüm kaynakları birleştir)
+   - Reservation schema with participants
+   - Day-by-day itinerary
+   - Resource allocation (hotels, vehicles, guides)
+   - Status tracking (pending, confirmed, cancelled, completed)
 
-2. **Customers (CRM)** - Müşteri yönetimi
-3. **Reservations** - Ana modül (tüm kaynakları birleştir)
-4. **Finance** - Faturalar, ödemeler, kar-zarar
+2. **Finance** - Finans modülü
+   - Invoices (faturalar)
+   - Payments tracking (ödeme takibi)
+   - Cost calculations (maliyet hesaplama)
+   - Profit/loss analysis (kar-zarar)
 
 ---
 
@@ -153,6 +174,8 @@ git push origin main
 - **guides** + **guide_pricings** - Service type pricing
 - **suppliers** + **entrance_fee_pricings** + **supplier_pricings**
 - **vehicle_suppliers** + **transfer_pricings** + **vehicle_allocation_pricings**
+- **agents** + **agent_contact_history** - B2B travel agencies
+- **customers** + **customer_contact_history** - B2B agent customers + B2C direct clients
 
 ### Key Enums
 ```prisma
@@ -177,14 +200,16 @@ enum AllocationType { FULL_DAY, HALF_DAY, NIGHT_SERVICE, PACKAGE_TOUR }
 
 ### Page Structure
 ```
-├── Dashboard (6 module cards)
+├── Dashboard (8 module cards)
 ├── Resources
 │   ├── Hotels (+ Pricing)
 │   ├── Guides (+ Pricing)
-│   ├── Vehicles (+ Pricing) [TODO]
+│   ├── Vehicle Suppliers (+ Pricing)
 │   └── Suppliers
 ├── Entrance Fees (MUSEUM suppliers)
-├── Customers [TODO]
+├── Customers
+│   ├── Agents (B2B) (+ Customer list)
+│   └── Direct Clients (B2C)
 ├── Reservations [TODO]
 └── Finance [TODO]
 ```
@@ -220,5 +245,5 @@ frontend/src/pages/GuidePricing.tsx               → Table view pattern
 
 **Son Güncelleme**: 2025-10-30
 **Git**: `main` branch
-**Durum**: ✅ Core modules completed | ⏳ Vehicle UI pending
-**Sonraki**: Vehicle Backend API + Frontend UI
+**Durum**: ✅ 7 Major modules completed | ⏳ Reservations + Finance pending
+**Sonraki**: Reservations module (core business logic)
