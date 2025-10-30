@@ -1445,9 +1445,9 @@ const AGE_CATEGORIES = [
 
 ---
 
-## 📍 NEREDE KALDIK? (2025-10-30 11:50)
+## 📍 NEREDE KALDIK? (2025-10-30 14:30)
 
-### ✅ Son Tamamlananlar
+### ✅ Son Tamamlananlar (BUGÜN - 2025-10-30)
 1. ✅ Supplier pricing system tamamen bitti (2 pricing model)
 2. ✅ EntranceFeePricing - yaş bazlı fiyatlandırma (4 kategori)
 3. ✅ SupplierPricing - hizmet tipi bazlı fiyatlandırma (5 tip)
@@ -1456,21 +1456,110 @@ const AGE_CATEGORIES = [
 6. ✅ Dashboard updated with entrance fees card
 7. ✅ AllEntranceFees sayfası - tüm giriş ücretlerini göster
 8. ✅ ATTRACTION supplier type kaldırıldı (gereksiz)
-9. ✅ Entrance fees dropdown'da tüm supplier'lar gösteriliyor
+9. ✅ MUSEUM tipi Suppliers sayfasından tamamen gizlendi
+10. ✅ EntranceFeeForm ayrı sayfaya taşındı (/entrance-fees/new)
+11. ✅ Giriş ücreti ekleme - otomatik MUSEUM supplier oluşturma
 
 ### 💾 Git Status
 ```
-Last Commit: "refactor: Remove ATTRACTION supplier type, show all suppliers in entrance fees"
+Last Commit: "feat: Separate entrance fee form into dedicated page at /entrance-fees/new"
 Branch: main
-Files Changed: 2
-Insertions: 2+
-Deletions: 6-
+Files Changed: 3
+Insertions: 325+
+Deletions: 252-
 ```
 
-### 🔄 Son Değişiklikler (2025-10-30 11:50)
-- **ATTRACTION tipi silindi**: SupplierType enum'dan ATTRACTION kaldırıldı
-- **AllEntranceFees.tsx**: Supplier dropdown filtrelemesi kaldırıldı, tüm supplier'lar gösteriliyor
-- **Prisma Schema**: RESTAURANT, MUSEUM, ACTIVITY, OTHER (4 tip kaldı)
+### 🔄 Son Değişiklikler (2025-10-30 14:30)
+
+#### 1. MUSEUM Supplier'ların Ayrılması
+**Sorun**: MUSEUM tipi supplier'lar hem Suppliers hem de Entrance Fees sayfasında görünüyordu.
+
+**Çözüm**:
+- `Suppliers.tsx`: MUSEUM ve ATTRACTION tipleri SUPPLIER_TYPES array'inden kaldırıldı
+- `Suppliers.tsx`: filterSuppliers fonksiyonuna `s.type !== 'MUSEUM'` filtresi eklendi
+- `SupplierForm.tsx`: MUSEUM ve ATTRACTION dropdown'dan kaldırıldı
+- **Sonuç**: MUSEUM supplier'lar sadece Entrance Fees sayfasında yönetilebilir
+
+#### 2. Giriş Ücreti Formu Ayrı Sayfaya Taşındı
+**Sorun**: Form inline olarak AllEntranceFees sayfasında toggle ile açılıyordu.
+
+**Çözüm**:
+- `EntranceFeeForm.tsx` (YENİ): Ayrı form sayfası oluşturuldu
+- `AllEntranceFees.tsx`: Inline form tamamen kaldırıldı (252 satır silindi)
+- `AllEntranceFees.tsx`: "Yeni Giriş Ücreti" butonu navigate kullanıyor
+- `App.tsx`: `/entrance-fees/new` route'u eklendi
+
+**Form Mantığı**:
+```typescript
+// 1. Önce MUSEUM tipinde supplier oluştur
+const supplierData = {
+  name: placeName,
+  type: 'MUSEUM',
+  city: city,
+  notes: formData.notes,
+};
+const supplierResponse = await api.post('/suppliers', supplierData);
+
+// 2. Giriş ücretini ekle
+await api.post(`/suppliers/${supplierId}/entrance-fees`, {
+  // ... fiyat bilgileri
+});
+```
+
+#### 3. Dosya Değişiklikleri
+
+**Yeni Dosyalar:**
+- `frontend/src/pages/EntranceFeeForm.tsx` - Giriş ücreti ekleme formu
+
+**Değiştirilen Dosyalar:**
+- `frontend/src/pages/AllEntranceFees.tsx` - Inline form kaldırıldı
+- `frontend/src/pages/Suppliers.tsx` - MUSEUM filter eklendi
+- `frontend/src/pages/SupplierForm.tsx` - MUSEUM dropdown'dan kaldırıldı
+- `frontend/src/App.tsx` - Yeni route eklendi
+
+### 📊 Giriş Ücretleri Modülü Akışı
+
+```
+/entrance-fees (Liste)
+├── Tüm giriş ücretleri (city+season gruplu)
+├── Filter: City, Search (supplier/city/season)
+└── [Yeni Giriş Ücreti] butonu → /entrance-fees/new
+
+/entrance-fees/new (Form)
+├── Yer Bilgileri
+│   ├── Yer Adı (Topkapı Sarayı, Efes Antik Kenti)
+│   └── Şehir
+├── Sezon Bilgileri
+│   ├── Sezon Adı (Yaz Sezonu 2025)
+│   ├── Başlangıç Tarihi
+│   └── Bitiş Tarihi
+├── Fiyatlar (EUR/USD/TRY)
+│   ├── Yetişkin (Adult)
+│   ├── Çocuk 0-6 Yaş
+│   ├── Çocuk 7-12 Yaş
+│   └── Öğrenci (Student)
+└── Notlar
+
+Form Submit:
+1. POST /suppliers → MUSEUM supplier oluştur
+2. POST /suppliers/{id}/entrance-fees → Fiyat ekle
+3. navigate('/entrance-fees') → Liste sayfasına dön
+```
+
+### 🎯 Supplier Type Durumu
+```prisma
+enum SupplierType {
+  RESTAURANT    // Restoran (Suppliers sayfasında)
+  MUSEUM        // Müze (Sadece Entrance Fees sayfasında)
+  ACTIVITY      // Aktivite (Suppliers sayfasında)
+  OTHER         // Diğer (Suppliers sayfasında)
+}
+```
+
+**Görünürlük:**
+- **Suppliers Sayfası**: RESTAURANT, ACTIVITY, OTHER
+- **Entrance Fees Sayfası**: MUSEUM (ve diğerleri)
+- **SupplierForm Dropdown**: RESTAURANT, ACTIVITY, OTHER (MUSEUM yok)
 
 ### 🎯 Sıradaki Modüller
 1. **Müşteri Yönetimi (CRM)** - Customer database, iletişim geçmişi
@@ -1479,6 +1568,6 @@ Deletions: 6-
 
 ---
 
-**Son Güncelleme**: 2025-10-30 11:50
-**Durum**: ✅ Supplier pricing system tamamlandı
+**Son Güncelleme**: 2025-10-30 14:30
+**Durum**: ✅ Entrance Fees modülü tamamlandı (separate form page)
 **Sonraki**: Customer Management modülü veya Reservation modülü
