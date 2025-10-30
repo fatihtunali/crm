@@ -150,13 +150,19 @@ git push origin main
 5. ✅ Entrance Fees modülü (separate page)
 6. ✅ Vehicle Suppliers modülü (full)
 7. ✅ Customer Management (B2B Agents + B2C Direct Clients)
+8. 🔨 Reservations modülü (IN PROGRESS)
+   - ✅ Database schema (Reservation, ReservationDay, ReservationActivity, ReservationParticipant, Payment)
+   - ✅ Backend API (CRUD + auto reservation code generation)
+   - ✅ Reservations list page with filters
+   - ✅ ReservationForm with 3-step customer selection
+   - ⏳ Form completion (daily itinerary, participants, pricing)
 
 ### ⏳ Sıradaki Modüller (ÖNCELİK SIRASI)
-1. **Reservations** - Ana modül (tüm kaynakları birleştir)
-   - Reservation schema with participants
-   - Day-by-day itinerary
-   - Resource allocation (hotels, vehicles, guides)
-   - Status tracking (pending, confirmed, cancelled, completed)
+1. **Reservations Form** - Complete the form
+   - Day-by-day itinerary builder with activities
+   - Participant management (ADULT, CHILD categories)
+   - Real-time cost/price calculation
+   - View/Edit existing reservations
 
 2. **Finance** - Finans modülü
    - Invoices (faturalar)
@@ -210,9 +216,116 @@ enum AllocationType { FULL_DAY, HALF_DAY, NIGHT_SERVICE, PACKAGE_TOUR }
 ├── Customers
 │   ├── Agents (B2B) (+ Customer list)
 │   └── Direct Clients (B2C)
-├── Reservations [TODO]
+├── Reservations (List + Form with 3-step customer selection)
 └── Finance [TODO]
 ```
+
+---
+
+## 📅 RESERVATIONS MODULE (IN PROGRESS)
+
+### Database Schema
+```prisma
+model Reservation {
+  id               Int      @id @default(autoincrement())
+  reservationCode  String   @unique          // REZ-2025-0001 (auto-generated)
+  customerId       Int                       // References Customer (B2B or B2C)
+  customer         Customer @relation(...)
+
+  startDate        DateTime
+  endDate          DateTime
+  totalDays        Int
+  status           ReservationStatus @default(PENDING)
+
+  totalCost        Decimal                   // Total cost (buy price)
+  totalPrice       Decimal                   // Total price (sell price)
+  profit           Decimal                   // totalPrice - totalCost
+  paidAmount       Decimal @default(0)
+  remainingAmount  Decimal                   // totalPrice - paidAmount
+
+  currency         String @default("EUR")
+  notes            String?                   // Customer-facing notes
+  internalNotes    String?                   // Internal team notes
+
+  days             ReservationDay[]          // Daily itinerary
+  participants     ReservationParticipant[]  // Guest list
+  payments         Payment[]                 // Payment history
+}
+
+enum ReservationStatus {
+  PENDING    // Ön rezervasyon
+  CONFIRMED  // Onaylandı
+  CANCELLED  // İptal
+  COMPLETED  // Tamamlandı
+}
+```
+
+### Backend API
+**Routes**: `/api/v1/reservations`
+
+**Key Features**:
+- ✅ Auto-generates unique reservation codes (REZ-YYYY-NNNN)
+- ✅ Nested creates (days, participants, activities, payments)
+- ✅ Filters (status, customerId, date range)
+- ✅ Full CRUD operations
+
+**Endpoints**:
+```
+GET    /reservations              - List all reservations
+GET    /reservations/:id          - Get reservation details
+POST   /reservations              - Create new reservation
+PUT    /reservations/:id          - Update reservation
+DELETE /reservations/:id          - Delete reservation
+POST   /reservations/:id/payments - Add payment
+```
+
+### Frontend - 3-Step Customer Selection Pattern
+
+**Problem**: Users were confused about customer selection in the form.
+
+**Solution**: Implemented a 3-step selection workflow:
+
+1. **Step 1: Customer Type Selection** (Radio buttons)
+   - ○ Acente (B2B) - For agency customers
+   - ○ Direkt Müşteri (B2C) - For direct customers
+
+2. **Step 2: Agent Selection** (Conditional - only for B2B)
+   - Dropdown showing all agents
+   - Disabled until B2B is selected
+
+3. **Step 3: Customer Selection** (Filtered)
+   - Shows only agent's customers (if B2B)
+   - Shows only direct customers (if B2C)
+   - Disabled until previous steps are complete
+
+**Key Code Pattern**:
+```typescript
+const [customerType, setCustomerType] = useState<'AGENT' | 'DIRECT'>('DIRECT');
+const [agents, setAgents] = useState<Agent[]>([]);
+const [customers, setCustomers] = useState<Customer[]>([]);
+
+const getFilteredCustomers = () => {
+  if (customerType === 'AGENT' && formData.agentId) {
+    return customers.filter(c => c.agent?.id === parseInt(formData.agentId));
+  } else if (customerType === 'DIRECT') {
+    return customers.filter(c => !c.agent);
+  }
+  return [];
+};
+```
+
+**Files**:
+- `frontend/src/pages/Reservations.tsx` - List view with filters
+- `frontend/src/pages/ReservationForm.tsx` - Create/Edit form (IN PROGRESS)
+- `backend/src/controllers/reservation.controller.ts` - API logic
+
+### Pending Features
+- ⏳ Daily itinerary builder (day-by-day resources)
+- ⏳ Activity management per day
+- ⏳ Participant management with age categories
+- ⏳ Real-time cost/price calculation
+- ⏳ Edit existing reservations
+- ⏳ Payment tracking UI
 
 ---
 
@@ -243,7 +356,8 @@ frontend/src/pages/GuidePricing.tsx               → Table view pattern
 
 ---
 
-**Son Güncelleme**: 2025-10-30
-**Git**: `main` branch
-**Durum**: ✅ 7 Major modules completed | ⏳ Reservations + Finance pending
-**Sonraki**: Reservations module (core business logic)
+**Son Güncelleme**: 2025-10-30 13:10
+**Git**: `main` branch (commit d279127)
+**Durum**: ✅ 7 modules complete | 🔨 Reservations (50%) | ⏳ Finance pending
+**Son Commit**: "feat: Implement 3-step customer selection for reservation form"
+**Sonraki**: Complete reservation form (daily itinerary + participants + pricing)
