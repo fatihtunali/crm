@@ -9,7 +9,6 @@ import {
   Search,
   Filter,
   ArrowRight,
-  Trash2,
   Plus,
 } from 'lucide-react';
 

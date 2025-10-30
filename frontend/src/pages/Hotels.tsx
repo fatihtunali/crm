@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Hotel as HotelIcon, MapPin, Star, Phone, Mail, Edit, Trash2, DollarSign } from 'lucide-react';
+import { Plus, Search, Hotel as HotelIcon, MapPin, Star, Phone, Edit, Trash2, DollarSign } from 'lucide-react';
 import api from '../services/api';
 
 interface Hotel {

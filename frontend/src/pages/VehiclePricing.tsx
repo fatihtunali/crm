@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  DollarSign, ArrowLeft, Plus, Trash2, Truck, Calendar, MapPin, X, Save
+  DollarSign, ArrowLeft, Plus, Truck, Calendar, MapPin, X, Save
 } from 'lucide-react';
 import api from '../services/api';
 

@@ -7,9 +7,7 @@ import {
   Calendar,
   MapPin,
   Trash2,
-  Building2,
   Ticket,
-  Users,
 } from 'lucide-react';
 
 interface EntranceFee {

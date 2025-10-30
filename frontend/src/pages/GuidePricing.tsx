@@ -137,10 +137,6 @@ const GuidePricing = () => {
     return acc;
   }, {} as Record<string, any>);
 
-  const getServiceLabel = (value: string) => {
-    return SERVICE_TYPES.find(st => st.value === value)?.label || value;
-  };
-
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
