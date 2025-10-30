@@ -35,9 +35,7 @@ interface Supplier {
 
 const SUPPLIER_TYPES = [
   { value: 'RESTAURANT', label: 'Restoran', icon: Utensils, color: 'blue' },
-  { value: 'MUSEUM', label: 'Müze', icon: Building2, color: 'purple' },
   { value: 'ACTIVITY', label: 'Aktivite', icon: Tag, color: 'green' },
-  { value: 'ATTRACTION', label: 'Turistik Mekan', icon: MapPin, color: 'amber' },
   { value: 'OTHER', label: 'Diğer', icon: FileText, color: 'slate' },
 ];
 
@@ -72,6 +70,9 @@ const Suppliers: React.FC = () => {
 
   const filterSuppliers = () => {
     let filtered = suppliers;
+
+    // MUSEUM tipini hiç gösterme (Giriş Ücretleri'nde ayrı sayfa var)
+    filtered = filtered.filter(s => s.type !== 'MUSEUM');
 
     // Active filter
     if (activeFilter === 'active') {

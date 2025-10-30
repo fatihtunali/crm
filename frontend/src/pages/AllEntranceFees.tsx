@@ -10,6 +10,7 @@ import {
   Filter,
   ArrowRight,
   Trash2,
+  Plus,
 } from 'lucide-react';
 
 interface EntranceFee {
