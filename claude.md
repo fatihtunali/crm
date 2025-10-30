@@ -1445,7 +1445,7 @@ const AGE_CATEGORIES = [
 
 ---
 
-## 📍 NEREDE KALDIK? (2025-10-30 11:30)
+## 📍 NEREDE KALDIK? (2025-10-30 11:50)
 
 ### ✅ Son Tamamlananlar
 1. ✅ Supplier pricing system tamamen bitti (2 pricing model)
@@ -1454,17 +1454,23 @@ const AGE_CATEGORIES = [
 4. ✅ Table list view pattern implemented
 5. ✅ Guide pricing simplified (language field removed)
 6. ✅ Dashboard updated with entrance fees card
-7. ✅ Backend built and servers restarted successfully
-8. ✅ Git commit & push completed
+7. ✅ AllEntranceFees sayfası - tüm giriş ücretlerini göster
+8. ✅ ATTRACTION supplier type kaldırıldı (gereksiz)
+9. ✅ Entrance fees dropdown'da tüm supplier'lar gösteriliyor
 
 ### 💾 Git Status
 ```
-Last Commit: "feat: Add supplier pricing system with entrance fees and service pricing"
+Last Commit: "refactor: Remove ATTRACTION supplier type, show all suppliers in entrance fees"
 Branch: main
-Files Changed: 14
-Insertions: 2240+
-Deletions: 357-
+Files Changed: 2
+Insertions: 2+
+Deletions: 6-
 ```
+
+### 🔄 Son Değişiklikler (2025-10-30 11:50)
+- **ATTRACTION tipi silindi**: SupplierType enum'dan ATTRACTION kaldırıldı
+- **AllEntranceFees.tsx**: Supplier dropdown filtrelemesi kaldırıldı, tüm supplier'lar gösteriliyor
+- **Prisma Schema**: RESTAURANT, MUSEUM, ACTIVITY, OTHER (4 tip kaldı)
 
 ### 🎯 Sıradaki Modüller
 1. **Müşteri Yönetimi (CRM)** - Customer database, iletişim geçmişi
@@ -1473,6 +1479,6 @@ Deletions: 357-
 
 ---
 
-**Son Güncelleme**: 2025-10-30 11:30
+**Son Güncelleme**: 2025-10-30 11:50
 **Durum**: ✅ Supplier pricing system tamamlandı
 **Sonraki**: Customer Management modülü veya Reservation modülü
