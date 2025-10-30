@@ -6,6 +6,7 @@ import hotelRoutes from './routes/hotel.routes';
 import vehicleRoutes from './routes/vehicle.routes';
 import guideRoutes from './routes/guide.routes';
 import supplierRoutes from './routes/supplier.routes';
+import vehicleSupplierRoutes from './routes/vehicleSupplier.routes';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -33,6 +34,7 @@ app.use('/api/v1/hotels', hotelRoutes);
 app.use('/api/v1/vehicles', vehicleRoutes);
 app.use('/api/v1/guides', guideRoutes);
 app.use('/api/v1/suppliers', supplierRoutes);
+app.use('/api/v1/vehicle-suppliers', vehicleSupplierRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

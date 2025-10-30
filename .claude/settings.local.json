@@ -22,7 +22,8 @@
       "Bash(npm run dev:*)",
       "Bash(./stop-dev.sh)",
       "Bash(npx prisma migrate:*)",
-      "Bash(./start-dev.sh:*)"
+      "Bash(./start-dev.sh:*)",
+      "Bash(ssh root@134.209.137.11 \"cat /root/crm/backend/.env\")"
     ],
     "deny": [],
     "ask": []

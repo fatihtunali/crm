@@ -14,6 +14,7 @@ import {
   MapPin,
   Building2,
   User,
+  Truck,
 } from 'lucide-react';
 import { authService } from '../../services/auth.service';
 import { cn } from '../../lib/utils';
@@ -40,7 +41,8 @@ const AppLayout = () => {
 
   const resourcesSubItems = [
     { path: '/resources/hotels', label: 'Oteller', icon: Hotel },
-    { path: '/resources/vehicles', label: 'Araçlar', icon: Car },
+    { path: '/resources/vehicle-suppliers', label: 'Araç Tedarikçileri', icon: Truck },
+    { path: '/resources/vehicles', label: 'Kendi Filomuz', icon: Car },
     { path: '/resources/guides', label: 'Rehberler', icon: User },
     { path: '/resources/suppliers', label: 'Tedarikçiler', icon: MapPin },
   ];

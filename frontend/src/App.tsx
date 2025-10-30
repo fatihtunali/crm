@@ -4,6 +4,12 @@ import Dashboard from './pages/Dashboard';
 import Hotels from './pages/Hotels';
 import HotelForm from './pages/HotelForm';
 import HotelPricing from './pages/HotelPricing';
+import VehicleSuppliers from './pages/VehicleSuppliers';
+import VehicleSupplierForm from './pages/VehicleSupplierForm';
+import VehiclePricing from './pages/VehiclePricing';
+import Guides from './pages/Guides';
+import GuideForm from './pages/GuideForm';
+import GuidePricing from './pages/GuidePricing';
 import AppLayout from './components/layout/AppLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { authService } from './services/auth.service';
@@ -18,12 +24,6 @@ const ResourcesPage = () => (
 const VehiclesPage = () => (
   <div className="p-8">
     <h1 className="text-2xl font-bold">Araçlar</h1>
-  </div>
-);
-
-const GuidesPage = () => (
-  <div className="p-8">
-    <h1 className="text-2xl font-bold">Rehberler</h1>
   </div>
 );
 
@@ -58,8 +58,15 @@ function App() {
           <Route path="/resources/hotels/:id/pricing" element={<HotelPricing />} />
           <Route path="/resources/hotels/:id/edit" element={<HotelForm />} />
           <Route path="/resources/hotels" element={<Hotels />} />
+          <Route path="/resources/vehicle-suppliers/new" element={<VehicleSupplierForm />} />
+          <Route path="/resources/vehicle-suppliers/:id/pricing" element={<VehiclePricing />} />
+          <Route path="/resources/vehicle-suppliers/:id/edit" element={<VehicleSupplierForm />} />
+          <Route path="/resources/vehicle-suppliers" element={<VehicleSuppliers />} />
           <Route path="/resources/vehicles" element={<VehiclesPage />} />
-          <Route path="/resources/guides" element={<GuidesPage />} />
+          <Route path="/resources/guides/new" element={<GuideForm />} />
+          <Route path="/resources/guides/:id/pricing" element={<GuidePricing />} />
+          <Route path="/resources/guides/:id/edit" element={<GuideForm />} />
+          <Route path="/resources/guides" element={<Guides />} />
           <Route path="/resources/suppliers" element={<SuppliersPage />} />
         </Route>
       </Routes>

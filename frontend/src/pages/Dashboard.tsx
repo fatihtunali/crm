@@ -13,6 +13,7 @@ import {
   Zap,
   BarChart3,
   Activity,
+  Truck,
 } from 'lucide-react';
 import { authService } from '../services/auth.service';
 import { cn } from '../lib/utils';
@@ -58,6 +59,13 @@ const Dashboard = () => {
       icon: Hotel,
       link: '/resources/hotels',
       gradient: 'from-purple-500 to-purple-600',
+    },
+    {
+      title: 'Araç Tedarikçileri',
+      description: 'Transfer ve tahsis fiyatları',
+      icon: Truck,
+      link: '/resources/vehicle-suppliers',
+      gradient: 'from-teal-500 to-teal-600',
     },
     {
       title: 'Araçlar',
@@ -213,7 +221,7 @@ const Dashboard = () => {
               <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
               {quickActions.map((action, index) => {
                 const Icon = action.icon;
                 const colors = [
@@ -222,6 +230,13 @@ const Dashboard = () => {
                     light: 'from-purple-50 via-purple-50 to-purple-100',
                     border: 'border-purple-200/50',
                     shadow: 'shadow-purple-500/20 hover:shadow-purple-500/40',
+                    glow: 'group-hover:shadow-2xl'
+                  },
+                  {
+                    bg: 'from-teal-500 via-teal-600 to-teal-700',
+                    light: 'from-teal-50 via-teal-50 to-teal-100',
+                    border: 'border-teal-200/50',
+                    shadow: 'shadow-teal-500/20 hover:shadow-teal-500/40',
                     glow: 'group-hover:shadow-2xl'
                   },
                   {
