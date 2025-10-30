@@ -10,6 +10,7 @@ import vehicleSupplierRoutes from './routes/vehicleSupplier.routes';
 import entranceFeeRoutes from './routes/entranceFee.routes';
 import agentRoutes from './routes/agent.routes';
 import customerRoutes from './routes/customer.routes';
+import reservationRoutes from './routes/reservation.routes';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -41,6 +42,7 @@ app.use('/api/v1/vehicle-suppliers', vehicleSupplierRoutes);
 app.use('/api/v1/entrance-fees', entranceFeeRoutes);
 app.use('/api/v1/agents', agentRoutes);
 app.use('/api/v1/customers', customerRoutes);
+app.use('/api/v1/reservations', reservationRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

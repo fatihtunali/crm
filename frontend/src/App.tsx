@@ -22,6 +22,8 @@ import AgentForm from './pages/AgentForm';
 import AgentDetail from './pages/AgentDetail';
 import DirectClients from './pages/DirectClients';
 import ClientForm from './pages/ClientForm';
+import Reservations from './pages/Reservations';
+import ReservationForm from './pages/ReservationForm';
 import AppLayout from './components/layout/AppLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { authService } from './services/auth.service';
@@ -81,6 +83,12 @@ function App() {
           <Route path="/resources/suppliers" element={<Suppliers />} />
           <Route path="/entrance-fees/new" element={<EntranceFeeForm />} />
           <Route path="/entrance-fees" element={<AllEntranceFees />} />
+
+          {/* Reservation Routes */}
+          <Route path="/reservations" element={<Reservations />} />
+          <Route path="/reservations/new" element={<ReservationForm />} />
+          <Route path="/reservations/:id" element={<ReservationForm />} />
+          <Route path="/reservations/:id/edit" element={<ReservationForm />} />
 
           {/* Customer Management Routes */}
           <Route path="/customers" element={<Customers />} />
