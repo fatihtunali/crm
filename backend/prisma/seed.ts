@@ -881,6 +881,392 @@ async function main() {
   ]);
   console.log(`✅ Created ${directCustomers.length} direct customers\n`);
 
+  // 10. EXAMPLE RESERVATIONS
+  console.log('📅 Creating example reservations...');
+
+  // Get customer IDs for reservations
+  const ayseYilmaz = directCustomers[0]; // B2C customer
+  const klausSchmidt = await prisma.customer.findFirst({
+    where: { email: 'klaus.schmidt@email.de' }
+  }); // B2B customer from Euro Travel Agency
+
+  // RESERVATION 1: B2C - Ayşe Yılmaz (Direct Customer)
+  // 3-day Istanbul tour with family
+  const reservation1 = await prisma.reservation.create({
+    data: {
+      reservationCode: 'REZ-2025-0001', // Normally auto-generated, but for seed we set it
+      customerId: ayseYilmaz.id,
+      startDate: new Date('2025-07-01'),
+      endDate: new Date('2025-07-03'),
+      totalDays: 3,
+      totalCost: 550, // What we pay to suppliers
+      totalPrice: 800, // What customer pays us
+      profit: 250, // Our profit
+      currency: 'EUR',
+      adultCount: 2,
+      childCount: 1,
+      notes: 'Çocuk için özel yemek talebi var. Vejetaryen menü.',
+      internalNotes: 'İlk rezervasyon, iyi takip et. Müşteri memnun kalırsa tekrar gelir.',
+      status: 'CONFIRMED',
+      createdBy: admin.id,
+
+      // Participants (Katılımcılar)
+      participants: {
+        create: [
+          {
+            participantType: 'ADULT',
+            firstName: 'Ayşe',
+            lastName: 'Yılmaz',
+            age: 32,
+          },
+          {
+            participantType: 'ADULT',
+            firstName: 'Mehmet',
+            lastName: 'Yılmaz',
+            age: 35,
+          },
+          {
+            participantType: 'CHILD_6_11',
+            firstName: 'Zeynep',
+            lastName: 'Yılmaz',
+            age: 8,
+          },
+        ],
+      },
+
+      // Daily Itinerary (Günlük Program)
+      days: {
+        create: [
+          // Day 1: Istanbul Historical Tour
+          {
+            dayNumber: 1,
+            date: new Date('2025-07-01'),
+            hotelId: hotels[0].id, // Grand Istanbul Palace
+            roomType: 'DOUBLE',
+            guideId: guides[0].id, // Ahmet Özkan
+            guideService: 'FULL_DAY',
+            breakfast: true,
+            lunch: true,
+            dinner: true,
+            description: 'İstanbul Tarihi Yarımada Turu - Topkapı Sarayı, Ayasofya, Sultanahmet Camii',
+            notes: 'Öğle yemeği Sultanahmet Köftecisi\'nde. Çocuk için vejetaryen menü.',
+            dayCost: 200, // Hotel €85 + Guide €180/2 = €90 + Entrance €25×2+€12.5 = €62.5 ≈ €200
+            dayPrice: 280, // Markup
+            activities: {
+              create: [
+                {
+                  activityType: 'ENTRANCE_FEE',
+                  supplierId: entranceFees[0].id, // Topkapı Sarayı
+                  name: 'Topkapı Sarayı Giriş',
+                  cost: 62.5, // 2 adults €25 each + 1 child €12.5
+                  price: 80, // Customer price with markup
+                  notes: '2 yetişkin + 1 çocuk (7-12 yaş)',
+                },
+              ],
+            },
+          },
+
+          // Day 2: Bosphorus Cruise + Asian Side
+          {
+            dayNumber: 2,
+            date: new Date('2025-07-02'),
+            hotelId: hotels[0].id, // Grand Istanbul Palace
+            roomType: 'DOUBLE',
+            guideId: guides[0].id, // Ahmet Özkan
+            guideService: 'FULL_DAY',
+            breakfast: true,
+            lunch: true,
+            dinner: false,
+            description: 'Boğaz Turu ve Anadolu Yakası - Boğaz gezisi, Beylerbeyi Sarayı, Çamlıca Tepesi',
+            notes: 'Boğaz turunda hafif bir deniz olabilir, dramamine hazır olsun.',
+            dayCost: 175,
+            dayPrice: 250,
+            activities: {
+              create: [
+                {
+                  activityType: 'ACTIVITY',
+                  supplierId: activities[1].id, // Bosphorus Cruise Company
+                  name: 'Boğaz Turu',
+                  cost: 105, // €35 × 3 people
+                  price: 135, // Customer price
+                  notes: '2 saat boğaz turu, 3 kişi',
+                },
+              ],
+            },
+          },
+
+          // Day 3: Shopping + Departure
+          {
+            dayNumber: 3,
+            date: new Date('2025-07-03'),
+            hotelId: hotels[0].id, // Grand Istanbul Palace
+            roomType: 'DOUBLE',
+            guideId: guides[0].id, // Ahmet Özkan
+            guideService: 'HALF_DAY',
+            breakfast: true,
+            lunch: true,
+            dinner: false,
+            transferType: 'AIRPORT_DROP',
+            vehicleType: 'VITO',
+            description: 'Kapalı Çarşı alışveriş turu ve havaalanına transfer',
+            notes: 'Uçak saati 18:00, saat 15:00\'te otelden çıkış.',
+            dayCost: 175,
+            dayPrice: 270,
+          },
+        ],
+      },
+
+      // Payment
+      payments: {
+        create: [
+          {
+            amount: 300, // Partial payment (deposit)
+            currency: 'EUR',
+            paymentMethod: 'CREDIT_CARD',
+            paymentDate: new Date('2025-06-15'),
+            notes: 'Ön ödeme, kredi kartı ile alındı',
+            createdBy: admin.id,
+          },
+        ],
+      },
+    },
+    include: {
+      customer: true,
+      days: { include: { activities: true } },
+      participants: true,
+      payments: true,
+    },
+  });
+
+  // Update reservation paid/remaining amounts
+  await prisma.reservation.update({
+    where: { id: reservation1.id },
+    data: {
+      paidAmount: 300,
+      remainingAmount: 500, // €800 - €300
+    },
+  });
+
+  console.log(`✅ Reservation 1 (B2C): ${reservation1.reservationCode} - Ayşe Yılmaz`);
+
+  // RESERVATION 2: B2B - Klaus Schmidt (Euro Travel Agency)
+  // 7-day Cappadocia package tour with balloon
+  const reservation2 = await prisma.reservation.create({
+    data: {
+      reservationCode: 'REZ-2025-0002',
+      customerId: klausSchmidt!.id,
+      startDate: new Date('2025-08-15'),
+      endDate: new Date('2025-08-21'),
+      totalDays: 7,
+      totalCost: 1800, // What we pay
+      totalPrice: 2570, // What agent pays us
+      profit: 770, // Our profit (agent will add their commission on top)
+      currency: 'EUR',
+      adultCount: 2,
+      childCount: 0,
+      notes: 'Honeymoon package - extra romantic touches requested',
+      internalNotes: 'VIP agent customer. Ensure premium service. Free upgrade to deluxe cave room if available.',
+      status: 'CONFIRMED',
+      createdBy: admin.id,
+
+      participants: {
+        create: [
+          {
+            participantType: 'ADULT',
+            firstName: 'Klaus',
+            lastName: 'Schmidt',
+            age: 49,
+          },
+          {
+            participantType: 'ADULT',
+            firstName: 'Petra',
+            lastName: 'Schmidt',
+            age: 47,
+          },
+        ],
+      },
+
+      days: {
+        create: [
+          // Day 1: Arrival
+          {
+            dayNumber: 1,
+            date: new Date('2025-08-15'),
+            hotelId: hotels[1].id, // Cappadocia Cave Suites
+            roomType: 'DOUBLE',
+            transferType: 'AIRPORT_PICKUP',
+            vehicleType: 'VITO',
+            breakfast: false,
+            lunch: false,
+            dinner: true,
+            description: 'Kayseri Havalimanı karşılama ve otele transfer',
+            notes: 'Flight: LH1234, arrival 14:30. Welcome drinks in cave terrace.',
+            dayCost: 200,
+            dayPrice: 280,
+          },
+
+          // Day 2: Hot Air Balloon + North Cappadocia
+          {
+            dayNumber: 2,
+            date: new Date('2025-08-16'),
+            hotelId: hotels[1].id,
+            roomType: 'DOUBLE',
+            guideId: guides[1].id, // Zeynep Aydın
+            guideService: 'FULL_DAY',
+            breakfast: true,
+            lunch: true,
+            dinner: true,
+            description: 'Sıcak hava balonu turu ve Kuzey Kapadokya - Göreme, Paşabağı, Devrent Vadisi',
+            notes: 'Balon turu 05:00-07:00, sonra kahvaltı. Romantik akşam yemeği rezerve edildi.',
+            dayCost: 500, // Balloon €180×2 + Guide + Hotel
+            dayPrice: 650,
+            activities: {
+              create: [
+                {
+                  activityType: 'ACTIVITY',
+                  supplierId: activities[0].id, // Cappadocia Balloons
+                  name: 'Sıcak Hava Balonu Turu',
+                  cost: 360, // €180 × 2 people
+                  price: 460, // Customer price
+                  notes: 'Standart balon turu, 2 kişi. Champagne breakfast included.',
+                },
+              ],
+            },
+          },
+
+          // Day 3: South Cappadocia
+          {
+            dayNumber: 3,
+            date: new Date('2025-08-17'),
+            hotelId: hotels[1].id,
+            roomType: 'DOUBLE',
+            guideId: guides[1].id,
+            guideService: 'FULL_DAY',
+            breakfast: true,
+            lunch: true,
+            dinner: true,
+            description: 'Güney Kapadokya Turu - Kaymaklı Yeraltı Şehri, Ihlara Vadisi',
+            notes: 'Yeraltı şehrinde dar geçitler var, dikkat.',
+            dayCost: 300,
+            dayPrice: 400,
+            activities: {
+              create: [
+                {
+                  activityType: 'ENTRANCE_FEE',
+                  supplierId: entranceFees[2].id, // Göreme Açık Hava Müzesi
+                  name: 'Göreme Açık Hava Müzesi',
+                  cost: 36, // €18 × 2
+                  price: 50,
+                  notes: '2 yetişkin giriş',
+                },
+              ],
+            },
+          },
+
+          // Day 4: Free Day
+          {
+            dayNumber: 4,
+            date: new Date('2025-08-18'),
+            hotelId: hotels[1].id,
+            roomType: 'DOUBLE',
+            breakfast: true,
+            lunch: false,
+            dinner: true,
+            description: 'Serbest Gün - Otel dinlenme, spa, havuz',
+            notes: 'Couple massage booked for 14:00 (paid separately by customer)',
+            dayCost: 150,
+            dayPrice: 230,
+          },
+
+          // Day 5: Pottery Workshop + Wine Tasting
+          {
+            dayNumber: 5,
+            date: new Date('2025-08-19'),
+            hotelId: hotels[1].id,
+            roomType: 'DOUBLE',
+            guideId: guides[1].id,
+            guideService: 'FULL_DAY',
+            breakfast: true,
+            lunch: true,
+            dinner: true,
+            description: 'Çömlekçilik atölyesi ve şarap tadımı - Avanos, yerel şaraphane',
+            notes: 'Pottery workshop hands-on experience. Wine tasting at sunset.',
+            dayCost: 250,
+            dayPrice: 350,
+          },
+
+          // Day 6: Hiking + Local Village
+          {
+            dayNumber: 6,
+            date: new Date('2025-08-20'),
+            hotelId: hotels[1].id,
+            roomType: 'DOUBLE',
+            guideId: guides[1].id,
+            guideService: 'FULL_DAY',
+            breakfast: true,
+            lunch: true,
+            dinner: true,
+            description: 'Rose Valley yürüyüşü ve yerel köy ziyareti - Çavuşin, Uçhisar',
+            notes: 'Easy hiking trail. Traditional Turkish home dinner.',
+            dayCost: 200,
+            dayPrice: 300,
+          },
+
+          // Day 7: Departure
+          {
+            dayNumber: 7,
+            date: new Date('2025-08-21'),
+            hotelId: hotels[1].id,
+            roomType: 'DOUBLE',
+            transferType: 'AIRPORT_DROP',
+            vehicleType: 'VITO',
+            breakfast: true,
+            lunch: false,
+            dinner: false,
+            description: 'Kayseri Havalimanına transfer',
+            notes: 'Flight: LH1235, departure 16:00. Check-out 12:00, late lunch at airport.',
+            dayCost: 200,
+            dayPrice: 280,
+          },
+        ],
+      },
+
+      payments: {
+        create: [
+          {
+            amount: 2570, // Full payment (agents usually pay upfront or net 30)
+            currency: 'EUR',
+            paymentMethod: 'BANK_TRANSFER',
+            paymentDate: new Date('2025-07-20'),
+            notes: 'Full payment received via bank transfer - Euro Travel Agency',
+            createdBy: admin.id,
+          },
+        ],
+      },
+    },
+    include: {
+      customer: {
+        include: {
+          agent: true, // Include agent info
+        },
+      },
+      days: { include: { activities: true } },
+      participants: true,
+      payments: true,
+    },
+  });
+
+  await prisma.reservation.update({
+    where: { id: reservation2.id },
+    data: {
+      paidAmount: 2570,
+      remainingAmount: 0, // Fully paid
+    },
+  });
+
+  console.log(`✅ Reservation 2 (B2B): ${reservation2.reservationCode} - Klaus Schmidt (Euro Travel Agency)`);
+  console.log('');
+
   console.log('✨ Database seeding completed successfully!');
   console.log('\n📊 Summary:');
   console.log(`   - 1 Admin User`);
@@ -892,6 +1278,7 @@ async function main() {
   console.log(`   - ${activities.length} Activity Suppliers (with activity pricing)`);
   console.log(`   - 3 Agents (with 5 B2B customers total)`);
   console.log(`   - ${directCustomers.length} Direct Customers (B2C)`);
+  console.log(`   - 2 Example Reservations (1 B2C + 1 B2B)`);
   console.log(`\n✅ All modules now have test data!\n`);
 }
 
