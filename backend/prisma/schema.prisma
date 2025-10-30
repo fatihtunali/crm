@@ -246,7 +246,6 @@ enum SupplierType {
   RESTAURANT    // Restoran
   MUSEUM        // Müze
   ACTIVITY      // Aktivite (balon, dalış vb.)
-  ATTRACTION    // Turistik mekan
   OTHER         // Diğer
 }
 

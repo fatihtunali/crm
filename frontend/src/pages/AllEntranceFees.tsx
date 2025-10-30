@@ -97,11 +97,8 @@ const AllEntranceFees: React.FC = () => {
   const fetchSuppliers = async () => {
     try {
       const response = await api.get('/suppliers?isActive=true');
-      // Sadece MUSEUM ve ATTRACTION tipindeki supplier'ları al
-      const filteredSuppliers = response.data.data.filter(
-        (s: Supplier) => s.type === 'MUSEUM' || s.type === 'ATTRACTION'
-      );
-      setSuppliers(filteredSuppliers);
+      // Tüm supplier'ları göster
+      setSuppliers(response.data.data);
     } catch (error) {
       console.error('Error fetching suppliers:', error);
     }
