@@ -24,6 +24,7 @@ import DirectClients from './pages/DirectClients';
 import ClientForm from './pages/ClientForm';
 import Reservations from './pages/Reservations';
 import ReservationForm from './pages/ReservationForm';
+import ReservationDetail from './pages/ReservationDetail';
 import AppLayout from './components/layout/AppLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { authService } from './services/auth.service';
@@ -87,7 +88,7 @@ function App() {
           {/* Reservation Routes */}
           <Route path="/reservations" element={<Reservations />} />
           <Route path="/reservations/new" element={<ReservationForm />} />
-          <Route path="/reservations/:id" element={<ReservationForm />} />
+          <Route path="/reservations/:id" element={<ReservationDetail />} />
           <Route path="/reservations/:id/edit" element={<ReservationForm />} />
 
           {/* Customer Management Routes */}
