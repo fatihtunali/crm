@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Calendar, User, DollarSign, Eye, Edit, Trash2, Clock } from 'lucide-react';
+import { Plus, Search, Calendar, User, DollarSign, Eye, Edit, Trash2 } from 'lucide-react';
 import api from '../services/api';
 
 interface Reservation {

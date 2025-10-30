@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Plus, Trash2, Calendar, Users, Hotel, Car, User as UserIcon, UtensilsCrossed } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Hotel, Car, User as UserIcon, UtensilsCrossed } from 'lucide-react';
 import api from '../services/api';
 
 interface Customer {
@@ -12,6 +12,12 @@ interface Customer {
     id: number;
     companyName: string;
   };
+}
+
+interface Agent {
+  id: number;
+  companyName: string;
+  contactPerson: string;
 }
 
 interface Hotel {
@@ -57,11 +63,14 @@ const ReservationForm = () => {
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
+  const [customerType, setCustomerType] = useState<'AGENT' | 'DIRECT'>('DIRECT');
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [guides, setGuides] = useState<Guide[]>([]);
 
   const [formData, setFormData] = useState({
+    agentId: '',
     customerId: '',
     startDate: '',
     endDate: '',
@@ -87,18 +96,32 @@ const ReservationForm = () => {
 
   const fetchData = async () => {
     try {
-      const [customersRes, hotelsRes, guidesRes] = await Promise.all([
+      const [agentsRes, customersRes, hotelsRes, guidesRes] = await Promise.all([
+        api.get('/agents'),
         api.get('/customers'),
         api.get('/hotels'),
         api.get('/guides'),
       ]);
 
+      setAgents(agentsRes.data.data);
       setCustomers(customersRes.data.data);
       setHotels(hotelsRes.data.data);
       setGuides(guidesRes.data.data);
     } catch (error) {
       console.error('Fetch data error:', error);
     }
+  };
+
+  // Filter customers based on selected agent (for B2B) or show only direct customers (for B2C)
+  const getFilteredCustomers = () => {
+    if (customerType === 'AGENT' && formData.agentId) {
+      // Show only customers of selected agent
+      return customers.filter(c => c.agent?.id === parseInt(formData.agentId));
+    } else if (customerType === 'DIRECT') {
+      // Show only direct customers (no agent)
+      return customers.filter(c => !c.agent);
+    }
+    return [];
   };
 
   const calculateDays = () => {
@@ -258,24 +281,99 @@ const ReservationForm = () => {
           {/* Customer & Dates */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Müşteri ve Tarihler</h2>
+
+            {/* Step 1: Customer Type Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-700 mb-3">Rezervasyon Sahibi *</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 px-4 py-3 border-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors"
+                  style={{
+                    borderColor: customerType === 'AGENT' ? '#3b82f6' : '#e2e8f0',
+                    backgroundColor: customerType === 'AGENT' ? '#eff6ff' : 'white'
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="customerType"
+                    value="AGENT"
+                    checked={customerType === 'AGENT'}
+                    onChange={(e) => {
+                      setCustomerType(e.target.value as 'AGENT' | 'DIRECT');
+                      setFormData({ ...formData, agentId: '', customerId: '' });
+                    }}
+                    className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                  />
+                  <span className="font-medium text-slate-900">Acente (B2B)</span>
+                </label>
+                <label className="flex items-center gap-2 px-4 py-3 border-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors"
+                  style={{
+                    borderColor: customerType === 'DIRECT' ? '#3b82f6' : '#e2e8f0',
+                    backgroundColor: customerType === 'DIRECT' ? '#eff6ff' : 'white'
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="customerType"
+                    value="DIRECT"
+                    checked={customerType === 'DIRECT'}
+                    onChange={(e) => {
+                      setCustomerType(e.target.value as 'AGENT' | 'DIRECT');
+                      setFormData({ ...formData, agentId: '', customerId: '' });
+                    }}
+                    className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                  />
+                  <span className="font-medium text-slate-900">Direkt Müşteri (B2C)</span>
+                </label>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Step 2: Agent Selection (only for B2B) */}
+              {customerType === 'AGENT' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Acente *</label>
+                  <select
+                    value={formData.agentId}
+                    onChange={(e) => setFormData({ ...formData, agentId: e.target.value, customerId: '' })}
+                    required
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Acente seçin</option>
+                    {agents.map((agent) => (
+                      <option key={agent.id} value={agent.id}>
+                        {agent.companyName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Step 3: Customer Selection */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Müşteri *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  {customerType === 'AGENT' ? 'Acentenin Müşterisi *' : 'Müşteri *'}
+                </label>
                 <select
                   value={formData.customerId}
                   onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={customerType === 'AGENT' && !formData.agentId}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
                 >
-                  <option value="">Müşteri seçin</option>
-                  {customers.map((customer) => (
+                  <option value="">
+                    {customerType === 'AGENT' && !formData.agentId
+                      ? 'Önce acente seçin'
+                      : 'Müşteri seçin'}
+                  </option>
+                  {getFilteredCustomers().map((customer) => (
                     <option key={customer.id} value={customer.id}>
-                      {customer.firstName} {customer.lastName}
-                      {customer.agent && ` (${customer.agent.companyName})`}
+                      {customer.firstName} {customer.lastName} - {customer.email}
                     </option>
                   ))}
                 </select>
               </div>
+
+              {/* Dates */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Başlangıç Tarihi *</label>
                 <input
@@ -297,6 +395,7 @@ const ReservationForm = () => {
                 />
               </div>
             </div>
+
             {formData.totalDays > 0 && (
               <p className="mt-4 text-sm text-blue-600 font-medium">
                 Toplam {formData.totalDays} gün
@@ -626,7 +725,13 @@ const ReservationForm = () => {
             </button>
             <button
               type="submit"
-              disabled={loading || !formData.customerId || !formData.startDate || !formData.endDate}
+              disabled={
+                loading ||
+                !formData.customerId ||
+                !formData.startDate ||
+                !formData.endDate ||
+                (customerType === 'AGENT' && !formData.agentId)
+              }
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="h-5 w-5" />
