@@ -15,6 +15,7 @@ import {
   Building2,
   User,
   Truck,
+  UserCircle,
 } from 'lucide-react';
 import { authService } from '../../services/auth.service';
 import { cn } from '../../lib/utils';
@@ -46,6 +47,11 @@ const AppLayout = () => {
     { path: '/resources/guides', label: 'Rehberler', icon: User },
     { path: '/resources/suppliers', label: 'Tedarikçiler', icon: MapPin },
     { path: '/entrance-fees', label: 'Giriş Ücretleri', icon: Building2 },
+  ];
+
+  const customersSubItems = [
+    { path: '/customers/agents', label: 'Acenteler (B2B)', icon: Building2 },
+    { path: '/customers/direct', label: 'Direkt Müşteriler (B2C)', icon: UserCircle },
   ];
 
   return (
@@ -80,6 +86,7 @@ const AppLayout = () => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
                 const isResourcesActive = item.path === '/resources' && location.pathname.startsWith('/resources');
+                const isCustomersActive = item.path === '/customers' && location.pathname.startsWith('/customers');
 
                 return (
                   <div key={item.path}>
@@ -87,7 +94,7 @@ const AppLayout = () => {
                       to={item.path}
                       className={cn(
                         'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                        isActive || isResourcesActive
+                        isActive || isResourcesActive || isCustomersActive
                           ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                       )}
@@ -111,6 +118,32 @@ const AppLayout = () => {
                         {resourcesSubItems.map((subItem) => {
                           const SubIcon = subItem.icon;
                           const isSubActive = location.pathname === subItem.path;
+
+                          return (
+                            <Link
+                              key={subItem.path}
+                              to={subItem.path}
+                              className={cn(
+                                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all',
+                                isSubActive
+                                  ? 'bg-accent font-medium text-foreground'
+                                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                              )}
+                            >
+                              <SubIcon className="h-4 w-4" />
+                              <span>{subItem.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Customers Submenu */}
+                    {item.path === '/customers' && sidebarOpen && isCustomersActive && (
+                      <div className="ml-4 mt-1 space-y-1 border-l border-border pl-4">
+                        {customersSubItems.map((subItem) => {
+                          const SubIcon = subItem.icon;
+                          const isSubActive = location.pathname.startsWith(subItem.path);
 
                           return (
                             <Link

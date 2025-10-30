@@ -16,6 +16,7 @@ import EntranceFeePricing from './pages/EntranceFeePricing';
 import SupplierServicePricing from './pages/SupplierServicePricing';
 import AllEntranceFees from './pages/AllEntranceFees';
 import EntranceFeeForm from './pages/EntranceFeeForm';
+import Customers from './pages/Customers';
 import Agents from './pages/Agents';
 import AgentForm from './pages/AgentForm';
 import AgentDetail from './pages/AgentDetail';
@@ -82,6 +83,7 @@ function App() {
           <Route path="/entrance-fees" element={<AllEntranceFees />} />
 
           {/* Customer Management Routes */}
+          <Route path="/customers" element={<Customers />} />
           <Route path="/customers/agents" element={<Agents />} />
           <Route path="/customers/agents/new" element={<AgentForm />} />
           <Route path="/customers/agents/:id" element={<AgentDetail />} />
