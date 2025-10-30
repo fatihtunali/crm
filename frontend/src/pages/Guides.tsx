@@ -183,14 +183,14 @@ const Guides = () => {
                               <Star
                                 key={i}
                                 className={`h-4 w-4 ${
-                                  i < guide.rating!
+                                  i < Number(guide.rating)
                                     ? 'fill-amber-400 text-amber-400'
                                     : 'text-slate-300'
                                 }`}
                               />
                             ))}
                             <span className="text-sm font-semibold text-slate-700 ml-1">
-                              {guide.rating.toFixed(1)}
+                              {Number(guide.rating).toFixed(1)}
                             </span>
                           </div>
                         )}
@@ -201,7 +201,7 @@ const Guides = () => {
                             <div className="flex items-center gap-1.5">
                               <DollarSign className="h-4 w-4 text-green-600" />
                               <span className="text-base font-bold text-green-700">
-                                €{guide.dailyRate}
+                                €{Number(guide.dailyRate)}
                               </span>
                               <span className="text-xs text-green-600">/gün</span>
                             </div>

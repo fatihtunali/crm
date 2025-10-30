@@ -10,6 +10,10 @@ import VehiclePricing from './pages/VehiclePricing';
 import Guides from './pages/Guides';
 import GuideForm from './pages/GuideForm';
 import GuidePricing from './pages/GuidePricing';
+import Suppliers from './pages/Suppliers';
+import SupplierForm from './pages/SupplierForm';
+import EntranceFeePricing from './pages/EntranceFeePricing';
+import SupplierServicePricing from './pages/SupplierServicePricing';
 import AppLayout from './components/layout/AppLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { authService } from './services/auth.service';
@@ -27,11 +31,6 @@ const VehiclesPage = () => (
   </div>
 );
 
-const SuppliersPage = () => (
-  <div className="p-8">
-    <h1 className="text-2xl font-bold">Tedarikçiler</h1>
-  </div>
-);
 
 function App() {
   const isAuthenticated = authService.isAuthenticated();
@@ -67,7 +66,11 @@ function App() {
           <Route path="/resources/guides/:id/pricing" element={<GuidePricing />} />
           <Route path="/resources/guides/:id/edit" element={<GuideForm />} />
           <Route path="/resources/guides" element={<Guides />} />
-          <Route path="/resources/suppliers" element={<SuppliersPage />} />
+          <Route path="/resources/suppliers/new" element={<SupplierForm />} />
+          <Route path="/resources/suppliers/:id/entrance-fees" element={<EntranceFeePricing />} />
+          <Route path="/resources/suppliers/:id/service-pricing" element={<SupplierServicePricing />} />
+          <Route path="/resources/suppliers/:id/edit" element={<SupplierForm />} />
+          <Route path="/resources/suppliers" element={<Suppliers />} />
         </Route>
       </Routes>
     </BrowserRouter>

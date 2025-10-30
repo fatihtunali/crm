@@ -2,14 +2,14 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth';
 
-// Bir rehberin tüm fiyatlarını listele
-export const getGuidePricings = async (req: Request, res: Response): Promise<void> => {
+// Bir tedarikçinin tüm hizmet fiyatlarını listele
+export const getSupplierPricings = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { guideId } = req.params;
+    const { supplierId } = req.params;
 
-    const pricings = await prisma.guidePricing.findMany({
+    const pricings = await prisma.supplierPricing.findMany({
       where: {
-        guideId: parseInt(guideId!),
+        supplierId: parseInt(supplierId!),
         isActive: true,
       },
       orderBy: [
@@ -25,15 +25,15 @@ export const getGuidePricings = async (req: Request, res: Response): Promise<voi
       data: pricings,
     });
   } catch (error) {
-    console.error('Get guide pricings error:', error);
+    console.error('Get supplier pricings error:', error);
     res.status(500).json({ error: 'Sunucu hatası' });
   }
 };
 
-// Yeni fiyat oluştur
-export const createGuidePricing = async (req: AuthRequest, res: Response): Promise<void> => {
+// Yeni hizmet fiyatı oluştur
+export const createSupplierPricing = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { guideId } = req.params;
+    const { supplierId } = req.params;
     const {
       city,
       serviceType,
@@ -48,33 +48,33 @@ export const createGuidePricing = async (req: AuthRequest, res: Response): Promi
     // Validasyon
     if (!city || !serviceType || !seasonName || !startDate || !endDate || !price) {
       res.status(400).json({
-        error: 'Şehir, hizmet tipi, sezon adı, tarihler ve fiyat zorunludur'
+        error: 'Şehir, hizmet tipi, sezon bilgileri ve fiyat zorunludur'
       });
       return;
     }
 
     // Geçerli service type'ları kontrol et
-    const validServiceTypes = ['FULL_DAY', 'HALF_DAY', 'TRANSFER', 'NIGHT_SERVICE', 'PACKAGE_TOUR'];
+    const validServiceTypes = ['BREAKFAST', 'LUNCH', 'DINNER', 'ACTIVITY', 'OTHER'];
     if (!validServiceTypes.includes(serviceType)) {
       res.status(400).json({
-        error: 'Geçersiz hizmet tipi. Seçenekler: FULL_DAY, HALF_DAY, TRANSFER, NIGHT_SERVICE, PACKAGE_TOUR'
+        error: 'Geçersiz hizmet tipi. Seçenekler: BREAKFAST, LUNCH, DINNER, ACTIVITY, OTHER'
       });
       return;
     }
 
-    // Rehber var mı kontrol et
-    const guide = await prisma.guide.findUnique({
-      where: { id: parseInt(guideId!) },
+    // Tedarikçi var mı kontrol et
+    const supplier = await prisma.supplier.findUnique({
+      where: { id: parseInt(supplierId!) },
     });
 
-    if (!guide) {
-      res.status(404).json({ error: 'Rehber bulunamadı' });
+    if (!supplier) {
+      res.status(404).json({ error: 'Tedarikçi bulunamadı' });
       return;
     }
 
-    const pricing = await prisma.guidePricing.create({
+    const pricing = await prisma.supplierPricing.create({
       data: {
-        guideId: parseInt(guideId!),
+        supplierId: parseInt(supplierId!),
         city,
         serviceType,
         seasonName,
@@ -89,17 +89,17 @@ export const createGuidePricing = async (req: AuthRequest, res: Response): Promi
 
     res.status(201).json({
       success: true,
-      message: 'Rehber fiyatı başarıyla oluşturuldu',
+      message: 'Tedarikçi hizmet fiyatı başarıyla oluşturuldu',
       data: pricing,
     });
   } catch (error) {
-    console.error('Create guide pricing error:', error);
+    console.error('Create supplier pricing error:', error);
     res.status(500).json({ error: 'Sunucu hatası' });
   }
 };
 
-// Fiyat güncelle
-export const updateGuidePricing = async (req: AuthRequest, res: Response): Promise<void> => {
+// Hizmet fiyatı güncelle
+export const updateSupplierPricing = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const {
@@ -114,7 +114,7 @@ export const updateGuidePricing = async (req: AuthRequest, res: Response): Promi
       isActive,
     } = req.body;
 
-    const pricing = await prisma.guidePricing.findUnique({
+    const pricing = await prisma.supplierPricing.findUnique({
       where: { id: parseInt(id!) },
     });
 
@@ -125,10 +125,10 @@ export const updateGuidePricing = async (req: AuthRequest, res: Response): Promi
 
     // Service type validasyonu (eğer güncelleniyorsa)
     if (serviceType !== undefined) {
-      const validServiceTypes = ['FULL_DAY', 'HALF_DAY', 'TRANSFER', 'NIGHT_SERVICE', 'PACKAGE_TOUR'];
+      const validServiceTypes = ['BREAKFAST', 'LUNCH', 'DINNER', 'ACTIVITY', 'OTHER'];
       if (!validServiceTypes.includes(serviceType)) {
         res.status(400).json({
-          error: 'Geçersiz hizmet tipi. Seçenekler: FULL_DAY, HALF_DAY, TRANSFER, NIGHT_SERVICE, PACKAGE_TOUR'
+          error: 'Geçersiz hizmet tipi. Seçenekler: BREAKFAST, LUNCH, DINNER, ACTIVITY, OTHER'
         });
         return;
       }
@@ -146,28 +146,28 @@ export const updateGuidePricing = async (req: AuthRequest, res: Response): Promi
     if (notes !== undefined) updateData.notes = notes;
     if (isActive !== undefined) updateData.isActive = isActive;
 
-    const updatedPricing = await prisma.guidePricing.update({
+    const updatedPricing = await prisma.supplierPricing.update({
       where: { id: parseInt(id!) },
       data: updateData,
     });
 
     res.json({
       success: true,
-      message: 'Rehber fiyatı başarıyla güncellendi',
+      message: 'Tedarikçi hizmet fiyatı başarıyla güncellendi',
       data: updatedPricing,
     });
   } catch (error) {
-    console.error('Update guide pricing error:', error);
+    console.error('Update supplier pricing error:', error);
     res.status(500).json({ error: 'Sunucu hatası' });
   }
 };
 
-// Fiyat sil (soft delete)
-export const deleteGuidePricing = async (req: AuthRequest, res: Response): Promise<void> => {
+// Hizmet fiyatı sil (soft delete)
+export const deleteSupplierPricing = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
-    const pricing = await prisma.guidePricing.findUnique({
+    const pricing = await prisma.supplierPricing.findUnique({
       where: { id: parseInt(id!) },
     });
 
@@ -177,17 +177,17 @@ export const deleteGuidePricing = async (req: AuthRequest, res: Response): Promi
     }
 
     // Soft delete
-    await prisma.guidePricing.update({
+    await prisma.supplierPricing.update({
       where: { id: parseInt(id!) },
       data: { isActive: false },
     });
 
     res.json({
       success: true,
-      message: 'Rehber fiyatı başarıyla silindi',
+      message: 'Tedarikçi hizmet fiyatı başarıyla silindi',
     });
   } catch (error) {
-    console.error('Delete guide pricing error:', error);
+    console.error('Delete supplier pricing error:', error);
     res.status(500).json({ error: 'Sunucu hatası' });
   }
 };

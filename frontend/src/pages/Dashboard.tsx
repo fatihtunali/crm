@@ -14,6 +14,7 @@ import {
   BarChart3,
   Activity,
   Truck,
+  Ticket,
 } from 'lucide-react';
 import { authService } from '../services/auth.service';
 import { cn } from '../lib/utils';
@@ -87,6 +88,13 @@ const Dashboard = () => {
       icon: MapPin,
       link: '/resources/suppliers',
       gradient: 'from-orange-500 to-orange-600',
+    },
+    {
+      title: 'Giriş Ücretleri',
+      description: 'Müze ve turistik mekan fiyatları',
+      icon: Ticket,
+      link: '/resources/suppliers',
+      gradient: 'from-rose-500 to-rose-600',
     },
   ];
 
@@ -221,7 +229,7 @@ const Dashboard = () => {
               <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
               {quickActions.map((action, index) => {
                 const Icon = action.icon;
                 const colors = [
@@ -258,6 +266,13 @@ const Dashboard = () => {
                     light: 'from-orange-50 via-orange-50 to-orange-100',
                     border: 'border-orange-200/50',
                     shadow: 'shadow-orange-500/20 hover:shadow-orange-500/40',
+                    glow: 'group-hover:shadow-2xl'
+                  },
+                  {
+                    bg: 'from-rose-500 via-rose-600 to-rose-700',
+                    light: 'from-rose-50 via-rose-50 to-rose-100',
+                    border: 'border-rose-200/50',
+                    shadow: 'shadow-rose-500/20 hover:shadow-rose-500/40',
                     glow: 'group-hover:shadow-2xl'
                   },
                 ];

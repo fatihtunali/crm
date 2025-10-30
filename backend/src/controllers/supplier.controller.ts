@@ -5,17 +5,16 @@ import { AuthRequest } from '../middleware/auth';
 // Tüm tedarikçileri listele
 export const getAllSuppliers = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { type, city, isActive, search } = req.query;
+    const { type, isActive, search } = req.query;
 
     const where: any = {};
 
-    if (type) where.type = type as string;
-    if (city) where.city = city as string;
     if (isActive !== undefined) where.isActive = isActive === 'true';
+    if (type) where.type = type as string;
     if (search) {
       where.OR = [
         { name: { contains: search as string, mode: 'insensitive' } },
-        { contactPerson: { contains: search as string, mode: 'insensitive' } },
+        { city: { contains: search as string, mode: 'insensitive' } },
         { phone: { contains: search as string, mode: 'insensitive' } },
       ];
     }
@@ -43,6 +42,16 @@ export const getSupplierById = async (req: Request, res: Response): Promise<void
 
     const supplier = await prisma.supplier.findUnique({
       where: { id: parseInt(id!) },
+      include: {
+        entranceFees: {
+          where: { isActive: true },
+          orderBy: { startDate: 'desc' },
+        },
+        supplierPricings: {
+          where: { isActive: true },
+          orderBy: { startDate: 'desc' },
+        },
+      },
     });
 
     if (!supplier) {
@@ -78,6 +87,15 @@ export const createSupplier = async (req: AuthRequest, res: Response): Promise<v
     // Validasyon
     if (!name || !type) {
       res.status(400).json({ error: 'Ad ve tip zorunludur' });
+      return;
+    }
+
+    // Geçerli supplier type'ları kontrol et
+    const validTypes = ['RESTAURANT', 'MUSEUM', 'ACTIVITY', 'ATTRACTION', 'OTHER'];
+    if (!validTypes.includes(type)) {
+      res.status(400).json({
+        error: 'Geçersiz tedarikçi tipi. Seçenekler: RESTAURANT, MUSEUM, ACTIVITY, ATTRACTION, OTHER'
+      });
       return;
     }
 
@@ -133,6 +151,17 @@ export const updateSupplier = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
+    // Type validasyonu (eğer güncelleniyorsa)
+    if (type !== undefined) {
+      const validTypes = ['RESTAURANT', 'MUSEUM', 'ACTIVITY', 'ATTRACTION', 'OTHER'];
+      if (!validTypes.includes(type)) {
+        res.status(400).json({
+          error: 'Geçersiz tedarikçi tipi. Seçenekler: RESTAURANT, MUSEUM, ACTIVITY, ATTRACTION, OTHER'
+        });
+        return;
+      }
+    }
+
     const updatedSupplier = await prisma.supplier.update({
       where: { id: parseInt(id!) },
       data: {
@@ -160,7 +189,7 @@ export const updateSupplier = async (req: AuthRequest, res: Response): Promise<v
   }
 };
 
-// Tedarikçi sil
+// Tedarikçi sil (soft delete)
 export const deleteSupplier = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -186,32 +215,6 @@ export const deleteSupplier = async (req: AuthRequest, res: Response): Promise<v
     });
   } catch (error) {
     console.error('Delete supplier error:', error);
-    res.status(500).json({ error: 'Sunucu hatası' });
-  }
-};
-
-// Tedarikçi istatistikleri
-export const getSupplierStats = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const total = await prisma.supplier.count();
-    const active = await prisma.supplier.count({ where: { isActive: true } });
-    const byType = await prisma.supplier.groupBy({
-      by: ['type'],
-      _count: true,
-      where: { isActive: true },
-    });
-
-    res.json({
-      success: true,
-      data: {
-        total,
-        active,
-        inactive: total - active,
-        byType,
-      },
-    });
-  } catch (error) {
-    console.error('Get supplier stats error:', error);
     res.status(500).json({ error: 'Sunucu hatası' });
   }
 };

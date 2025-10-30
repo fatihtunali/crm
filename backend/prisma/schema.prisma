@@ -181,7 +181,6 @@ model GuidePricing {
   guide   Guide @relation(fields: [guideId], references: [id], onDelete: Cascade)
 
   city        String // Şehir (Istanbul, Cappadocia, Antalya...)
-  language    String // Dil (TR, EN, DE, RU, AR, CN, JP...)
   serviceType GuideServiceType @map("service_type") // Tam gün, Yarım gün, Transfer, Gece
 
   // Sezonsal bilgiler
@@ -201,7 +200,6 @@ model GuidePricing {
 
   @@index([guideId])
   @@index([city])
-  @@index([language])
   @@index([serviceType])
   @@index([startDate, endDate])
   @@index([isActive])
@@ -209,10 +207,11 @@ model GuidePricing {
 }
 
 enum GuideServiceType {
-  FULL_DAY // Tam Gün (8-10 saat)
-  HALF_DAY // Yarım Gün (4-5 saat)
-  TRANSFER // Transfer (Havaalanı karşılama vb.)
+  FULL_DAY      // Tam Gün (8-10 saat)
+  HALF_DAY      // Yarım Gün (4-5 saat)
+  TRANSFER      // Transfer (Havaalanı karşılama vb.)
   NIGHT_SERVICE // Gece Kullanımı (Yemek, eğlence)
+  PACKAGE_TOUR  // Paket Tur (günlük fiyat)
 }
 
 // Tedarikçi Yönetimi
@@ -234,18 +233,95 @@ model Supplier {
   updatedAt DateTime @updatedAt @map("updated_at")
   createdBy Int      @map("created_by")
 
+  // Relations
+  entranceFees     EntranceFeePricing[]
+  supplierPricings SupplierPricing[]
+
   @@index([type])
   @@index([isActive])
   @@map("suppliers")
 }
 
 enum SupplierType {
-  RESTAURANT // Restoran
-  MUSEUM // Müze
-  ACTIVITY // Aktivite (balon, dalış vb.)
-  TRANSFER // Transfer hizmeti
-  VEHICLE // Araç tedarikçisi
-  OTHER // Diğer
+  RESTAURANT    // Restoran
+  MUSEUM        // Müze
+  ACTIVITY      // Aktivite (balon, dalış vb.)
+  ATTRACTION    // Turistik mekan
+  OTHER         // Diğer
+}
+
+// Giriş Ücretleri (Müzeler, Antik Kentler, Turistik Mekanlar)
+model EntranceFeePricing {
+  id         Int      @id @default(autoincrement())
+  supplierId Int      @map("supplier_id")
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  city String // Şehir
+
+  // Sezon bilgileri
+  seasonName String   @map("season_name")
+  startDate  DateTime @map("start_date")
+  endDate    DateTime @map("end_date")
+
+  // Fiyat kategorileri (per person)
+  adultPrice      Decimal @map("adult_price") @db.Decimal(10, 2)
+  child0to6Price  Decimal @map("child_0_to_6_price") @db.Decimal(10, 2)
+  child7to12Price Decimal @map("child_7_to_12_price") @db.Decimal(10, 2)
+  studentPrice    Decimal @map("student_price") @db.Decimal(10, 2)
+
+  currency String @default("EUR")
+  notes    String? @db.Text
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy Int      @map("created_by")
+
+  @@index([supplierId])
+  @@index([city])
+  @@index([startDate, endDate])
+  @@index([isActive])
+  @@map("entrance_fee_pricings")
+}
+
+// Tedarikçi Hizmet Fiyatlandırması (Restoranlar, Aktiviteler, vb.)
+model SupplierPricing {
+  id         Int      @id @default(autoincrement())
+  supplierId Int      @map("supplier_id")
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  city        String              // Şehir
+  serviceType SupplierServiceType @map("service_type")
+
+  // Sezon bilgileri
+  seasonName String   @map("season_name")
+  startDate  DateTime @map("start_date")
+  endDate    DateTime @map("end_date")
+
+  price    Decimal @db.Decimal(10, 2) // Per person
+  currency String  @default("EUR")
+
+  notes    String? @db.Text
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy Int      @map("created_by")
+
+  @@index([supplierId])
+  @@index([city])
+  @@index([serviceType])
+  @@index([startDate, endDate])
+  @@index([isActive])
+  @@map("supplier_pricings")
+}
+
+enum SupplierServiceType {
+  BREAKFAST // Kahvaltı
+  LUNCH     // Öğle yemeği
+  DINNER    // Akşam yemeği
+  ACTIVITY  // Aktivite (balon, dalış, vs.)
+  OTHER     // Diğer hizmetler
 }
 
 // Araç Tedarikçisi (Transfer & Allocation)
