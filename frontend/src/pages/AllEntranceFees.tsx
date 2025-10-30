@@ -41,13 +41,6 @@ const AGE_CATEGORIES = [
   { key: 'studentPrice', label: 'Öğrenci', description: 'Student', color: 'amber' },
 ];
 
-interface Supplier {
-  id: number;
-  name: string;
-  type: string;
-  city?: string;
-}
-
 const AllEntranceFees: React.FC = () => {
   const navigate = useNavigate();
   const [entranceFees, setEntranceFees] = useState<EntranceFee[]>([]);
@@ -58,9 +51,8 @@ const AllEntranceFees: React.FC = () => {
 
   // Form state
   const [showForm, setShowForm] = useState(false);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [formData, setFormData] = useState({
-    supplierId: '',
+    placeName: '', // Yer adı (Topkapı Sarayı, Efes Antik Kenti vs.)
     city: '',
     seasonName: '',
     startDate: '',
@@ -75,7 +67,6 @@ const AllEntranceFees: React.FC = () => {
 
   useEffect(() => {
     fetchEntranceFees();
-    fetchSuppliers();
   }, []);
 
   useEffect(() => {
@@ -95,32 +86,46 @@ const AllEntranceFees: React.FC = () => {
     }
   };
 
-  const fetchSuppliers = async () => {
-    try {
-      const response = await api.get('/suppliers?isActive=true');
-      // Tüm supplier'ları göster
-      setSuppliers(response.data.data);
-    } catch (error) {
-      console.error('Error fetching suppliers:', error);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { supplierId, city, seasonName, startDate, endDate, adultPrice, child0to6Price, child7to12Price, studentPrice } = formData;
+    const { placeName, city, seasonName, startDate, endDate, adultPrice, child0to6Price, child7to12Price, studentPrice } = formData;
 
-    if (!supplierId || !city || !seasonName || !startDate || !endDate || !adultPrice || !child0to6Price || !child7to12Price || !studentPrice) {
+    // Validation
+    if (!placeName || !city || !seasonName || !startDate || !endDate || !adultPrice || !child0to6Price || !child7to12Price || !studentPrice) {
       alert('Lütfen tüm zorunlu alanları doldurun');
       return;
     }
 
     try {
-      await api.post(`/suppliers/${supplierId}/entrance-fees`, formData);
+      // 1. Önce MUSEUM tipinde supplier oluştur
+      const supplierData = {
+        name: placeName,
+        type: 'MUSEUM',
+        city: city,
+        notes: formData.notes,
+      };
+      const supplierResponse = await api.post('/suppliers', supplierData);
+      const supplierId = supplierResponse.data.data.id;
+
+      // 2. Giriş ücretini ekle
+      await api.post(`/suppliers/${supplierId}/entrance-fees`, {
+        city: formData.city,
+        seasonName: formData.seasonName,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        adultPrice: formData.adultPrice,
+        child0to6Price: formData.child0to6Price,
+        child7to12Price: formData.child7to12Price,
+        studentPrice: formData.studentPrice,
+        currency: formData.currency,
+        notes: formData.notes,
+      });
+
       alert('Giriş ücreti başarıyla eklendi');
       setShowForm(false);
       setFormData({
-        supplierId: '',
+        placeName: '',
         city: '',
         seasonName: '',
         startDate: '',
@@ -225,30 +230,25 @@ const AllEntranceFees: React.FC = () => {
           <h3 className="text-lg font-bold text-slate-900 mb-4">Yeni Giriş Ücreti Ekle</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Supplier Selection */}
+              {/* Yer Adı */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   <span className="flex items-center gap-2">
                     <Building2 className="h-4 w-4" />
-                    Tedarikçi (Müze/Turistik Mekan) *
+                    Yer Adı (Müze/Antik Kent/Saray vb.) *
                   </span>
                 </label>
-                <select
-                  value={formData.supplierId}
-                  onChange={e => setFormData({ ...formData, supplierId: e.target.value })}
+                <input
+                  type="text"
+                  value={formData.placeName}
+                  onChange={e => setFormData({ ...formData, placeName: e.target.value })}
+                  placeholder="Örn: Topkapı Sarayı, Efes Antik Kenti"
                   required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none bg-white"
-                >
-                  <option value="">Tedarikçi Seçin</option>
-                  {suppliers.map(supplier => (
-                    <option key={supplier.id} value={supplier.id}>
-                      {supplier.name} ({supplier.city})
-                    </option>
-                  ))}
-                </select>
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
               </div>
 
-              {/* City */}
+              {/* Şehir */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   <span className="flex items-center gap-2">
