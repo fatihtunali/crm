@@ -49,22 +49,6 @@ const AllEntranceFees: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [cityFilter, setCityFilter] = useState<string>('');
 
-  // Form state
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    placeName: '', // Yer adı (Topkapı Sarayı, Efes Antik Kenti vs.)
-    city: '',
-    seasonName: '',
-    startDate: '',
-    endDate: '',
-    adultPrice: '',
-    child0to6Price: '',
-    child7to12Price: '',
-    studentPrice: '',
-    currency: 'EUR',
-    notes: '',
-  });
-
   useEffect(() => {
     fetchEntranceFees();
   }, []);
@@ -83,64 +67,6 @@ const AllEntranceFees: React.FC = () => {
       alert('Giriş ücretleri yüklenemedi');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const { placeName, city, seasonName, startDate, endDate, adultPrice, child0to6Price, child7to12Price, studentPrice } = formData;
-
-    // Validation
-    if (!placeName || !city || !seasonName || !startDate || !endDate || !adultPrice || !child0to6Price || !child7to12Price || !studentPrice) {
-      alert('Lütfen tüm zorunlu alanları doldurun');
-      return;
-    }
-
-    try {
-      // 1. Önce MUSEUM tipinde supplier oluştur
-      const supplierData = {
-        name: placeName,
-        type: 'MUSEUM',
-        city: city,
-        notes: formData.notes,
-      };
-      const supplierResponse = await api.post('/suppliers', supplierData);
-      const supplierId = supplierResponse.data.data.id;
-
-      // 2. Giriş ücretini ekle
-      await api.post(`/suppliers/${supplierId}/entrance-fees`, {
-        city: formData.city,
-        seasonName: formData.seasonName,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        adultPrice: formData.adultPrice,
-        child0to6Price: formData.child0to6Price,
-        child7to12Price: formData.child7to12Price,
-        studentPrice: formData.studentPrice,
-        currency: formData.currency,
-        notes: formData.notes,
-      });
-
-      alert('Giriş ücreti başarıyla eklendi');
-      setShowForm(false);
-      setFormData({
-        placeName: '',
-        city: '',
-        seasonName: '',
-        startDate: '',
-        endDate: '',
-        adultPrice: '',
-        child0to6Price: '',
-        child7to12Price: '',
-        studentPrice: '',
-        currency: 'EUR',
-        notes: '',
-      });
-      fetchEntranceFees();
-    } catch (error: any) {
-      console.error('Error creating entrance fee:', error);
-      alert(error.response?.data?.error || 'Bir hata oluştu');
     }
   };
 
@@ -215,190 +141,14 @@ const AllEntranceFees: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => navigate('/entrance-fees/new')}
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
           >
             <Plus className="h-5 w-5" />
-            {showForm ? 'Formu Kapat' : 'Yeni Giriş Ücreti'}
+            Yeni Giriş Ücreti
           </button>
         </div>
       </div>
-
-      {/* Add Form */}
-      {showForm && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Yeni Giriş Ücreti Ekle</h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Yer Adı */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  <span className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    Yer Adı (Müze/Antik Kent/Saray vb.) *
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.placeName}
-                  onChange={e => setFormData({ ...formData, placeName: e.target.value })}
-                  placeholder="Örn: Topkapı Sarayı, Efes Antik Kenti"
-                  required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Şehir */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  <span className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Şehir *
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={e => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="Örn: Nevşehir"
-                  required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Season Name */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  <span className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Sezon Adı *
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.seasonName}
-                  onChange={e => setFormData({ ...formData, seasonName: e.target.value })}
-                  placeholder="Örn: Yaz Sezonu 2025"
-                  required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Start Date */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Başlangıç Tarihi *
-                </label>
-                <input
-                  type="date"
-                  value={formData.startDate}
-                  onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                  required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* End Date */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Bitiş Tarihi *
-                </label>
-                <input
-                  type="date"
-                  value={formData.endDate}
-                  onChange={e => setFormData({ ...formData, endDate: e.target.value })}
-                  required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Adult Price */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Yetişkin Fiyatı * (€)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.adultPrice}
-                  onChange={e => setFormData({ ...formData, adultPrice: e.target.value })}
-                  placeholder="25.00"
-                  required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Child 0-6 Price */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Çocuk 0-6 Yaş Fiyatı * (€)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.child0to6Price}
-                  onChange={e => setFormData({ ...formData, child0to6Price: e.target.value })}
-                  placeholder="0.00"
-                  required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Child 7-12 Price */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Çocuk 7-12 Yaş Fiyatı * (€)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.child7to12Price}
-                  onChange={e => setFormData({ ...formData, child7to12Price: e.target.value })}
-                  placeholder="12.50"
-                  required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Student Price */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Öğrenci Fiyatı * (€)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.studentPrice}
-                  onChange={e => setFormData({ ...formData, studentPrice: e.target.value })}
-                  placeholder="15.00"
-                  required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Notlar</label>
-              <textarea
-                value={formData.notes}
-                onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                rows={2}
-                placeholder="Özel notlar..."
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-              />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold"
-            >
-              Kaydet
-            </button>
-          </form>
-        </div>
-      )}
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
