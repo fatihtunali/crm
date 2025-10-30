@@ -1218,7 +1218,261 @@ git pull origin main
 
 ---
 
-**Son Güncelleme**: 2025-10-29 23:30
-**Durum**: ✅ Hotel modülü tamamlandı, Vehicle database hazır
-**Yarın İlk İş**: Vehicle backend API controllers (3-4 dosya)
-- memorize all add to claude.md - don't forget where to start tomorrow you will be in different computer
+---
+
+## 🏛️ TEDARİKÇİ FİYATLANDIRMA SİSTEMİ (TAMAMLANDI - 2025-10-30)
+
+### ✅ Tamamlanan İşler
+
+#### 1. Database Schema - İki Ayrı Fiyatlama Modeli
+
+**EntranceFeePricing** - Müze ve turistik mekan giriş ücretleri (yaş bazlı)
+```prisma
+model EntranceFeePricing {
+  id         Int      @id @default(autoincrement())
+  supplierId Int      @map("supplier_id")
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  city       String   // Şehir
+
+  // Sezon bilgileri
+  seasonName String   @map("season_name")
+  startDate  DateTime @map("start_date")
+  endDate    DateTime @map("end_date")
+
+  // Fiyat kategorileri (per person)
+  adultPrice      Decimal @map("adult_price") @db.Decimal(10, 2)
+  child0to6Price  Decimal @map("child_0_to_6_price") @db.Decimal(10, 2)
+  child7to12Price Decimal @map("child_7_to_12_price") @db.Decimal(10, 2)
+  studentPrice    Decimal @map("student_price") @db.Decimal(10, 2)
+
+  currency String  @default("EUR")
+  notes    String? @db.Text
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy Int      @map("created_by")
+
+  @@map("entrance_fee_pricings")
+}
+```
+
+**SupplierPricing** - Restoran ve aktivite hizmet fiyatları (hizmet tipi bazlı)
+```prisma
+model SupplierPricing {
+  id         Int      @id @default(autoincrement())
+  supplierId Int      @map("supplier_id")
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  city        String              // Şehir
+  serviceType SupplierServiceType @map("service_type")
+
+  // Sezon bilgileri
+  seasonName String   @map("season_name")
+  startDate  DateTime @map("start_date")
+  endDate    DateTime @map("end_date")
+
+  price    Decimal @db.Decimal(10, 2) // Per person
+  currency String  @default("EUR")
+
+  notes    String? @db.Text
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy Int      @map("created_by")
+
+  @@map("supplier_pricings")
+}
+
+enum SupplierServiceType {
+  BREAKFAST // Kahvaltı
+  LUNCH     // Öğle yemeği
+  DINNER    // Akşam yemeği
+  ACTIVITY  // Aktivite (balon, dalış, vs.)
+  OTHER     // Diğer hizmetler
+}
+```
+
+**ÖNEMLİ NOTLAR:**
+- **EntranceFee**: Müze, antik kent gibi giriş ücretli yerler için - 4 yaş kategorisi
+- **SupplierPricing**: Restoran, aktivite gibi hizmetler için - 5 hizmet tipi
+- Her ikisi de şehir + sezon bazlı gruplandırılır
+- Table list view kullanılır (tüm kategoriler tek satırda)
+
+#### 2. Backend API
+
+**Dosyalar:**
+- `backend/src/controllers/supplier.controller.ts` - Supplier CRUD
+- `backend/src/controllers/entranceFeePricing.controller.ts` - Entrance Fee CRUD
+- `backend/src/controllers/supplierPricing.controller.ts` - Service Pricing CRUD
+- `backend/src/routes/supplier.routes.ts` - All routes
+
+**Endpoints:**
+```
+# Supplier CRUD
+GET    /api/v1/suppliers                              - Tüm tedarikçiler
+GET    /api/v1/suppliers/:id                          - Tek tedarikçi
+POST   /api/v1/suppliers                              - Yeni tedarikçi
+PUT    /api/v1/suppliers/:id                          - Güncelle
+DELETE /api/v1/suppliers/:id                          - Sil (soft delete)
+
+# Entrance Fee Pricing
+GET    /api/v1/suppliers/:supplierId/entrance-fees    - Tüm giriş ücretleri
+POST   /api/v1/suppliers/:supplierId/entrance-fees    - Yeni giriş ücreti
+PUT    /api/v1/suppliers/entrance-fees/:id            - Güncelle
+DELETE /api/v1/suppliers/entrance-fees/:id            - Sil (soft delete)
+
+# Supplier Service Pricing
+GET    /api/v1/suppliers/:supplierId/service-pricings - Tüm hizmet fiyatları
+POST   /api/v1/suppliers/:supplierId/service-pricings - Yeni hizmet fiyatı
+PUT    /api/v1/suppliers/service-pricings/:id         - Güncelle
+DELETE /api/v1/suppliers/service-pricings/:id         - Sil (soft delete)
+```
+
+#### 3. Frontend UI
+
+**Dosyalar:**
+- `frontend/src/pages/Suppliers.tsx` - Tedarikçi listesi
+- `frontend/src/pages/SupplierForm.tsx` - Tedarikçi ekleme/düzenleme
+- `frontend/src/pages/EntranceFeePricing.tsx` - Giriş ücreti fiyat yönetimi (table view)
+- `frontend/src/pages/SupplierServicePricing.tsx` - Hizmet fiyat yönetimi (table view)
+
+**Routes:**
+```
+/resources/suppliers                         - Liste
+/resources/suppliers/new                     - Yeni tedarikçi
+/resources/suppliers/:id/edit                - Tedarikçi düzenle
+/resources/suppliers/:id/entrance-fees       - Giriş ücretleri
+/resources/suppliers/:id/service-pricing     - Hizmet fiyatları
+```
+
+**Tasarım Özellikleri:**
+- **List Format**: Kompakt liste görünümü
+- **Table View**: Tüm fiyat kategorileri tek satırda (GuidePricing pattern'i)
+- **Color-Coded**: Farklı kategoriler için farklı renkler
+- **Inline Actions**: Delete butonu hover ile görünür
+- **Grouped Display**: Şehir + Sezon bazlı gruplama
+
+#### 4. Table List View Pattern
+
+**EntranceFeePricing** - 4 yaş kategorisi yan yana:
+```
+| Yetişkin | Çocuk 0-6 | Çocuk 7-12 | Öğrenci |
+|----------|-----------|------------|---------|
+|   €25    |    €0     |    €12.50  |   €15   |
+```
+
+**SupplierServicePricing** - 5 hizmet tipi yan yana:
+```
+| Kahvaltı | Öğle Yemeği | Akşam Yemeği | Aktivite | Diğer |
+|----------|-------------|--------------|----------|-------|
+|   €15    |     €25     |      €30     |    €50   |   -   |
+```
+
+#### 5. Rehber Fiyatlama Güncellemesi
+
+**Değişiklik:** Dil bazlı fiyatlandırma kaldırıldı, sadece hizmet tipleri kaldı.
+
+**Guide Service Types:**
+- FULL_DAY - Tam Gün (8-10 saat)
+- HALF_DAY - Yarım Gün (4-5 saat)
+- TRANSFER - Transfer (Havaalanı karşılama)
+- NIGHT_SERVICE - Gece Kullanımı (Yemek, eğlence)
+- PACKAGE_TOUR - Paket Tur (Günlük fiyat)
+
+**GuidePricing.tsx:** Table view ile güncellendi - tüm hizmet tipleri tek satırda gösteriliyor.
+
+#### 6. Dashboard Güncellemesi
+
+**Eklenen Kart:**
+```typescript
+{
+  title: 'Giriş Ücretleri',
+  description: 'Müze ve turistik mekan fiyatları',
+  icon: Ticket,
+  link: '/resources/suppliers',
+  gradient: 'from-rose-500 to-rose-600',
+}
+```
+
+Dashboard'a 6. quick access kartı eklendi (xl:grid-cols-6).
+
+### 🎯 Kullanım Senaryoları
+
+**Senaryo 1: Müze Giriş Ücreti**
+1. Supplier oluştur (Type: MUSEUM)
+2. Entrance Fees sayfasına git
+3. Şehir + Sezon seç
+4. 4 yaş kategorisi için fiyat gir (Adult, Child 0-6, Child 7-12, Student)
+5. Kaydet → Tüm fiyatlar tek satırda görünür
+
+**Senaryo 2: Restoran Yemek Fiyatı**
+1. Supplier oluştur (Type: RESTAURANT)
+2. Service Pricing sayfasına git
+3. Şehir + Sezon + Service Type seç (BREAKFAST/LUNCH/DINNER)
+4. Fiyat gir (per person)
+5. Kaydet → Hizmet tipine göre tabloda görünür
+
+### 🔧 Technical Details
+
+**Decimal to Number Conversion:**
+```typescript
+// Prisma Decimal fields must be converted
+Number(pricing.price)
+Number(pricing.adultPrice)
+```
+
+**Authentication Middleware:**
+```typescript
+// Correct import
+import { authenticateToken } from '../middleware/auth';
+
+// Usage in routes
+router.use(authenticateToken);
+```
+
+**Table View Pattern (Entrance Fees):**
+```typescript
+const AGE_CATEGORIES = [
+  { key: 'adultPrice', label: 'Yetişkin', description: 'Adult', color: 'blue' },
+  { key: 'child0to6Price', label: 'Çocuk 0-6', description: '0-2.99 yaş', color: 'pink' },
+  { key: 'child7to12Price', label: 'Çocuk 7-12', description: '3-5.99 yaş', color: 'rose' },
+  { key: 'studentPrice', label: 'Öğrenci', description: 'Student', color: 'amber' },
+];
+```
+
+---
+
+## 📍 NEREDE KALDIK? (2025-10-30 11:30)
+
+### ✅ Son Tamamlananlar
+1. ✅ Supplier pricing system tamamen bitti (2 pricing model)
+2. ✅ EntranceFeePricing - yaş bazlı fiyatlandırma (4 kategori)
+3. ✅ SupplierPricing - hizmet tipi bazlı fiyatlandırma (5 tip)
+4. ✅ Table list view pattern implemented
+5. ✅ Guide pricing simplified (language field removed)
+6. ✅ Dashboard updated with entrance fees card
+7. ✅ Backend built and servers restarted successfully
+8. ✅ Git commit & push completed
+
+### 💾 Git Status
+```
+Last Commit: "feat: Add supplier pricing system with entrance fees and service pricing"
+Branch: main
+Files Changed: 14
+Insertions: 2240+
+Deletions: 357-
+```
+
+### 🎯 Sıradaki Modüller
+1. **Müşteri Yönetimi (CRM)** - Customer database, iletişim geçmişi
+2. **Rezervasyon Yönetimi** - Ana modül, tüm kaynakları birleştir
+3. **Finans Modülü** - Faturalar, ödemeler, kar-zarar
+
+---
+
+**Son Güncelleme**: 2025-10-30 11:30
+**Durum**: ✅ Supplier pricing system tamamlandı
+**Sonraki**: Customer Management modülü veya Reservation modülü
