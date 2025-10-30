@@ -328,7 +328,7 @@ enum SupplierServiceType {
   OTHER     // Diğer hizmetler
 }
 
-// Tur Paketleri Fiyatlandırması (Tour Operator Supplier'lar için)
+// Tur Paketleri Fiyatlandırması (Tour Operator Supplier'lar için - Dış Tedarikçi)
 model TourPackagePricing {
   id         Int      @id @default(autoincrement())
   supplierId Int      @map("supplier_id")
@@ -369,6 +369,91 @@ model TourPackagePricing {
   @@index([startDate, endDate])
   @@index([isActive])
   @@map("tour_package_pricings")
+}
+
+// ============================================
+// TOUR TEMPLATES (Kendi Tur Şablonlarınız)
+// ============================================
+
+// Tur Şablonları - Sürekli sattığınız hazır paketler
+model TourTemplate {
+  id          Int      @id @default(autoincrement())
+  name        String   // "7 Days Istanbul & Cappadocia Classic"
+  description String?  @db.Text
+  totalDays   Int
+
+  // Default financial estimates (temel tahminler)
+  estimatedCost  Decimal @map("estimated_cost") @db.Decimal(10, 2)
+  estimatedPrice Decimal @map("estimated_price") @db.Decimal(10, 2)
+  currency       String  @default("EUR")
+
+  notes    String?  @db.Text
+  isActive Boolean  @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy Int      @map("created_by")
+
+  // Relations
+  days TourTemplateDay[]
+
+  @@index([isActive])
+  @@index([name])
+  @@map("tour_templates")
+}
+
+// Şablon Günlük Programı
+model TourTemplateDay {
+  id         Int          @id @default(autoincrement())
+  templateId Int          @map("template_id")
+  template   TourTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  dayNumber Int @map("day_number")
+
+  // Default selections (önerilen seçimler)
+  hotelId      Int?             @map("hotel_id")
+  roomType     RoomType?        @map("room_type")
+  guideId      Int?             @map("guide_id")
+  guideService GuideServiceType? @map("guide_service")
+  vehicleType  VehicleType?     @map("vehicle_type")
+  transferType String?          @map("transfer_type")
+
+  // Meals
+  breakfast Boolean @default(false)
+  lunch     Boolean @default(false)
+  dinner    Boolean @default(false)
+
+  // Program details
+  description String  // "Istanbul Old City - Topkapi, Hagia Sophia, Blue Mosque"
+  notes       String? @db.Text
+
+  // Financial estimates (günlük tahminler)
+  dayCost  Decimal @map("day_cost") @db.Decimal(10, 2)
+  dayPrice Decimal @map("day_price") @db.Decimal(10, 2)
+
+  // Relations
+  activities TourTemplateActivity[]
+
+  @@index([templateId])
+  @@index([dayNumber])
+  @@map("tour_template_days")
+}
+
+// Şablon Günlük Aktiviteleri
+model TourTemplateActivity {
+  id    Int             @id @default(autoincrement())
+  dayId Int             @map("day_id")
+  day   TourTemplateDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+
+  activityType ActivityType @map("activity_type")
+  supplierId   Int?         @map("supplier_id") // Optional - hangi supplier'dan
+  name         String       // "Topkapı Palace Entrance", "Hot Air Balloon"
+  cost         Decimal      @db.Decimal(10, 2) // Maliyet
+  price        Decimal      @db.Decimal(10, 2) // Satış fiyatı
+  notes        String?      @db.Text
+
+  @@index([dayId])
+  @@map("tour_template_activities")
 }
 
 // Araç Tedarikçisi (Transfer & Allocation)
