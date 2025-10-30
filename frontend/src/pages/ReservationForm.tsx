@@ -88,10 +88,15 @@ const ReservationForm = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    if (isEdit && id) {
+      fetchReservation();
+    }
+  }, [id]);
 
   useEffect(() => {
-    calculateDays();
+    if (!isEdit) {
+      calculateDays();
+    }
   }, [formData.startDate, formData.endDate]);
 
   const fetchData = async () => {
@@ -109,6 +114,70 @@ const ReservationForm = () => {
       setGuides(guidesRes.data.data);
     } catch (error) {
       console.error('Fetch data error:', error);
+    }
+  };
+
+  const fetchReservation = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get(`/reservations/${id}`);
+      const reservation = response.data.data;
+
+      // Determine customer type (B2B or B2C)
+      const hasAgent = Boolean(reservation.customer.agent);
+      setCustomerType(hasAgent ? 'AGENT' : 'DIRECT');
+
+      // Set form data
+      setFormData({
+        agentId: reservation.customer.agent?.id?.toString() || '',
+        customerId: reservation.customer.id.toString(),
+        startDate: reservation.startDate.split('T')[0],
+        endDate: reservation.endDate.split('T')[0],
+        totalDays: reservation.totalDays,
+        currency: reservation.currency,
+        notes: reservation.notes || '',
+        internalNotes: reservation.internalNotes || '',
+      });
+
+      // Set participants
+      if (reservation.participants && reservation.participants.length > 0) {
+        setParticipants(
+          reservation.participants.map((p: any) => ({
+            participantType: p.participantType,
+            firstName: p.firstName,
+            lastName: p.lastName,
+            age: p.age,
+          }))
+        );
+      }
+
+      // Set days
+      if (reservation.days && reservation.days.length > 0) {
+        setDays(
+          reservation.days.map((d: any) => ({
+            dayNumber: d.dayNumber,
+            date: d.date.split('T')[0],
+            hotelId: d.hotel?.id || '',
+            roomType: d.roomType || '',
+            transferType: d.transferType || '',
+            vehicleType: d.vehicleType || '',
+            guideId: d.guide?.id || '',
+            guideService: d.guideService || '',
+            breakfast: d.breakfast,
+            lunch: d.lunch,
+            dinner: d.dinner,
+            description: d.description || '',
+            notes: d.notes || '',
+            dayCost: Number(d.dayCost) || 0,
+            dayPrice: Number(d.dayPrice) || 0,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Fetch reservation error:', error);
+      alert('Rezervasyon yüklenemedi');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -253,6 +322,17 @@ const ReservationForm = () => {
 
   const { totalCost, totalPrice, profit } = calculateTotals();
 
+  if (loading && isEdit) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent mb-4"></div>
+          <p className="text-slate-600">Rezervasyon yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
@@ -283,95 +363,126 @@ const ReservationForm = () => {
             <h2 className="text-xl font-bold text-slate-900 mb-4">Müşteri ve Tarihler</h2>
 
             {/* Step 1: Customer Type Selection */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 mb-3">Rezervasyon Sahibi *</label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 px-4 py-3 border-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors"
-                  style={{
-                    borderColor: customerType === 'AGENT' ? '#3b82f6' : '#e2e8f0',
-                    backgroundColor: customerType === 'AGENT' ? '#eff6ff' : 'white'
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="customerType"
-                    value="AGENT"
-                    checked={customerType === 'AGENT'}
-                    onChange={(e) => {
-                      setCustomerType(e.target.value as 'AGENT' | 'DIRECT');
-                      setFormData({ ...formData, agentId: '', customerId: '' });
+            {!isEdit && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-700 mb-3">Rezervasyon Sahibi *</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 px-4 py-3 border-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors"
+                    style={{
+                      borderColor: customerType === 'AGENT' ? '#3b82f6' : '#e2e8f0',
+                      backgroundColor: customerType === 'AGENT' ? '#eff6ff' : 'white'
                     }}
-                    className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
-                  />
-                  <span className="font-medium text-slate-900">Acente (B2B)</span>
-                </label>
-                <label className="flex items-center gap-2 px-4 py-3 border-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors"
-                  style={{
-                    borderColor: customerType === 'DIRECT' ? '#3b82f6' : '#e2e8f0',
-                    backgroundColor: customerType === 'DIRECT' ? '#eff6ff' : 'white'
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="customerType"
-                    value="DIRECT"
-                    checked={customerType === 'DIRECT'}
-                    onChange={(e) => {
-                      setCustomerType(e.target.value as 'AGENT' | 'DIRECT');
-                      setFormData({ ...formData, agentId: '', customerId: '' });
+                  >
+                    <input
+                      type="radio"
+                      name="customerType"
+                      value="AGENT"
+                      checked={customerType === 'AGENT'}
+                      onChange={(e) => {
+                        setCustomerType(e.target.value as 'AGENT' | 'DIRECT');
+                        setFormData({ ...formData, agentId: '', customerId: '' });
+                      }}
+                      className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                    />
+                    <span className="font-medium text-slate-900">Acente (B2B)</span>
+                  </label>
+                  <label className="flex items-center gap-2 px-4 py-3 border-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors"
+                    style={{
+                      borderColor: customerType === 'DIRECT' ? '#3b82f6' : '#e2e8f0',
+                      backgroundColor: customerType === 'DIRECT' ? '#eff6ff' : 'white'
                     }}
-                    className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
-                  />
-                  <span className="font-medium text-slate-900">Direkt Müşteri (B2C)</span>
-                </label>
+                  >
+                    <input
+                      type="radio"
+                      name="customerType"
+                      value="DIRECT"
+                      checked={customerType === 'DIRECT'}
+                      onChange={(e) => {
+                        setCustomerType(e.target.value as 'AGENT' | 'DIRECT');
+                        setFormData({ ...formData, agentId: '', customerId: '' });
+                      }}
+                      className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                    />
+                    <span className="font-medium text-slate-900">Direkt Müşteri (B2C)</span>
+                  </label>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Step 2: Agent Selection (only for B2B) */}
-              {customerType === 'AGENT' && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Acente *</label>
-                  <select
-                    value={formData.agentId}
-                    onChange={(e) => setFormData({ ...formData, agentId: e.target.value, customerId: '' })}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Acente seçin</option>
-                    {agents.map((agent) => (
-                      <option key={agent.id} value={agent.id}>
-                        {agent.companyName}
-                      </option>
-                    ))}
-                  </select>
+              {/* Edit mode: Show customer info (read-only) */}
+              {isEdit && formData.customerId && (
+                <div className="md:col-span-2 bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <p className="text-sm font-medium text-blue-900 mb-2">Müşteri Bilgileri (Değiştirilemez)</p>
+                  {(() => {
+                    const customer = customers.find(c => c.id === parseInt(formData.customerId));
+                    if (!customer) return null;
+                    return (
+                      <div>
+                        <p className="text-base font-semibold text-slate-900">
+                          {customer.firstName} {customer.lastName}
+                        </p>
+                        <p className="text-sm text-slate-600">{customer.email}</p>
+                        {customer.agent && (
+                          <p className="text-xs text-indigo-700 mt-1 font-medium">
+                            Acenta: {customer.agent.companyName}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
-              {/* Step 3: Customer Selection */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  {customerType === 'AGENT' ? 'Acentenin Müşterisi *' : 'Müşteri *'}
-                </label>
-                <select
-                  value={formData.customerId}
-                  onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                  required
-                  disabled={customerType === 'AGENT' && !formData.agentId}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">
-                    {customerType === 'AGENT' && !formData.agentId
-                      ? 'Önce acente seçin'
-                      : 'Müşteri seçin'}
-                  </option>
-                  {getFilteredCustomers().map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.firstName} {customer.lastName} - {customer.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* New mode: Show customer selection */}
+              {!isEdit && (
+                <>
+                  {/* Step 2: Agent Selection (only for B2B) */}
+                  {customerType === 'AGENT' && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">Acente *</label>
+                      <select
+                        value={formData.agentId}
+                        onChange={(e) => setFormData({ ...formData, agentId: e.target.value, customerId: '' })}
+                        required
+                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Acente seçin</option>
+                        {agents.map((agent) => (
+                          <option key={agent.id} value={agent.id}>
+                            {agent.companyName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Step 3: Customer Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      {customerType === 'AGENT' ? 'Acentenin Müşterisi *' : 'Müşteri *'}
+                    </label>
+                    <select
+                      value={formData.customerId}
+                      onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+                      required
+                      disabled={customerType === 'AGENT' && !formData.agentId}
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {customerType === 'AGENT' && !formData.agentId
+                          ? 'Önce acente seçin'
+                          : 'Müşteri seçin'}
+                      </option>
+                      {getFilteredCustomers().map((customer) => (
+                        <option key={customer.id} value={customer.id}>
+                          {customer.firstName} {customer.lastName} - {customer.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
 
               {/* Dates */}
               <div>
@@ -730,7 +841,7 @@ const ReservationForm = () => {
                 !formData.customerId ||
                 !formData.startDate ||
                 !formData.endDate ||
-                (customerType === 'AGENT' && !formData.agentId)
+                (!isEdit && customerType === 'AGENT' && !formData.agentId)
               }
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
