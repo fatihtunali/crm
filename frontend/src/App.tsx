@@ -14,6 +14,7 @@ import Suppliers from './pages/Suppliers';
 import SupplierForm from './pages/SupplierForm';
 import EntranceFeePricing from './pages/EntranceFeePricing';
 import SupplierServicePricing from './pages/SupplierServicePricing';
+import AllEntranceFees from './pages/AllEntranceFees';
 import AppLayout from './components/layout/AppLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { authService } from './services/auth.service';
@@ -71,6 +72,7 @@ function App() {
           <Route path="/resources/suppliers/:id/service-pricing" element={<SupplierServicePricing />} />
           <Route path="/resources/suppliers/:id/edit" element={<SupplierForm />} />
           <Route path="/resources/suppliers" element={<Suppliers />} />
+          <Route path="/entrance-fees" element={<AllEntranceFees />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -2,6 +2,40 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth';
 
+// TÜM giriş ücreti fiyatlarını listele (tüm tedarikçilerden)
+export const getAllEntranceFees = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const pricings = await prisma.entranceFeePricing.findMany({
+      where: {
+        isActive: true,
+      },
+      include: {
+        supplier: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            city: true,
+          },
+        },
+      },
+      orderBy: [
+        { city: 'asc' },
+        { startDate: 'desc' },
+      ],
+    });
+
+    res.json({
+      success: true,
+      count: pricings.length,
+      data: pricings,
+    });
+  } catch (error) {
+    console.error('Get all entrance fees error:', error);
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
+};
+
 // Bir tedarikçinin tüm giriş ücreti fiyatlarını listele
 export const getEntranceFeePricings = async (req: Request, res: Response): Promise<void> => {
   try {

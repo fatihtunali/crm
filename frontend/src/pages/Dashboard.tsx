@@ -93,7 +93,7 @@ const Dashboard = () => {
       title: 'Giriş Ücretleri',
       description: 'Müze ve turistik mekan fiyatları',
       icon: Ticket,
-      link: '/resources/suppliers',
+      link: '/entrance-fees',
       gradient: 'from-rose-500 to-rose-600',
     },
   ];

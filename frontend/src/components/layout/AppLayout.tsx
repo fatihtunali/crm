@@ -45,6 +45,7 @@ const AppLayout = () => {
     { path: '/resources/vehicles', label: 'Kendi Filomuz', icon: Car },
     { path: '/resources/guides', label: 'Rehberler', icon: User },
     { path: '/resources/suppliers', label: 'Tedarikçiler', icon: MapPin },
+    { path: '/entrance-fees', label: 'Giriş Ücretleri', icon: Building2 },
   ];
 
   return (
