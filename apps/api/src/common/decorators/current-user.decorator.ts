@@ -23,3 +23,10 @@ export const TenantId = createParamDecorator(
     return request.user?.tenantId;
   },
 );
+
+export const UserId = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): number => {
+    const request = ctx.switchToHttp().getRequest();
+    return request.user?.userId;
+  },
+);

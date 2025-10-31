@@ -19,6 +19,12 @@ import { InvoicesModule } from './invoices/invoices.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { HealthModule } from './health/health.module';
 import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
+import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { FilesModule } from './files/files.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { ReportsModule } from './reports/reports.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { VendorPortalModule } from './vendor-portal/vendor-portal.module';
 
 @Module({
   imports: [
@@ -42,6 +48,12 @@ import { IdempotencyInterceptor } from './common/interceptors/idempotency.interc
     PaymentVendorModule,
     InvoicesModule,
     HealthModule,
+    AuditLogsModule,
+    FilesModule,
+    WebhooksModule,
+    ReportsModule,
+    NotificationsModule,
+    VendorPortalModule,
   ],
   providers: [
     {

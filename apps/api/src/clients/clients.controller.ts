@@ -27,7 +27,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@tour-crm/shared';
 
 @ApiTags('Clients')
-@ApiBearerAuth('JWT-auth')
+@ApiBearerAuth('bearerAuth')
 @Controller('clients')
 @UseGuards(RolesGuard)
 export class ClientsController {

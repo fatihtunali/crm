@@ -20,6 +20,7 @@ import {
 import { ExchangeRatesService } from './exchange-rates.service';
 import { CreateExchangeRateDto } from './dto/create-exchange-rate.dto';
 import { UpdateExchangeRateDto } from './dto/update-exchange-rate.dto';
+import { ImportRatesDto } from './dto/import-rates.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -27,11 +28,50 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@tour-crm/shared';
 
 @ApiTags('Exchange Rates')
-@ApiBearerAuth('JWT-auth')
+@ApiBearerAuth('bearerAuth')
 @Controller('exchange-rates')
 @UseGuards(RolesGuard)
 export class ExchangeRatesController {
   constructor(private readonly exchangeRatesService: ExchangeRatesService) {}
+
+  @Post('import')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTING)
+  @ApiOperation({
+    summary: 'Import exchange rates from CSV',
+    description: 'Import multiple exchange rates from CSV content. CSV format: fromCurrency,toCurrency,rate,rateDate (YYYY-MM-DD)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Import completed with summary',
+    schema: {
+      example: {
+        summary: {
+          total: 10,
+          imported: 8,
+          skipped: 1,
+          errors: 1,
+        },
+        imported: [
+          {
+            id: 1,
+            fromCurrency: 'TRY',
+            toCurrency: 'EUR',
+            rate: 0.0305,
+            rateDate: '2024-01-15T00:00:00Z',
+            source: 'csv-import',
+          },
+        ],
+        skipped: ['TRY->USD on 2024-01-15 (already exists)'],
+        errors: ['Line 5: Invalid rate value: abc'],
+      },
+    },
+  })
+  importFromCsv(
+    @Body() importRatesDto: ImportRatesDto,
+    @TenantId() tenantId: number,
+  ) {
+    return this.exchangeRatesService.importFromCsv(importRatesDto, tenantId);
+  }
 
   @Post()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.OPERATIONS, UserRole.ACCOUNTING)

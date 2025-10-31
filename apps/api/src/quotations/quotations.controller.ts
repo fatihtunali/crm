@@ -20,6 +20,7 @@ import {
 import { QuotationsService } from './quotations.service';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { UpdateQuotationDto } from './dto/update-quotation.dto';
+import { SearchQuotationDto } from './dto/search-quotation.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -27,7 +28,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole, QuotationStatus } from '@tour-crm/shared';
 
 @ApiTags('Quotations')
-@ApiBearerAuth('JWT-auth')
+@ApiBearerAuth('bearerAuth')
 @Controller('quotations')
 @UseGuards(RolesGuard)
 export class QuotationsController {
@@ -64,6 +65,26 @@ export class QuotationsController {
     @Query('status') status?: QuotationStatus,
   ) {
     return this.quotationsService.findAll(tenantId, paginationDto, status);
+  }
+
+  @Get('search')
+  @Roles(
+    UserRole.OWNER,
+    UserRole.ADMIN,
+    UserRole.AGENT,
+    UserRole.OPERATIONS,
+    UserRole.ACCOUNTING,
+  )
+  @ApiOperation({
+    summary: 'Search quotations with filters',
+    description: 'Advanced search for quotations by client name, tour name, status, and dates'
+  })
+  @ApiResponse({ status: 200, description: 'Quotations search results retrieved successfully' })
+  search(
+    @TenantId() tenantId: number,
+    @Query() searchDto: SearchQuotationDto,
+  ) {
+    return this.quotationsService.search(tenantId, searchDto);
   }
 
   @Get('stats')

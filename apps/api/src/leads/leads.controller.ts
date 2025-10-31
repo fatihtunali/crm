@@ -27,7 +27,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole, LeadStatus } from '@tour-crm/shared';
 
 @ApiTags('Leads')
-@ApiBearerAuth('JWT-auth')
+@ApiBearerAuth('bearerAuth')
 @Controller('leads')
 @UseGuards(RolesGuard)
 export class LeadsController {

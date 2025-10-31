@@ -27,7 +27,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@tour-crm/shared';
 
 @ApiTags('Vendor Rates')
-@ApiBearerAuth('JWT-auth')
+@ApiBearerAuth('bearerAuth')
 @Controller('vendor-rates')
 @UseGuards(RolesGuard)
 export class VendorRatesController {
