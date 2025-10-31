@@ -68,6 +68,7 @@ model User {
   email        String    @db.VarChar(255)
   passwordHash String    @map("password_hash") @db.VarChar(255)
   role         UserRole  @default(AGENT)
+  phone        String?   @db.VarChar(50)
   isActive     Boolean   @default(true) @map("is_active")
   lastLoginAt  DateTime? @map("last_login_at")
   createdAt    DateTime  @default(now()) @map("created_at")
