@@ -13,14 +13,19 @@ This document contains all the steps needed to get the Tour Operator CRM project
    - Download from: https://git-scm.com/
    - Verify installation: `git --version`
 
-### 3. **PostgreSQL** (v14 or later)
-   - Download from: https://www.postgresql.org/download/
-   - During installation, remember your postgres password
-   - Default port: 5432
-
-### 4. **Code Editor** (Optional but recommended)
+### 3. **Code Editor** (Optional but recommended)
    - Visual Studio Code: https://code.visualstudio.com/
    - Or any editor you prefer
+
+## Database Setup
+
+**Important:** We're using a **centralized PostgreSQL database** hosted on our server at `134.209.137.11`. You don't need to install PostgreSQL locally!
+
+**Benefits:**
+- ✅ No local database setup required
+- ✅ Shared data across office and home computers
+- ✅ Single source of truth
+- ✅ Already configured and running
 
 ## Project Setup Steps
 
@@ -40,66 +45,61 @@ npm install
 
 This will install all dependencies for the monorepo (both API and Web app).
 
-### Step 3: Set Up Database
+### Step 3: Copy Environment File from Server
 
-1. **Create PostgreSQL Database:**
-   ```bash
-   # Login to PostgreSQL
-   psql -U postgres
+The easiest way is to copy the `.env` file directly from the server:
 
-   # Create database
-   CREATE DATABASE tour_crm;
+**On Windows (PowerShell):**
+```powershell
+scp root@134.209.137.11:/home/crm/.env .
+```
 
-   # Exit psql
-   \q
-   ```
+**On Mac/Linux:**
+```bash
+scp root@134.209.137.11:/home/crm/.env .
+```
 
-2. **Create Environment File:**
+This will copy the production `.env` file with all the correct settings.
 
-   Create a file named `.env` in the root of the project:
+**Alternatively, create `.env` manually** with these contents:
+```env
+# Database - Connected to server
+DATABASE_URL="postgresql://crm:Dlr235672.-Yt@134.209.137.11:5432/crm?schema=public"
 
-   ```env
-   # Database
-   DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/tour_crm?schema=public"
+# JWT
+JWT_SECRET="crm-tour-operator-production-secret-2025-XyZ\!@#$%"
+JWT_EXPIRES_IN="7d"
 
-   # JWT
-   JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
-   JWT_EXPIRES_IN="7d"
+# API
+PORT=3001
+API_PREFIX="api/v1"
 
-   # API
-   PORT=3001
-   API_PREFIX="api/v1"
+# CORS
+CORS_ORIGIN="http://localhost:3000"
 
-   # CORS
-   CORS_ORIGIN="http://localhost:3000"
+# Frontend
+NEXT_PUBLIC_API_URL="http://localhost:3001/api/v1"
+```
 
-   # Frontend
-   NEXT_PUBLIC_API_URL="http://localhost:3001/api/v1"
-   ```
+**Important Notes:**
+- ⚠️ This file contains sensitive credentials - **NEVER commit it to Git**
+- ✅ The file is already in `.gitignore` and will be automatically ignored
+- ✅ Database is on the server at `134.209.137.11`
+- ✅ Schema and tables are already created - no migrations needed locally!
+- 🐳 **Docker not needed** - we're using the centralized database server
 
-   **Important:** Replace `YOUR_PASSWORD` with your PostgreSQL password!
+### Step 4: Generate Prisma Client
 
-### Step 4: Run Database Migrations
+The database schema is already set up on the server. You just need to generate the Prisma client locally:
 
 ```bash
 cd apps/api
-npx prisma migrate dev
 npx prisma generate
 ```
 
-This will:
-- Create all database tables
-- Set up the schema
-- Generate Prisma client
+This generates the TypeScript types for database access.
 
-### Step 5: (Optional) Seed Database
-
-If there's a seed script available:
-```bash
-npm run prisma:seed
-```
-
-### Step 6: Start Development Servers
+### Step 5: Start Development Servers
 
 Open **two terminal windows**:
 
