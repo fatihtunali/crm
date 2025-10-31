@@ -14,6 +14,7 @@ import { VendorRatesModule } from './vendor-rates/vendor-rates.module';
 import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
 import { BookingItemsModule } from './booking-items/booking-items.module';
 import { PaymentClientModule } from './payment-client/payment-client.module';
+import { PaymentVendorModule } from './payment-vendor/payment-vendor.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -35,6 +36,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     ExchangeRatesModule,
     BookingItemsModule,
     PaymentClientModule,
+    PaymentVendorModule,
   ],
   providers: [
     {
