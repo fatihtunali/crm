@@ -10,6 +10,7 @@ import { VendorsModule } from './vendors/vendors.module';
 import { ToursModule } from './tours/tours.module';
 import { QuotationsModule } from './quotations/quotations.module';
 import { BookingsModule } from './bookings/bookings.module';
+import { VendorRatesModule } from './vendor-rates/vendor-rates.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -27,6 +28,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     ToursModule,
     QuotationsModule,
     BookingsModule,
+    VendorRatesModule,
   ],
   providers: [
     {
