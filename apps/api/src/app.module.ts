@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ClientsModule } from './clients/clients.module';
 import { LeadsModule } from './leads/leads.module';
+import { VendorsModule } from './vendors/vendors.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -19,6 +20,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     UsersModule,
     ClientsModule,
     LeadsModule,
+    VendorsModule,
   ],
   providers: [
     {
