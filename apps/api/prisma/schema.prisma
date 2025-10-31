@@ -45,6 +45,8 @@ model Tenant {
   invoices         Invoice[]
   auditLogs        AuditLog[]
   idempotencyKeys  IdempotencyKey[]
+  files            File[]
+  webhookEvents    WebhookEvent[]
 
   @@index([code])
   @@index([isActive])
@@ -62,18 +64,19 @@ enum UserRole {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  tenantId     Int       @map("tenant_id")
-  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name         String    @db.VarChar(255)
-  email        String    @db.VarChar(255)
-  passwordHash String    @map("password_hash") @db.VarChar(255)
-  role         UserRole  @default(AGENT)
-  phone        String?   @db.VarChar(50)
-  isActive     Boolean   @default(true) @map("is_active")
-  lastLoginAt  DateTime? @map("last_login_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id                Int       @id @default(autoincrement())
+  tenantId          Int       @map("tenant_id")
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name              String    @db.VarChar(255)
+  email             String    @db.VarChar(255)
+  passwordHash      String    @map("password_hash") @db.VarChar(255)
+  role              UserRole  @default(AGENT)
+  phone             String?   @db.VarChar(50)
+  preferredLanguage String    @default("en") @map("preferred_language") @db.VarChar(10)
+  isActive          Boolean   @default(true) @map("is_active")
+  lastLoginAt       DateTime? @map("last_login_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   // Relations
   auditLogs AuditLog[]
@@ -533,4 +536,85 @@ model IdempotencyKey {
   @@index([tenantId])
   @@index([expiresAt])
   @@map("idempotency_keys")
+}
+
+// ============================================
+// FILE STORAGE
+// ============================================
+
+enum FileStatus {
+  PENDING
+  UPLOADED
+  FAILED
+}
+
+model File {
+  id           Int        @id @default(autoincrement())
+  tenantId     Int        @map("tenant_id")
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId       Int?       @map("user_id")
+  fileName     String     @map("file_name") @db.VarChar(255)
+  originalName String     @map("original_name") @db.VarChar(255)
+  mimeType     String     @map("mime_type") @db.VarChar(100)
+  fileSize     Int        @map("file_size")
+  storageKey   String     @map("storage_key") @db.VarChar(500)
+  url          String?    @db.VarChar(1000)
+  entity       String?    @db.VarChar(100)
+  entityId     Int?       @map("entity_id")
+  status       FileStatus @default(PENDING)
+  uploadedAt   DateTime?  @map("uploaded_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([status])
+  @@map("files")
+}
+
+// ============================================
+// WEBHOOKS
+// ============================================
+
+enum WebhookEventStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  RETRY
+}
+
+enum WebhookEventType {
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  PAYMENT_PENDING
+  REFUND_PROCESSED
+  REFUND_FAILED
+}
+
+model WebhookEvent {
+  id              Int                @id @default(autoincrement())
+  tenantId        Int                @map("tenant_id")
+  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider        String             @db.VarChar(100)
+  eventType       WebhookEventType   @map("event_type")
+  status          WebhookEventStatus @default(PENDING)
+  payloadJson     Json               @map("payload_json")
+  signatureHeader String?            @map("signature_header") @db.VarChar(500)
+  isVerified      Boolean            @default(false) @map("is_verified")
+  processedAt     DateTime?          @map("processed_at")
+  errorMessage    String?            @map("error_message") @db.Text
+  retryCount      Int                @default(0) @map("retry_count")
+  ipAddress       String?            @map("ip_address") @db.VarChar(45)
+  userAgent       String?            @map("user_agent") @db.Text
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([provider])
+  @@index([eventType])
+  @@index([status])
+  @@index([createdAt])
+  @@map("webhook_events")
 }

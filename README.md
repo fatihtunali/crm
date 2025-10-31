@@ -10,18 +10,26 @@ A production-ready, multi-tenant Tour Operator CRM system designed for Turkish t
 - **Role-Based Access Control**: OWNER, ADMIN, AGENT, OPERATIONS, ACCOUNTING, GUIDE, VENDOR
 - **Internationalization**: English and Turkish UI (i18n ready)
 - **Invoice Generation**: PDF invoices with VAT/KDV support
-- **Audit Trail**: Complete logging of sensitive changes
+- **Audit Trail**: Complete logging of sensitive changes with query API
+- **File Management**: Secure file uploads with AWS S3 pre-signed URLs
+- **Idempotency**: Duplicate payment prevention with idempotency keys
+- **Health Checks**: Kubernetes-ready liveness and readiness probes
+- **Quotation Workflow**: Email quotations and track acceptance/rejection
+- **Global Error Handling**: Standardized error responses with Prisma error mapping
 
 ## Tech Stack
 
 ### Backend
 - **NestJS** - Enterprise Node.js framework
 - **TypeScript** - Type-safe development
-- **MySQL** - Relational database
+- **PostgreSQL** - Relational database
 - **Prisma** - Type-safe ORM with migrations
 - **JWT** - Authentication with refresh tokens
 - **Swagger/OpenAPI** - API documentation
 - **Argon2** - Secure password hashing
+- **PDFKit** - Server-side PDF generation
+- **AWS S3 SDK** - Cloud file storage with pre-signed URLs
+- **Class Validator** - DTO validation
 
 ### Frontend
 - **Next.js 14** - React framework with App Router
@@ -223,13 +231,48 @@ Once the API is running, visit http://localhost:3001/api/docs for interactive Sw
 
 ### Key Endpoints
 
+#### Authentication
 - `POST /api/v1/auth/login` - Login
 - `POST /api/v1/auth/refresh` - Refresh token
-- `GET /api/v1/clients` - List clients
+- `POST /api/v1/auth/logout` - Logout
+
+#### CRM Operations
+- `GET /api/v1/clients` - List clients (paginated)
+- `POST /api/v1/clients` - Create client
+- `GET /api/v1/leads` - List leads (paginated)
+- `POST /api/v1/leads` - Create lead
+
+#### Quotation Workflow
 - `POST /api/v1/quotations` - Create quotation
-- `POST /api/v1/quotations/:id/accept` - Accept → Booking
-- `POST /api/v1/bookings/:id/payments` - Record payment
-- `GET /api/v1/invoices/:id/pdf` - Download invoice PDF
+- `POST /api/v1/quotations/:id/send` - Send quotation to client
+- `POST /api/v1/quotations/:id/accept` - Accept quotation → Create booking
+- `POST /api/v1/quotations/:id/reject` - Reject quotation
+
+#### Booking & Payments
+- `GET /api/v1/bookings` - List bookings (paginated)
+- `POST /api/v1/bookings` - Create booking
+- `POST /api/v1/payment-client` - Record client payment (idempotent)
+- `POST /api/v1/payment-vendor` - Record vendor payment (idempotent)
+
+#### Invoicing
+- `GET /api/v1/invoices` - List invoices (paginated)
+- `POST /api/v1/invoices` - Create invoice
+- `GET /api/v1/invoices/:id/pdf` - Generate & download invoice PDF
+
+#### File Management
+- `POST /api/v1/files/upload-url` - Request pre-signed upload URL
+- `POST /api/v1/files/:id/confirm` - Confirm file upload
+- `GET /api/v1/files` - List uploaded files (paginated)
+- `GET /api/v1/files/:id/download-url` - Get pre-signed download URL
+
+#### Audit Logs
+- `GET /api/v1/audit-logs` - Query audit logs with filters
+- `GET /api/v1/audit-logs/stats` - Get audit log statistics
+- `GET /api/v1/audit-logs/:id` - Get specific audit log entry
+
+#### Health Checks
+- `GET /api/v1/health/healthz` - Liveness probe
+- `GET /api/v1/health/readyz` - Readiness probe (with database check)
 
 ## Internationalization
 
