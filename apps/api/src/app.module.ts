@@ -25,6 +25,11 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { ReportsModule } from './reports/reports.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { VendorPortalModule } from './vendor-portal/vendor-portal.module';
+import { PartiesModule } from './parties/parties.module';
+import { ContactsModule } from './contacts/contacts.module';
+import { SuppliersModule } from './suppliers/suppliers.module';
+import { ServiceOfferingsModule } from './service-offerings/service-offerings.module';
+import { HotelsModule } from './hotels/hotels.module';
 
 @Module({
   imports: [
@@ -54,6 +59,11 @@ import { VendorPortalModule } from './vendor-portal/vendor-portal.module';
     ReportsModule,
     NotificationsModule,
     VendorPortalModule,
+    PartiesModule,
+    ContactsModule,
+    SuppliersModule,
+    ServiceOfferingsModule,
+    HotelsModule,
   ],
   providers: [
     {

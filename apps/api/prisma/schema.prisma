@@ -47,6 +47,15 @@ model Tenant {
   idempotencyKeys  IdempotencyKey[]
   files            File[]
   webhookEvents    WebhookEvent[]
+  parties          Party[]
+  suppliers        Supplier[]
+  contacts         Contact[]
+  serviceOfferings ServiceOffering[]
+  hotelRoomRates   HotelRoomRate[]
+  transferRates    TransferRate[]
+  vehicleRates     VehicleRate[]
+  guideRates       GuideRate[]
+  activityRates    ActivityRate[]
 
   @@index([code])
   @@index([isActive])
@@ -205,7 +214,434 @@ model Itinerary {
 }
 
 // ============================================
-// VENDORS
+// SUPPLIER CATALOG SYSTEM
+// ============================================
+
+// Generic entity: name, tax_id, addresses, contacts
+model Party {
+  id        Int      @id @default(autoincrement())
+  tenantId  Int      @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String   @db.VarChar(255)
+  taxId     String?  @map("tax_id") @db.VarChar(100)
+  address   String?  @db.Text
+  city      String?  @db.VarChar(100)
+  country   String?  @db.VarChar(100)
+  notes     String?  @db.Text
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  contacts  Contact[]
+  suppliers Supplier[]
+
+  @@index([tenantId])
+  @@index([name])
+  @@index([isActive])
+  @@map("parties")
+}
+
+// Contacts - many per party
+model Contact {
+  id          Int      @id @default(autoincrement())
+  tenantId    Int      @map("tenant_id")
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  partyId     Int      @map("party_id")
+  party       Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  contactType String   @map("contact_type") @db.VarChar(50) // operations, accounting, sales, etc.
+  name        String   @db.VarChar(255)
+  email       String?  @db.VarChar(255)
+  phone       String?  @db.VarChar(50)
+  position    String?  @db.VarChar(100)
+  isPrimary   Boolean  @default(false) @map("is_primary")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([partyId])
+  @@index([contactType])
+  @@map("contacts")
+}
+
+enum SupplierType {
+  HOTEL
+  TRANSPORT
+  ACTIVITY_OPERATOR
+  GUIDE_AGENCY
+  OTHER
+}
+
+// Suppliers - subset of parties that sell to you
+model Supplier {
+  id              Int          @id @default(autoincrement())
+  tenantId        Int          @map("tenant_id")
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  partyId         Int          @map("party_id")
+  party           Party        @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  type            SupplierType
+  bankName        String?      @map("bank_name") @db.VarChar(255)
+  bankAccountNo   String?      @map("bank_account_no") @db.VarChar(100)
+  bankIban        String?      @map("bank_iban") @db.VarChar(100)
+  bankSwift       String?      @map("bank_swift") @db.VarChar(50)
+  paymentTerms    String?      @map("payment_terms") @db.VarChar(255)
+  defaultCurrency String       @default("TRY") @map("default_currency") @db.VarChar(3)
+  creditLimit     Decimal?     @map("credit_limit") @db.Decimal(12, 2)
+  commissionPct   Decimal      @default(0) @map("commission_pct") @db.Decimal(5, 2)
+  isActive        Boolean      @default(true) @map("is_active")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  serviceOfferings ServiceOffering[]
+
+  @@unique([tenantId, partyId])
+  @@index([tenantId])
+  @@index([partyId])
+  @@index([type])
+  @@index([isActive])
+  @@map("suppliers")
+}
+
+enum ServiceType {
+  HOTEL_ROOM
+  TRANSFER
+  VEHICLE_HIRE
+  GUIDE_SERVICE
+  ACTIVITY
+}
+
+// Service offerings - the catalog index (what's available)
+model ServiceOffering {
+  id          Int         @id @default(autoincrement())
+  tenantId    Int         @map("tenant_id")
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supplierId  Int         @map("supplier_id")
+  supplier    Supplier    @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  serviceType ServiceType @map("service_type")
+  title       String      @db.VarChar(255)
+  location    String?     @db.VarChar(255)
+  description String?     @db.Text
+  isActive    Boolean     @default(true) @map("is_active")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  // Relations to type-specific details (one-to-one)
+  hotelRoom    HotelRoom?
+  transfer     Transfer?
+  vehicle      Vehicle?
+  guide        Guide?
+  activity     Activity?
+  bookingItems BookingItem[]
+
+  // Relations to rate cards (one-to-many)
+  hotelRoomRates HotelRoomRate[]
+  transferRates  TransferRate[]
+  vehicleRates   VehicleRate[]
+  guideRates     GuideRate[]
+  activityRates  ActivityRate[]
+
+  @@index([tenantId])
+  @@index([supplierId])
+  @@index([serviceType])
+  @@index([isActive])
+  @@index([location])
+  @@map("service_offerings")
+}
+
+// ============================================
+// HOTEL ROOMS (Type-specific detail)
+// ============================================
+
+enum BoardType {
+  RO // Room Only
+  BB // Bed & Breakfast
+  HB // Half Board
+  FB // Full Board
+  AI // All Inclusive
+}
+
+model HotelRoom {
+  serviceOfferingId Int      @id @map("service_offering_id")
+  serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  hotelName         String   @map("hotel_name") @db.VarChar(255)
+  stars             Int?     // 1-5 stars
+  address           String?  @db.Text
+  city              String?  @db.VarChar(100)
+  country           String?  @db.VarChar(100)
+  geo               String?  @db.VarChar(100) // e.g., "41.0082,28.9784"
+  roomType          String   @map("room_type") @db.VarChar(100) // DBL, TWN, TRP, SUITE, etc.
+  maxOccupancy      Int      @default(2) @map("max_occupancy")
+  boardTypes        Json?    @map("board_types") // Available board types: ["BB", "HB", "FB", "AI"]
+  amenities         Json?    // ["wifi", "pool", "spa", "parking"]
+  checkInTime       String?  @map("check_in_time") @db.VarChar(10) // e.g., "14:00"
+  checkOutTime      String?  @map("check_out_time") @db.VarChar(10) // e.g., "11:00"
+  cancellationPolicy String? @map("cancellation_policy") @db.Text
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("hotel_rooms")
+}
+
+enum PricingModel {
+  PER_ROOM_NIGHT
+  PER_PERSON_NIGHT
+  PER_TRANSFER
+  PER_KM
+  PER_HOUR
+  PER_DAY
+  PER_HALF_DAY
+  PER_PERSON
+  PER_GROUP
+}
+
+model HotelRoomRate {
+  id                  Int           @id @default(autoincrement())
+  tenantId            Int           @map("tenant_id")
+  tenant              Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  serviceOfferingId   Int           @map("service_offering_id")
+  serviceOffering     ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  seasonFrom          DateTime      @map("season_from") @db.Date
+  seasonTo            DateTime      @map("season_to") @db.Date
+  pricingModel        PricingModel  @default(PER_ROOM_NIGHT) @map("pricing_model")
+  boardType           BoardType     @map("board_type")
+  occupancyAdults     Int           @default(2) @map("occupancy_adults")
+  occupancyChildren   Int           @default(0) @map("occupancy_children")
+  costTry             Decimal       @map("cost_try") @db.Decimal(12, 2)
+  childPolicyJson     Json?         @map("child_policy_json") // e.g., {"age_0_2": "free", "age_3_6": "50%"}
+  allotment           Int?          // Number of rooms contracted
+  releaseDays         Int?          @map("release_days") // Days before check-in to release
+  minStay             Int?          @default(1) @map("min_stay")
+  notes               String?       @db.Text
+  isActive            Boolean       @default(true) @map("is_active")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([serviceOfferingId])
+  @@index([seasonFrom, seasonTo])
+  @@index([boardType])
+  @@index([isActive])
+  @@map("hotel_room_rates")
+}
+
+// ============================================
+// TRANSFERS (Type-specific detail)
+// ============================================
+
+enum TransferType {
+  PRIVATE
+  SHARED
+  SHUTTLE
+}
+
+model Transfer {
+  serviceOfferingId Int          @id @map("service_offering_id")
+  serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  originZone        String       @map("origin_zone") @db.VarChar(255)
+  destZone          String       @map("dest_zone") @db.VarChar(255)
+  transferType      TransferType @map("transfer_type")
+  vehicleClass      String       @map("vehicle_class") @db.VarChar(100) // sedan, van, minibus, coach
+  capacity          Int          @default(4) // Number of passengers
+  meetGreet         Boolean      @default(false) @map("meet_greet")
+  luggageAllowance  String?      @map("luggage_allowance") @db.VarChar(100)
+  duration          Int?         @db.Integer // Estimated duration in minutes
+  distance          Decimal?     @db.Decimal(8, 2) // Distance in km
+  notes             String?      @db.Text
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  @@map("transfers")
+}
+
+model TransferRate {
+  id                  Int             @id @default(autoincrement())
+  tenantId            Int             @map("tenant_id")
+  tenant              Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  serviceOfferingId   Int             @map("service_offering_id")
+  serviceOffering     ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  seasonFrom          DateTime        @map("season_from") @db.Date
+  seasonTo            DateTime        @map("season_to") @db.Date
+  pricingModel        PricingModel    @default(PER_TRANSFER) @map("pricing_model")
+  baseCostTry         Decimal         @map("base_cost_try") @db.Decimal(12, 2)
+  includedKm          Decimal?        @map("included_km") @db.Decimal(8, 2)
+  includedHours       Decimal?        @map("included_hours") @db.Decimal(5, 2)
+  extraKmTry          Decimal?        @map("extra_km_try") @db.Decimal(8, 2)
+  extraHourTry        Decimal?        @map("extra_hour_try") @db.Decimal(8, 2)
+  nightSurchargePct   Decimal         @default(0) @map("night_surcharge_pct") @db.Decimal(5, 2)
+  holidaySurchargePct Decimal         @default(0) @map("holiday_surcharge_pct") @db.Decimal(5, 2)
+  waitingTimeFree     Int?            @default(0) @map("waiting_time_free") // Free waiting minutes
+  notes               String?         @db.Text
+  isActive            Boolean         @default(true) @map("is_active")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([serviceOfferingId])
+  @@index([seasonFrom, seasonTo])
+  @@index([isActive])
+  @@map("transfer_rates")
+}
+
+// ============================================
+// VEHICLES (Type-specific detail)
+// ============================================
+
+model Vehicle {
+  serviceOfferingId Int             @id @map("service_offering_id")
+  serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  make              String          @db.VarChar(100)
+  model             String          @db.VarChar(100)
+  year              Int?
+  plateNumber       String?         @map("plate_number") @db.VarChar(50)
+  seats             Int             @default(5)
+  vehicleClass      String          @map("vehicle_class") @db.VarChar(100) // economy, comfort, luxury, SUV, van
+  transmission      String?         @db.VarChar(50) // automatic, manual
+  fuelType          String?         @map("fuel_type") @db.VarChar(50) // petrol, diesel, electric, hybrid
+  withDriver        Boolean         @default(false) @map("with_driver")
+  features          Json?           // ["GPS", "child_seat", "wifi", "AC"]
+  insuranceIncluded Boolean         @default(true) @map("insurance_included")
+  notes             String?         @db.Text
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@map("vehicles")
+}
+
+model VehicleRate {
+  id                Int             @id @default(autoincrement())
+  tenantId          Int             @map("tenant_id")
+  tenant            Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  serviceOfferingId Int             @map("service_offering_id")
+  serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  seasonFrom        DateTime        @map("season_from") @db.Date
+  seasonTo          DateTime        @map("season_to") @db.Date
+  pricingModel      PricingModel    @default(PER_DAY) @map("pricing_model")
+  baseCostTry       Decimal         @map("base_cost_try") @db.Decimal(12, 2)
+  dailyKmIncluded   Decimal?        @map("daily_km_included") @db.Decimal(8, 2)
+  extraKmTry        Decimal?        @map("extra_km_try") @db.Decimal(8, 2)
+  driverDailyTry    Decimal?        @map("driver_daily_try") @db.Decimal(8, 2) // If with driver
+  oneWayFeeTry      Decimal?        @map("one_way_fee_try") @db.Decimal(8, 2)
+  depositTry        Decimal?        @map("deposit_try") @db.Decimal(12, 2)
+  minRentalDays     Int?            @default(1) @map("min_rental_days")
+  notes             String?         @db.Text
+  isActive          Boolean         @default(true) @map("is_active")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([serviceOfferingId])
+  @@index([seasonFrom, seasonTo])
+  @@index([isActive])
+  @@map("vehicle_rates")
+}
+
+// ============================================
+// GUIDES (Type-specific detail)
+// ============================================
+
+model Guide {
+  serviceOfferingId Int             @id @map("service_offering_id")
+  serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  guideName         String          @map("guide_name") @db.VarChar(255)
+  licenseNo         String?         @map("license_no") @db.VarChar(100)
+  languages         Json            // ["English", "Turkish", "Spanish"]
+  regions           Json?           // ["Istanbul", "Cappadocia", "Ephesus"]
+  specializations   Json?           // ["historical", "adventure", "culinary"]
+  maxGroupSize      Int?            @default(20) @map("max_group_size")
+  rating            Decimal?        @db.Decimal(3, 2) // e.g., 4.85
+  phone             String?         @db.VarChar(50)
+  email             String?         @db.VarChar(255)
+  notes             String?         @db.Text
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@map("guides")
+}
+
+model GuideRate {
+  id                  Int             @id @default(autoincrement())
+  tenantId            Int             @map("tenant_id")
+  tenant              Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  serviceOfferingId   Int             @map("service_offering_id")
+  serviceOffering     ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  seasonFrom          DateTime        @map("season_from") @db.Date
+  seasonTo            DateTime        @map("season_to") @db.Date
+  pricingModel        PricingModel    @default(PER_DAY) @map("pricing_model")
+  dayCostTry          Decimal?        @map("day_cost_try") @db.Decimal(12, 2)
+  halfDayCostTry      Decimal?        @map("half_day_cost_try") @db.Decimal(12, 2)
+  hourCostTry         Decimal?        @map("hour_cost_try") @db.Decimal(12, 2)
+  overtimeHourTry     Decimal?        @map("overtime_hour_try") @db.Decimal(12, 2)
+  holidaySurchargePct Decimal         @default(0) @map("holiday_surcharge_pct") @db.Decimal(5, 2)
+  minHours            Int?            @default(4) @map("min_hours")
+  notes               String?         @db.Text
+  isActive            Boolean         @default(true) @map("is_active")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([serviceOfferingId])
+  @@index([seasonFrom, seasonTo])
+  @@index([isActive])
+  @@map("guide_rates")
+}
+
+// ============================================
+// ACTIVITIES (Type-specific detail)
+// ============================================
+
+model Activity {
+  serviceOfferingId Int             @id @map("service_offering_id")
+  serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  operatorName      String          @map("operator_name") @db.VarChar(255)
+  activityType      String          @map("activity_type") @db.VarChar(100) // tour, attraction, experience
+  durationMinutes   Int?            @map("duration_minutes")
+  capacity          Int?            // Maximum participants
+  minAge            Int?            @map("min_age")
+  maxAge            Int?            @map("max_age")
+  difficulty        String?         @db.VarChar(50) // easy, moderate, difficult
+  includedItems     Json?           @map("included_items") // ["entrance", "guide", "lunch", "equipment"]
+  meetingPoint      String?         @map("meeting_point") @db.Text
+  pickupAvailable   Boolean         @default(false) @map("pickup_available")
+  cancellationPolicy String?        @map("cancellation_policy") @db.Text
+  notes             String?         @db.Text
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@map("activities")
+}
+
+model ActivityRate {
+  id                  Int             @id @default(autoincrement())
+  tenantId            Int             @map("tenant_id")
+  tenant              Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  serviceOfferingId   Int             @map("service_offering_id")
+  serviceOffering     ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  seasonFrom          DateTime        @map("season_from") @db.Date
+  seasonTo            DateTime        @map("season_to") @db.Date
+  pricingModel        PricingModel    @default(PER_PERSON) @map("pricing_model")
+  baseCostTry         Decimal         @map("base_cost_try") @db.Decimal(12, 2)
+  minPax              Int?            @default(1) @map("min_pax")
+  maxPax              Int?            @map("max_pax")
+  tieredPricingJson   Json?           @map("tiered_pricing_json") // {"1-4": 100, "5-8": 80, "9+": 70}
+  childDiscountPct    Decimal?        @default(0) @map("child_discount_pct") @db.Decimal(5, 2)
+  groupDiscountPct    Decimal?        @default(0) @map("group_discount_pct") @db.Decimal(5, 2)
+  notes               String?         @db.Text
+  isActive            Boolean         @default(true) @map("is_active")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([serviceOfferingId])
+  @@index([seasonFrom, seasonTo])
+  @@index([isActive])
+  @@map("activity_rates")
+}
+
+// ============================================
+// LEGACY VENDORS (TO BE DEPRECATED)
 // ============================================
 
 enum VendorType {
@@ -378,24 +814,36 @@ enum ItemType {
 }
 
 model BookingItem {
-  id           Int      @id @default(autoincrement())
-  tenantId     Int      @map("tenant_id")
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  bookingId    Int      @map("booking_id")
-  booking      Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  itemType     ItemType @map("item_type")
-  vendorId     Int?     @map("vendor_id")
-  vendor       Vendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
-  qty          Int      @default(1)
-  unitCostTry  Decimal  @default(0) @map("unit_cost_try") @db.Decimal(12, 2)
-  unitPriceEur Decimal  @default(0) @map("unit_price_eur") @db.Decimal(12, 2)
-  notes        String?  @db.Text
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id                  Int              @id @default(autoincrement())
+  tenantId            Int              @map("tenant_id")
+  tenant              Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bookingId           Int              @map("booking_id")
+  booking             Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  itemType            ItemType         @map("item_type")
+
+  // Legacy vendor reference (deprecated, kept for backward compatibility)
+  vendorId            Int?             @map("vendor_id")
+  vendor              Vendor?          @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  // New catalog reference
+  serviceOfferingId   Int?             @map("service_offering_id")
+  serviceOffering     ServiceOffering? @relation(fields: [serviceOfferingId], references: [id], onDelete: SetNull)
+
+  qty                 Int              @default(1)
+  unitCostTry         Decimal          @default(0) @map("unit_cost_try") @db.Decimal(12, 2)
+  unitPriceEur        Decimal          @default(0) @map("unit_price_eur") @db.Decimal(12, 2)
+
+  // Pricing snapshot to freeze details at booking time
+  pricingSnapshotJson Json?            @map("pricing_snapshot_json")
+
+  notes               String?          @db.Text
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
 
   @@index([tenantId])
   @@index([bookingId])
   @@index([vendorId])
+  @@index([serviceOfferingId])
   @@map("booking_items")
 }
 

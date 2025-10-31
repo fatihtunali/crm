@@ -1,0 +1,318 @@
+1) Guests & Pax Types (stop treating all humans the same)
+
+Problem: Pricing and policies hinge on who is traveling (adult/child/infant, nationality), not just a headcount.
+
+Model
+
+pax_types (ADULT, CHILD, INFANT) with age bands.
+
+booking_guests (booking_id, guest_no, pax_type, dob, nationality, passport_meta, notes).
+
+Optional: pax_pricing_rules per service (e.g., child free under 6 for activities).
+
+API
+
+GET/POST /pax-types
+
+GET/POST /bookings/{id}/guests
+
+Store only necessary PII; encrypt sensitive fields.
+
+Payoff: Child policies, visa warnings, and room occupancy validation become deterministic.
+
+2) Products vs. Packages (components vs. bundles)
+
+Problem: “Tour” is often a package of components (room + transfer + guide + activity) with its own markup.
+
+Model
+
+You already have service_offerings (components). Add:
+
+packages (tenant_id, code, title, description).
+
+package_items (package_id, service_offering_id, qty, default_day_offset, optional flags).
+
+package_rates (season_from/to, markup_pct or fixed EUR).
+
+API
+
+GET/POST /packages
+
+GET/POST /packages/{id}/items
+
+Pricing helper: POST /pricing/package-quote → expands components, applies package rate/markup.
+
+Payoff: One click to add a Cappadocia 3D/2N package; consistent margins.
+
+3) Availability & Allotment (inventory, but for tours)
+
+Problem: You’ll oversell rooms/balloons if you only store rates.
+
+Model
+
+allotments (service_offering_id, date, total_units, hold_until, source).
+
+allocations (booking_item_id, allotment_id, units_reserved, status).
+
+API
+
+GET /availability?offering=...&date=... (returns free units).
+
+POST /booking-items should atomically reserve from allotments (or fail).
+
+Payoff: Ops can see remaining capacity per day; fewer angry calls at 6 a.m.
+
+4) Locations, Zones, & Distance (transfers that think about space)
+
+Problem: City names aren’t enough for pricing transfers.
+
+Model
+
+locations (country, region, city, geo).
+
+zones (airport zone, old town, hotel belt) with polygon/centroid.
+
+location_zone_map (hotel → zone).
+
+distance_matrix_cache (origin_zone, dest_zone, km, minutes) for fast quotes.
+
+API
+
+GET/POST /locations, GET/POST /zones.
+
+Pricing helper can lookup zone→zone rules.
+
+Payoff: Transfer pricing by zone, automatic extra-km fees, realistic ETAs.
+
+5) Policies & Fees (money rules live here, not sprinkled in code)
+
+Problem: Cancellation, no-show, holiday surcharge, and child rules are scattered.
+
+Model
+
+policies (type ENUM: CANCELLATION, NO_SHOW, HOLIDAY_SURCHARGE, CHILD, MIN_STAY, RELEASE).
+
+policy_rules (JSON with condition→action, e.g., “cancel ≤7d → 50%”).
+
+Link policies_map (applied_to: service_offering_id | package_id | tenant).
+
+API
+
+GET/POST /policies, GET/POST /policies/apply
+
+Pricing helper returns a policy_breakdown array and total.
+
+Payoff: Transparent quotes; predictable refunds.
+
+6) Scheduling & Assignment (people and vehicles have calendars)
+
+Problem: Guides and vehicles get double-booked without calendars.
+
+Model
+
+resources (type: GUIDE | VEHICLE | DRIVER, capacity, attributes).
+
+resource_calendar (resource_id, start, end, booking_item_id, status).
+
+resource_skills / resource_regions (for guide language/region matching).
+
+API
+
+GET /resources/search?type=GUIDE&lang=en&date=...
+
+POST /bookings/{id}/assignments (resource_id → booking_item_id)
+
+Calendar endpoints for quick views.
+
+Payoff: Assignment becomes a click, not a spreadsheet safari.
+
+7) Documents & Templates (PDFs, emails, vouchers, contracts)
+
+Problem: Every operator needs branded docs in EN/TR with placeholders.
+
+Model
+
+templates (type: QUOTATION_EMAIL, VOUCHER_PDF, INVOICE_PDF, CONTRACT, WHATSAPP_TEXT, language, subject/body/html).
+
+template_vars (documented fields like {{client.name}}, {{booking.total_sell_eur}}).
+
+Rendered docs stored in your existing files.
+
+API
+
+GET/POST /templates
+
+POST /render (template_id, context_object_id) → file_id
+
+Payoff: Ops edits templates without devs; two-language comms standardized.
+
+8) Accounting Reconciliation & Statements (trust the numbers)
+
+Problem: You record payments, but ops and finance need reconciliation and supplier statements.
+
+Model
+
+payment_intents (external provider refs, status timeline).
+
+client_ledger (booking_id, entry_type: invoice | payment | refund | adjustment, amount_eur, date).
+
+supplier_ledger (vendor_id, booking_id, amount_try, date).
+
+supplier_statements (vendor_id, period_from/to, opening, debits, credits, closing).
+
+API
+
+GET /finance/booking-ledger/{bookingId}
+
+GET /finance/supplier-statement?vendorId=...&from=...&to=...
+
+POST /finance/reconcile (match payment_intents to payments)
+
+Payoff: Month-end is a checklist, not a crime scene.
+
+9) Workflow Engine (glue for “if this then that”)
+
+Problem: Triggers (send reminder, confirm vendor, request doc) are ad hoc.
+
+Model
+
+workflows (name, active, trigger: EVENT|SCHEDULE, condition_json, actions_json).
+
+events (booking.created, payment.received, tour.starting_tomorrow).
+
+workflow_runs (status, logs).
+
+API
+
+GET/POST /workflows
+
+POST /workflows/test (dry-run on entity)
+
+Actions can call notifications, generate docs, or create tasks.
+
+Payoff: Scale ops without adding humans.
+
+10) Compliance & Data Retention (KVKK/GDPR without headaches)
+
+Problem: PII must be minimized and erasable.
+
+Model
+
+data_retention_policies (entity_type, retention_days).
+
+anonymization_jobs (entity_id, status).
+
+Field-level encryption for passports; redaction in audit_logs.
+
+API
+
+POST /privacy/anonymize/{entityType}/{id}
+
+GET /privacy/retention-policies
+
+Payoff: Clear knobs for legal requests and auto-purge.
+
+11) Tenant Ops (SaaS niceties you’ll want later)
+
+Problem: Each agency wants their flavor.
+
+Model
+
+tenant_settings (branding, invoice_numbering, default_locale, default_currency).
+
+feature_flags (per tenant).
+
+webhooks_outgoing (tenant-owned destinations).
+
+API
+
+GET/POST /tenants/{id}/settings
+
+GET/POST /tenants/{id}/features
+
+Payoff: Sell the same codebase to very different operators.
+
+12) Reporting Warehouse (don’t crush prod)
+
+Problem: Heavy reports slow the OLTP DB.
+
+Approach
+
+Nightly/streaming ETL to a star schema in a read-optimized DB:
+
+Facts: fact_bookings, fact_payments_client, fact_payments_vendor.
+
+Dimensions: date, tenant, destination, supplier, service_type, agent.
+
+Keep your /reports/* hitting the warehouse.
+
+Payoff: Fast dashboards; happy ops.
+
+13) Performance & Observability (sniff problems early)
+
+Caching: exchange_rates by date pair; zone distances.
+
+Write-through denorms: store booking.totals to avoid big recalcs.
+
+Telemetry: trace id on every request; log slow queries; dashboard for error rates per endpoint.
+
+Minimal OAS patches to add (sketch)
+# Suppliers split (company-level)
+POST   /api/v1/suppliers
+GET    /api/v1/suppliers
+GET    /api/v1/suppliers/{id}
+PATCH  /api/v1/suppliers/{id}
+DELETE /api/v1/suppliers/{id}
+
+# Catalog shells and typed details
+POST   /api/v1/service-offerings
+GET    /api/v1/service-offerings
+GET    /api/v1/service-offerings/{id}
+PATCH  /api/v1/service-offerings/{id}
+DELETE /api/v1/service-offerings/{id}
+
+POST   /api/v1/hotel-rooms
+POST   /api/v1/hotel-room-rates
+POST   /api/v1/transfers
+POST   /api/v1/transfer-rates
+POST   /api/v1/vehicles
+POST   /api/v1/vehicle-rates
+POST   /api/v1/guides
+POST   /api/v1/guide-rates
+POST   /api/v1/activities
+POST   /api/v1/activity-rates
+
+# Availability & assignment
+GET    /api/v1/availability
+POST   /api/v1/bookings/{id}/assignments
+GET    /api/v1/resources
+GET    /api/v1/resources/{id}/calendar
+
+# Pricing helpers
+POST   /api/v1/pricing/quote
+POST   /api/v1/pricing/bulk-quote
+
+# Packages
+POST   /api/v1/packages
+GET    /api/v1/packages
+POST   /api/v1/packages/{id}/items
+POST   /api/v1/pricing/package-quote
+
+# Policies
+POST   /api/v1/policies
+GET    /api/v1/policies
+POST   /api/v1/policies/apply
+
+Migration order (safe and boring)
+
+Introduce suppliers + service_offerings in parallel with vendors.
+
+Add typed tables + rates; write backfill scripts mapping old vendor_rates → new structures.
+
+Add booking_items.service_offering_id + pricing_snapshot_json and populate for new bookings first.
+
+Swap UI to read from the new catalog; keep old endpoints as read-only for a sprint; then retire them.
+
+Layer availability and assignment once catalog is stable.
+
+Add policies and move cancellation/no-show logic out of code into data.
