@@ -27,6 +27,13 @@ export class QuotationsService {
               id: true,
               source: true,
               notes: true,
+              client: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
             },
           },
           tour: {

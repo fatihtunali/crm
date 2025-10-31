@@ -85,6 +85,7 @@ export class WebhooksController {
 
   /**
    * AUTHENTICATED ENDPOINT - Get webhook statistics
+   * NOTE: This must come BEFORE the :id route to avoid "stats" being parsed as an ID
    */
   @Get('stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -100,6 +101,7 @@ export class WebhooksController {
 
   /**
    * AUTHENTICATED ENDPOINT - Get single webhook event
+   * NOTE: This must come AFTER specific routes like /stats
    */
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)

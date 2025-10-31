@@ -1,0 +1,306 @@
+1) Core model (clean split)
+
+Parties & Suppliers
+
+parties — generic entity: name, tax_id, addresses, contacts.
+
+suppliers — subset of parties that sell to you (FK party_id), with bank accounts, payment terms.
+
+contacts — many per party (ops@hotel.com
+, accounting@transporter.com
+).
+
+Catalog vs. Pricing
+
+service_offerings — the catalog index (what’s available), minimal shared fields:
+
+id, supplier_id, service_type ENUM[hotel_room,transfer,vehicle_hire,guide_service,activity], title, location_id, is_active.
+
+Type-specific detail tables (one-to-one with service_offerings.id):
+
+hotel_rooms, transfers, vehicles, guides, activities.
+
+Rate cards per type (one-to-many):
+
+hotel_room_rates, transfer_rates, vehicle_rates, guide_rates, activity_rates.
+
+Optional: contracts (supplier terms, commission, seasons) referenced by rate rows.
+
+Bookings
+
+booking_items now reference service_offering_id and store a snapshot of priced details (so future rate changes don’t alter past bookings).
+
+Keep your dual-currency: unit_cost_try, unit_price_eur, qty, plus a pricing_snapshot_json.
+
+2) Type-specific fields (what actually varies)
+A) Hotels
+
+hotel_rooms:
+
+hotel_name, stars, address, geo, board_types (BB/HB/FB/AI), room_type (DBL/TWN/TRP/SUITE), max_occupancy, amenities.
+
+hotel_room_rates:
+
+service_offering_id, season_from, season_to,
+
+pricing_model ENUM[per_room_night,per_person_night],
+
+board_type, occupancy (adults/children),
+
+cost_try, optional child_policy_json, allotment (nullable), release_days.
+
+B) Transfers
+
+transfers:
+
+origin_zone_id, dest_zone_id, private_or_shared, vehicle_class (sedan, van, minibus), meet_greet bool.
+
+transfer_rates:
+
+service_offering_id, pricing_model ENUM[per_transfer,per_km,per_hour],
+
+included_km, included_hours, extra_km_try, extra_hour_try,
+
+base_cost_try, night_surcharge_pct, holiday_surcharge_pct.
+
+C) Vehicle hire (with/without driver)
+
+vehicles:
+
+fleet_owner_supplier_id, make, model, year, seats, class, with_driver bool.
+
+vehicle_rates:
+
+service_offering_id, pricing_model ENUM[per_day,per_hour],
+
+daily_km_included, extra_km_try, driver_daily_try (if with_driver),
+
+base_cost_try, one_way_fee_try (optional).
+
+D) Guides
+
+guides:
+
+name, license_no, languages (array), regions (array), max_group_size.
+
+guide_rates:
+
+service_offering_id, pricing_model ENUM[per_day,per_half_day,per_hour],
+
+day_cost_try, half_day_cost_try, hour_cost_try, overtime_hour_try, holiday_surcharge_pct.
+
+E) Activities / Attractions
+
+activities:
+
+operator_name, duration_minutes, capacity, age_limit, included_items, meeting_point.
+
+activity_rates:
+
+service_offering_id, pricing_model ENUM[per_person,per_group],
+
+min_pax, max_pax, tiered_pricing_json (e.g., 1–4 pax cost, 5–8 pax cost), base_cost_try.
+
+You don’t need all fields on day one—start with the ones you price against. Add the rest later.
+
+3) Booking items (snapshot pattern)
+
+Keep your existing booking_items but link to the catalog and freeze details:
+
+ALTER TABLE booking_items
+  ADD COLUMN service_offering_id BIGINT NULL,
+  ADD COLUMN service_type ENUM('hotel_room','transfer','vehicle_hire','guide_service','activity') NULL,
+  ADD COLUMN pricing_snapshot_json JSON NULL;
+
+
+When you add an item to a booking:
+
+Resolve the rate (TRY) based on date + pax + model.
+
+Write unit_cost_try, compute unit_price_eur via locked rate/markup.
+
+Save a small pricing_snapshot_json:
+
+{
+  "resolved_rate_id": 123,
+  "board_type": "BB",
+  "occupancy": {"adults":2,"children":0},
+  "included_km": 40,
+  "night_surcharge_applied": true
+}
+
+
+So historical bookings never change if someone edits the catalog.
+
+4) API shape (clean, discoverable)
+Suppliers (company-level)
+
+POST /api/v1/suppliers
+
+GET /api/v1/suppliers?type=hotel|transport|activity|guide
+
+GET /api/v1/suppliers/{id} (with bank accounts, contacts)
+
+PATCH /api/v1/suppliers/{id} / DELETE ...
+
+Catalog (shared shell)
+
+POST /api/v1/service-offerings (create shell with supplier_id, service_type)
+
+GET /api/v1/service-offerings?type=hotel_room&location=...&active=true
+
+GET /api/v1/service-offerings/{id} (returns shell + typed details)
+
+PATCH /api/v1/service-offerings/{id} / DELETE ...
+
+Type detail endpoints
+
+POST /api/v1/hotel-rooms / GET /api/v1/hotel-rooms/{id} / PATCH ...
+
+POST /api/v1/transfers / ...
+
+POST /api/v1/vehicles / ...
+
+POST /api/v1/guides / ...
+
+POST /api/v1/activities / ...
+
+Each body must include service_offering_id (created first).
+
+Rate endpoints (by type)
+
+POST /api/v1/hotel-room-rates (+ list, get, patch, delete)
+
+POST /api/v1/transfer-rates
+
+POST /api/v1/vehicle-rates
+
+POST /api/v1/guide-rates
+
+POST /api/v1/activity-rates
+
+Pricing helpers (nice UX, powerful logic)
+
+POST /api/v1/pricing/quote
+
+Input: { service_type, service_offering_id, date(s), pax, options, tenant_id implicit }
+
+Output: { cost_try, sell_eur, breakdown, warnings }
+
+POST /api/v1/pricing/bulk-quote (for itinerary builder to price all days at once)
+
+These helpers will keep the front-end simple and guarantee prices match booking creation.
+
+5) Minimal SQL to get started (illustrative)
+CREATE TABLE suppliers (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  tenant_id BIGINT NOT NULL,
+  party_id BIGINT NOT NULL,
+  type ENUM('hotel','transport','activity_operator','guide_agency','other') NOT NULL,
+  payment_terms VARCHAR(64),
+  is_active TINYINT(1) DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE service_offerings (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  tenant_id BIGINT NOT NULL,
+  supplier_id BIGINT NOT NULL,
+  service_type ENUM('hotel_room','transfer','vehicle_hire','guide_service','activity') NOT NULL,
+  title VARCHAR(160) NOT NULL,
+  location_id BIGINT NULL,
+  is_active TINYINT(1) DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX (tenant_id, service_type, is_active),
+  FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
+);
+
+CREATE TABLE hotel_rooms (
+  service_offering_id BIGINT PRIMARY KEY,
+  hotel_name VARCHAR(160) NOT NULL,
+  stars TINYINT,
+  room_type VARCHAR(64),
+  max_occupancy TINYINT,
+  board_types JSON,
+  amenities JSON,
+  FOREIGN KEY (service_offering_id) REFERENCES service_offerings(id)
+);
+
+CREATE TABLE hotel_room_rates (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  tenant_id BIGINT NOT NULL,
+  service_offering_id BIGINT NOT NULL,
+  season_from DATE NOT NULL,
+  season_to DATE NOT NULL,
+  pricing_model ENUM('per_room_night','per_person_night') NOT NULL,
+  board_type ENUM('RO','BB','HB','FB','AI') NOT NULL,
+  occupancy_adults TINYINT DEFAULT 2,
+  occupancy_children TINYINT DEFAULT 0,
+  cost_try DECIMAL(12,2) NOT NULL,
+  child_policy_json JSON NULL,
+  allotment INT NULL,
+  release_days INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX (tenant_id, service_offering_id, season_from, season_to),
+  FOREIGN KEY (service_offering_id) REFERENCES service_offerings(id)
+);
+
+
+Replicate this pattern for transfers, vehicle_rates, guide_rates, activity_rates.
+
+6) UI/UX that won’t drive your ops team mad
+
+Catalog → typed tabs
+
+“Suppliers” (company level)
+
+“Catalog”
+
+Tabs: Hotels, Transfers, Vehicles, Guides, Activities
+
+Each tab lists offerings with filters: location/zone, class, capacity, stars, amenities, languages, etc.
+
+“Rates” button on each row opens the type-specific rate table with seasons.
+
+Itinerary builder
+
+Add line → choose type first → choose offering → date(s) → pax → call /pricing/quote → confirm → adds to booking with EUR price & TRY cost.
+
+Bulk actions
+
+“Copy rates from last season”
+
+“Clone offering to another supplier” (for chain hotels, fleet clones)
+
+7) Migration from your current vendors
+
+Create suppliers from vendors (1:1), copy contacts/tax/bank data.
+
+For each existing vendor_rate:
+
+Decide its service_type and create a service_offerings row.
+
+Move type-specific fields into the new detail table (start basic).
+
+Move price rows to the appropriate *_rates table.
+
+Update booking_items:
+
+Resolve which service_offering_id each item belongs to.
+
+Backfill service_type and write a minimal pricing_snapshot_json with the old rate id and salient fields.
+
+You can run both schemas in parallel for a sprint, write a read-through layer that resolves from the new tables first and falls back to the legacy vendor_rates if needed, then sunset the old table.
+
+8) Why this works (and scales)
+
+Operational clarity: ops people think in “rooms,” “transfers,” “guides,” not “vendors.”
+
+Pricing correctness: each type has the knobs it actually needs (occupancy, seasons, zones, surcharges).
+
+SaaS-ready: tenants can have wildly different catalogs and rate models without forking your code.
+
+Performance: indexes per type; small joins; pricing helpers keep the front-end fast.

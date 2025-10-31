@@ -1,0 +1,8 @@
+{
+  "/[locale]/(dashboard)/files/page": "app/[locale]/(dashboard)/files/page.js",
+  "/[locale]/(dashboard)/webhooks/page": "app/[locale]/(dashboard)/webhooks/page.js",
+  "/[locale]/(dashboard)/dashboard/page": "app/[locale]/(dashboard)/dashboard/page.js",
+  "/[locale]/(dashboard)/tours/page": "app/[locale]/(dashboard)/tours/page.js",
+  "/[locale]/(dashboard)/vendors/page": "app/[locale]/(dashboard)/vendors/page.js",
+  "/[locale]/(dashboard)/settings/page": "app/[locale]/(dashboard)/settings/page.js"
+}

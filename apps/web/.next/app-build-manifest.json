@@ -1,0 +1,100 @@
+{
+  "pages": {
+    "/[locale]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/page.js"
+    ],
+    "/[locale]/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/layout.js"
+    ],
+    "/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/layout.css",
+      "static/chunks/app/layout.js"
+    ],
+    "/[locale]/(dashboard)/dashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/dashboard/page.js"
+    ],
+    "/[locale]/(dashboard)/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/layout.js"
+    ],
+    "/[locale]/(dashboard)/bookings/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/bookings/page.js"
+    ],
+    "/[locale]/(dashboard)/payments/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/payments/page.js"
+    ],
+    "/[locale]/(dashboard)/payments/new/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/payments/new/page.js"
+    ],
+    "/[locale]/(dashboard)/invoices/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/invoices/page.js"
+    ],
+    "/[locale]/(dashboard)/invoices/new/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/invoices/new/page.js"
+    ],
+    "/[locale]/(dashboard)/reports/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/reports/page.js"
+    ],
+    "/[locale]/(dashboard)/files/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/files/page.js"
+    ],
+    "/[locale]/(dashboard)/webhooks/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/webhooks/page.js"
+    ],
+    "/[locale]/(dashboard)/settings/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/settings/page.js"
+    ],
+    "/[locale]/(dashboard)/leads/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/leads/page.js"
+    ],
+    "/[locale]/(dashboard)/clients/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/clients/page.js"
+    ],
+    "/[locale]/(dashboard)/vendors/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/vendors/page.js"
+    ],
+    "/[locale]/(dashboard)/tours/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/tours/page.js"
+    ],
+    "/[locale]/(dashboard)/quotations/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/[locale]/(dashboard)/quotations/page.js"
+    ]
+  }
+}
