@@ -208,4 +208,164 @@ export class QuotationsService {
       totalPriceEur: stat._sum.sellPriceEur || 0,
     }));
   }
+
+  // Workflow methods
+  async sendQuotation(id: number, tenantId: number) {
+    // Verify quotation exists and belongs to tenant
+    const quotation = await this.prisma.quotation.findFirst({
+      where: { id, tenantId },
+      include: {
+        lead: {
+          include: {
+            client: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!quotation) {
+      throw new NotFoundException(`Quotation with ID ${id} not found`);
+    }
+
+    // Validate status transition
+    if (quotation.status !== QuotationStatus.DRAFT) {
+      throw new Error(
+        `Cannot send quotation with status ${quotation.status}. Only DRAFT quotations can be sent.`,
+      );
+    }
+
+    // Validate client email exists
+    if (!quotation.lead?.client?.email) {
+      throw new Error(
+        'Cannot send quotation: No email address found for the associated client.',
+      );
+    }
+
+    // Update status to SENT
+    const updatedQuotation = await this.prisma.quotation.update({
+      where: { id },
+      data: { status: QuotationStatus.SENT },
+      include: {
+        lead: {
+          include: {
+            client: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        tour: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    // TODO: Send email notification to client
+    // For now, we'll just log it
+    // await this.emailService.sendQuotation(updatedQuotation);
+
+    return {
+      ...updatedQuotation,
+      message: `Quotation sent successfully to ${quotation.lead.client.email}`,
+    };
+  }
+
+  async acceptQuotation(id: number, tenantId: number) {
+    // Verify quotation exists and belongs to tenant
+    const quotation = await this.prisma.quotation.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!quotation) {
+      throw new NotFoundException(`Quotation with ID ${id} not found`);
+    }
+
+    // Validate status transition
+    if (quotation.status !== QuotationStatus.SENT) {
+      throw new Error(
+        `Cannot accept quotation with status ${quotation.status}. Only SENT quotations can be accepted.`,
+      );
+    }
+
+    // Update status to ACCEPTED
+    const updatedQuotation = await this.prisma.quotation.update({
+      where: { id },
+      data: { status: QuotationStatus.ACCEPTED },
+      include: {
+        lead: {
+          select: {
+            id: true,
+            source: true,
+          },
+        },
+        tour: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...updatedQuotation,
+      message: 'Quotation accepted successfully. Exchange rate has been locked.',
+    };
+  }
+
+  async rejectQuotation(id: number, tenantId: number) {
+    // Verify quotation exists and belongs to tenant
+    const quotation = await this.prisma.quotation.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!quotation) {
+      throw new NotFoundException(`Quotation with ID ${id} not found`);
+    }
+
+    // Validate status transition
+    if (quotation.status !== QuotationStatus.SENT) {
+      throw new Error(
+        `Cannot reject quotation with status ${quotation.status}. Only SENT quotations can be rejected.`,
+      );
+    }
+
+    // Update status to REJECTED
+    const updatedQuotation = await this.prisma.quotation.update({
+      where: { id },
+      data: { status: QuotationStatus.REJECTED },
+      include: {
+        lead: {
+          select: {
+            id: true,
+            source: true,
+          },
+        },
+        tour: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...updatedQuotation,
+      message: 'Quotation rejected.',
+    };
+  }
 }

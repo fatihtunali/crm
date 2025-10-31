@@ -82,6 +82,72 @@ export class QuotationsController {
     return this.quotationsService.getStatsByStatus(tenantId);
   }
 
+  @Post(':id/send')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS)
+  @ApiOperation({ summary: 'Send quotation to client (DRAFT → SENT)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Quotation sent successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Quotation not found',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid status transition or missing client email',
+  })
+  sendQuotation(
+    @Param('id', ParseIntPipe) id: number,
+    @TenantId() tenantId: number,
+  ) {
+    return this.quotationsService.sendQuotation(id, tenantId);
+  }
+
+  @Post(':id/accept')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS)
+  @ApiOperation({ summary: 'Accept quotation (SENT → ACCEPTED)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Quotation accepted successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Quotation not found',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid status transition',
+  })
+  acceptQuotation(
+    @Param('id', ParseIntPipe) id: number,
+    @TenantId() tenantId: number,
+  ) {
+    return this.quotationsService.acceptQuotation(id, tenantId);
+  }
+
+  @Post(':id/reject')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS)
+  @ApiOperation({ summary: 'Reject quotation (SENT → REJECTED)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Quotation rejected successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Quotation not found',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid status transition',
+  })
+  rejectQuotation(
+    @Param('id', ParseIntPipe) id: number,
+    @TenantId() tenantId: number,
+  ) {
+    return this.quotationsService.rejectQuotation(id, tenantId);
+  }
+
   @Get(':id')
   @Roles(
     UserRole.OWNER,
