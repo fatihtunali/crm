@@ -30,6 +30,10 @@ import { ContactsModule } from './contacts/contacts.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { ServiceOfferingsModule } from './service-offerings/service-offerings.module';
 import { HotelsModule } from './hotels/hotels.module';
+import { TransfersModule } from './transfers/transfers.module';
+import { VehiclesModule } from './vehicles/vehicles.module';
+import { GuidesModule } from './guides/guides.module';
+import { ActivitiesModule } from './activities/activities.module';
 
 @Module({
   imports: [
@@ -64,6 +68,10 @@ import { HotelsModule } from './hotels/hotels.module';
     SuppliersModule,
     ServiceOfferingsModule,
     HotelsModule,
+    TransfersModule,
+    VehiclesModule,
+    GuidesModule,
+    ActivitiesModule,
   ],
   providers: [
     {
