@@ -9,6 +9,8 @@ import {
   ParseIntPipe,
   UseGuards,
   Query,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,6 +19,7 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
+import { Response } from 'express';
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
@@ -84,6 +87,43 @@ export class InvoicesController {
   })
   getStats(@TenantId() tenantId: number) {
     return this.invoicesService.getStats(tenantId);
+  }
+
+  @Get(':id/pdf')
+  @Roles(
+    UserRole.OWNER,
+    UserRole.ADMIN,
+    UserRole.AGENT,
+    UserRole.OPERATIONS,
+    UserRole.ACCOUNTING,
+  )
+  @ApiOperation({ summary: 'Generate and download invoice PDF' })
+  @ApiResponse({
+    status: 200,
+    description: 'Invoice PDF generated successfully',
+    content: {
+      'application/pdf': {
+        schema: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
+  async generatePDF(
+    @Param('id', ParseIntPipe) id: number,
+    @TenantId() tenantId: number,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const pdfStream = await this.invoicesService.generatePDF(id, tenantId);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="invoice-${id}.pdf"`,
+    });
+
+    return new StreamableFile(pdfStream);
   }
 
   @Get(':id')
