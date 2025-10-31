@@ -20,6 +20,7 @@ import {
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -43,10 +44,13 @@ export class ClientsController {
 
   @Get()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS)
-  @ApiOperation({ summary: 'Get all clients for current tenant' })
+  @ApiOperation({ summary: 'Get all clients for current tenant with pagination' })
   @ApiResponse({ status: 200, description: 'Clients retrieved successfully' })
-  findAll(@TenantId() tenantId: number) {
-    return this.clientsService.findAll(tenantId);
+  findAll(
+    @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.clientsService.findAll(tenantId, paginationDto);
   }
 
   @Get('search')

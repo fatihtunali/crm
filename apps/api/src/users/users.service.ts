@@ -7,27 +7,40 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import * as argon2 from 'argon2';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number) {
-    return this.prisma.user.findMany({
-      where: { tenantId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        phone: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(tenantId: number, paginationDto: PaginationDto): Promise<PaginatedResponse<any>> {
+    const { skip, take, sortBy = 'createdAt', order = 'desc' } = paginationDto;
+
+    const where = { tenantId };
+
+    const [data, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          phone: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, paginationDto.page ?? 1, paginationDto.limit ?? 50);
   }
 
   async findOne(id: number, tenantId: number) {

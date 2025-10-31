@@ -2,38 +2,50 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePaymentVendorDto } from './dto/create-payment-vendor.dto';
 import { UpdatePaymentVendorDto } from './dto/update-payment-vendor.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 
 @Injectable()
 export class PaymentVendorService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number, bookingId?: number, vendorId?: number) {
-    return this.prisma.paymentVendor.findMany({
-      where: {
-        tenantId,
-        ...(bookingId && { bookingId }),
-        ...(vendorId && { vendorId }),
-      },
-      include: {
-        booking: {
-          select: {
-            id: true,
-            bookingCode: true,
-            startDate: true,
+  async findAll(tenantId: number, paginationDto: PaginationDto, bookingId?: number, vendorId?: number): Promise<PaginatedResponse<any>> {
+    const { skip, take, sortBy = 'dueAt', order = 'asc' } = paginationDto;
+    const where = {
+      tenantId,
+      ...(bookingId && { bookingId }),
+      ...(vendorId && { vendorId }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.paymentVendor.findMany({
+        where,
+        include: {
+          booking: {
+            select: {
+              id: true,
+              bookingCode: true,
+              startDate: true,
+            },
+          },
+          vendor: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+              email: true,
+              phone: true,
+            },
           },
         },
-        vendor: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            email: true,
-            phone: true,
-          },
-        },
-      },
-      orderBy: { dueAt: 'asc' },
-    });
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.paymentVendor.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, paginationDto.page ?? 1, paginationDto.limit ?? 50);
   }
 
   async findOne(id: number, tenantId: number) {

@@ -20,6 +20,7 @@ import {
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -67,10 +68,11 @@ export class InvoicesController {
   })
   findAll(
     @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
     @Query('bookingId', new ParseIntPipe({ optional: true }))
     bookingId?: number,
   ) {
-    return this.invoicesService.findAll(tenantId, bookingId);
+    return this.invoicesService.findAll(tenantId, paginationDto, bookingId);
   }
 
   @Get('stats')

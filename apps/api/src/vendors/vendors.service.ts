@@ -5,20 +5,32 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { VendorType } from '@tour-crm/shared';
 
 @Injectable()
 export class VendorsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number, type?: VendorType) {
-    return this.prisma.vendor.findMany({
-      where: {
-        tenantId,
-        ...(type && { type }),
-      },
-      orderBy: { name: 'asc' },
-    });
+  async findAll(tenantId: number, paginationDto: PaginationDto, type?: VendorType): Promise<PaginatedResponse<any>> {
+    const { skip, take, sortBy = 'name', order = 'asc' } = paginationDto;
+    const where = {
+      tenantId,
+      ...(type && { type }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.vendor.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.vendor.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, paginationDto.page ?? 1, paginationDto.limit ?? 50);
   }
 
   async findOne(id: number, tenantId: number) {

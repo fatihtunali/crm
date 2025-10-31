@@ -20,6 +20,7 @@ import {
 import { ToursService } from './tours.service';
 import { CreateTourDto } from './dto/create-tour.dto';
 import { UpdateTourDto } from './dto/update-tour.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -42,10 +43,13 @@ export class ToursController {
 
   @Get()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS, UserRole.ACCOUNTING)
-  @ApiOperation({ summary: 'Get all tours for current tenant' })
+  @ApiOperation({ summary: 'Get all tours for current tenant with pagination' })
   @ApiResponse({ status: 200, description: 'Tours retrieved successfully' })
-  findAll(@TenantId() tenantId: number) {
-    return this.toursService.findAll(tenantId);
+  findAll(
+    @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.toursService.findAll(tenantId, paginationDto);
   }
 
   @Get('search')

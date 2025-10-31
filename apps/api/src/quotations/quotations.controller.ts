@@ -20,6 +20,7 @@ import {
 import { QuotationsService } from './quotations.service';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { UpdateQuotationDto } from './dto/update-quotation.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -51,7 +52,7 @@ export class QuotationsController {
     UserRole.OPERATIONS,
     UserRole.ACCOUNTING,
   )
-  @ApiOperation({ summary: 'Get all quotations for current tenant' })
+  @ApiOperation({ summary: 'Get all quotations for current tenant with pagination' })
   @ApiQuery({ name: 'status', enum: QuotationStatus, required: false })
   @ApiResponse({
     status: 200,
@@ -59,9 +60,10 @@ export class QuotationsController {
   })
   findAll(
     @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
     @Query('status') status?: QuotationStatus,
   ) {
-    return this.quotationsService.findAll(tenantId, status);
+    return this.quotationsService.findAll(tenantId, paginationDto, status);
   }
 
   @Get('stats')

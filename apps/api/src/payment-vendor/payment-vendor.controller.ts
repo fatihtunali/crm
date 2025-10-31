@@ -20,6 +20,7 @@ import {
 import { PaymentVendorService } from './payment-vendor.service';
 import { CreatePaymentVendorDto } from './dto/create-payment-vendor.dto';
 import { UpdatePaymentVendorDto } from './dto/update-payment-vendor.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -72,12 +73,13 @@ export class PaymentVendorController {
   })
   findAll(
     @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
     @Query('bookingId', new ParseIntPipe({ optional: true }))
     bookingId?: number,
     @Query('vendorId', new ParseIntPipe({ optional: true }))
     vendorId?: number,
   ) {
-    return this.paymentVendorService.findAll(tenantId, bookingId, vendorId);
+    return this.paymentVendorService.findAll(tenantId, paginationDto, bookingId, vendorId);
   }
 
   @Get('stats')

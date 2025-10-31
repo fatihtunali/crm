@@ -2,28 +2,40 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVendorRateDto } from './dto/create-vendor-rate.dto';
 import { UpdateVendorRateDto } from './dto/update-vendor-rate.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 
 @Injectable()
 export class VendorRatesService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number, vendorId?: number) {
-    return this.prisma.vendorRate.findMany({
-      where: {
-        tenantId,
-        ...(vendorId && { vendorId }),
-      },
-      include: {
-        vendor: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
+  async findAll(tenantId: number, paginationDto: PaginationDto, vendorId?: number): Promise<PaginatedResponse<any>> {
+    const { skip, take, sortBy = 'seasonFrom', order = 'desc' } = paginationDto;
+    const where = {
+      tenantId,
+      ...(vendorId && { vendorId }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.vendorRate.findMany({
+        where,
+        include: {
+          vendor: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+            },
           },
         },
-      },
-      orderBy: [{ vendorId: 'asc' }, { seasonFrom: 'desc' }],
-    });
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.vendorRate.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, paginationDto.page ?? 1, paginationDto.limit ?? 50);
   }
 
   async findOne(id: number, tenantId: number) {

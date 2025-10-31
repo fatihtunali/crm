@@ -20,6 +20,7 @@ import {
 import { ExchangeRatesService } from './exchange-rates.service';
 import { CreateExchangeRateDto } from './dto/create-exchange-rate.dto';
 import { UpdateExchangeRateDto } from './dto/update-exchange-rate.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -59,8 +60,11 @@ export class ExchangeRatesController {
     status: 200,
     description: 'Exchange rates retrieved successfully',
   })
-  findAll(@TenantId() tenantId: number) {
-    return this.exchangeRatesService.findAll(tenantId);
+  findAll(
+    @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.exchangeRatesService.findAll(tenantId, paginationDto);
   }
 
   @Get('latest')

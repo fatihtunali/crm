@@ -2,36 +2,48 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePaymentClientDto } from './dto/create-payment-client.dto';
 import { UpdatePaymentClientDto } from './dto/update-payment-client.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 
 @Injectable()
 export class PaymentClientService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number, bookingId?: number) {
-    return this.prisma.paymentClient.findMany({
-      where: {
-        tenantId,
-        ...(bookingId && { bookingId }),
-      },
-      include: {
-        booking: {
-          select: {
-            id: true,
-            bookingCode: true,
-            startDate: true,
-            client: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                phone: true,
+  async findAll(tenantId: number, paginationDto: PaginationDto, bookingId?: number): Promise<PaginatedResponse<any>> {
+    const { skip, take, sortBy = 'paidAt', order = 'desc' } = paginationDto;
+    const where = {
+      tenantId,
+      ...(bookingId && { bookingId }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.paymentClient.findMany({
+        where,
+        include: {
+          booking: {
+            select: {
+              id: true,
+              bookingCode: true,
+              startDate: true,
+              client: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  phone: true,
+                },
               },
             },
           },
         },
-      },
-      orderBy: { paidAt: 'desc' },
-    });
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.paymentClient.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, paginationDto.page ?? 1, paginationDto.limit ?? 50);
   }
 
   async findOne(id: number, tenantId: number) {

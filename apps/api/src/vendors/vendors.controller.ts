@@ -20,6 +20,7 @@ import {
 import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -42,11 +43,15 @@ export class VendorsController {
 
   @Get()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS, UserRole.ACCOUNTING)
-  @ApiOperation({ summary: 'Get all vendors for current tenant' })
+  @ApiOperation({ summary: 'Get all vendors for current tenant with pagination' })
   @ApiQuery({ name: 'type', enum: VendorType, required: false })
   @ApiResponse({ status: 200, description: 'Vendors retrieved successfully' })
-  findAll(@TenantId() tenantId: number, @Query('type') type?: VendorType) {
-    return this.vendorsService.findAll(tenantId, type);
+  findAll(
+    @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
+    @Query('type') type?: VendorType,
+  ) {
+    return this.vendorsService.findAll(tenantId, paginationDto, type);
   }
 
   @Get('search')

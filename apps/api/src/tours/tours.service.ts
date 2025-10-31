@@ -6,21 +6,33 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTourDto } from './dto/create-tour.dto';
 import { UpdateTourDto } from './dto/update-tour.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 
 @Injectable()
 export class ToursService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number) {
-    return this.prisma.tour.findMany({
-      where: { tenantId },
-      include: {
-        _count: {
-          select: { itineraries: true, quotations: true },
+  async findAll(tenantId: number, paginationDto: PaginationDto): Promise<PaginatedResponse<any>> {
+    const { skip, take, sortBy = 'code', order = 'asc' } = paginationDto;
+    const where = { tenantId };
+
+    const [data, total] = await Promise.all([
+      this.prisma.tour.findMany({
+        where,
+        include: {
+          _count: {
+            select: { itineraries: true, quotations: true },
+          },
         },
-      },
-      orderBy: { code: 'asc' },
-    });
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.tour.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, paginationDto.page ?? 1, paginationDto.limit ?? 50);
   }
 
   async findOne(id: number, tenantId: number) {

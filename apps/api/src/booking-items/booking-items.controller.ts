@@ -20,6 +20,7 @@ import {
 import { BookingItemsService } from './booking-items.service';
 import { CreateBookingItemDto } from './dto/create-booking-item.dto';
 import { UpdateBookingItemDto } from './dto/update-booking-item.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -67,10 +68,11 @@ export class BookingItemsController {
   })
   findAll(
     @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
     @Query('bookingId', new ParseIntPipe({ optional: true }))
     bookingId?: number,
   ) {
-    return this.bookingItemsService.findAll(tenantId, bookingId);
+    return this.bookingItemsService.findAll(tenantId, paginationDto, bookingId);
   }
 
   @Get(':id')

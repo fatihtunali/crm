@@ -1,0 +1,55 @@
+Nice-to-add soon (v1.1+)
+
+Reports: /api/v1/reports/pnl, /api/v1/reports/revenue, /api/v1/reports/leads.
+
+Search on more resources: /bookings/search, /quotations/search.
+
+Notifications stub: /api/v1/notifications/send (email/WhatsApp templates EN/TR).
+
+Me endpoints: GET /api/v1/auth/me, PATCH /api/v1/auth/me (profile, language).
+
+Password flows: /auth/forgot-password, /auth/reset-password, optional /auth/logout.
+
+Rate importer: /exchange-rates/import (CSV).
+
+Vendor portal (read-only) later.
+
+Minimal OAS deltas to add now
+
+components.securitySchemes.bearerAuth (JWT).
+
+Global security: [{ bearerAuth: [] }], override per route if public.
+
+components.parameters for Pagination, Sort, TenantHeader.
+
+components.schemas.Error, PageMeta.
+
+New routes:
+
+POST /quotations/{id}/send
+
+POST /quotations/{id}/accept
+
+GET /invoices/{id}/pdf
+
+POST /payments/webhook/{provider}
+
+GET /audit-logs
+
+GET /healthz, GET /readyz
+
+POST /files/sign-upload, POST /files
+
+Mark payment-client and payment-vendor schemas with fixed currencies and Idempotency-Key header in parameters.
+
+Domain rules to encode (so behavior is unambiguous)
+
+When a quotation is accepted → create booking, copy lines to booking-items, freeze locked_exchange_rate from exchange_rates by acceptance date.
+
+P&L per booking = sum(item.unit_price_eur*qty) − (sum(item.unit_cost_try*qty) / locked_exchange_rate).
+
+Soft delete means records are excluded from queries by default; add ?include=inactive to override.
+
+Role gates: ACCOUNTING only → create invoices & client/vendor payments; OPERATIONS only → mutate booking items and itineraries; ADMIN only → deactivate users; GUIDE → read-only bookings assigned.
+
+If you implement the bullets under Gaps to close, your backend is genuinely “done” for an operational v1.0 and ready for UI wiring and production hardening. When you want, I can output a patch OAS snippet for the new endpoints and components so you can paste it directly into your spec.

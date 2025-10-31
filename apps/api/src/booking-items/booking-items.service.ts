@@ -2,40 +2,52 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingItemDto } from './dto/create-booking-item.dto';
 import { UpdateBookingItemDto } from './dto/update-booking-item.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 
 @Injectable()
 export class BookingItemsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number, bookingId?: number) {
-    return this.prisma.bookingItem.findMany({
-      where: {
-        tenantId,
-        ...(bookingId && { bookingId }),
-      },
-      include: {
-        booking: {
-          select: {
-            id: true,
-            startDate: true,
-            client: {
-              select: {
-                id: true,
-                name: true,
+  async findAll(tenantId: number, paginationDto: PaginationDto, bookingId?: number): Promise<PaginatedResponse<any>> {
+    const { skip, take, sortBy = 'id', order = 'asc' } = paginationDto;
+    const where = {
+      tenantId,
+      ...(bookingId && { bookingId }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.bookingItem.findMany({
+        where,
+        include: {
+          booking: {
+            select: {
+              id: true,
+              startDate: true,
+              client: {
+                select: {
+                  id: true,
+                  name: true,
+                },
               },
             },
           },
-        },
-        vendor: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
+          vendor: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+            },
           },
         },
-      },
-      orderBy: { id: 'asc' },
-    });
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.bookingItem.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, paginationDto.page ?? 1, paginationDto.limit ?? 50);
   }
 
   async findOne(id: number, tenantId: number) {

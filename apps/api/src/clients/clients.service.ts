@@ -6,16 +6,28 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 
 @Injectable()
 export class ClientsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number) {
-    return this.prisma.client.findMany({
-      where: { tenantId },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(tenantId: number, paginationDto: PaginationDto): Promise<PaginatedResponse<any>> {
+    const { skip, take, sortBy = 'createdAt', order = 'desc' } = paginationDto;
+    const where = { tenantId };
+
+    const [data, total] = await Promise.all([
+      this.prisma.client.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.client.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, paginationDto.page ?? 1, paginationDto.limit ?? 50);
   }
 
   async findOne(id: number, tenantId: number) {

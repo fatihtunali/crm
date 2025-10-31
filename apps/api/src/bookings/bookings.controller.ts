@@ -20,6 +20,7 @@ import {
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -51,14 +52,15 @@ export class BookingsController {
     UserRole.OPERATIONS,
     UserRole.ACCOUNTING,
   )
-  @ApiOperation({ summary: 'Get all bookings for current tenant' })
+  @ApiOperation({ summary: 'Get all bookings for current tenant with pagination' })
   @ApiQuery({ name: 'status', enum: BookingStatus, required: false })
   @ApiResponse({ status: 200, description: 'Bookings retrieved successfully' })
   findAll(
     @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
     @Query('status') status?: BookingStatus,
   ) {
-    return this.bookingsService.findAll(tenantId, status);
+    return this.bookingsService.findAll(tenantId, paginationDto, status);
   }
 
   @Get('stats')

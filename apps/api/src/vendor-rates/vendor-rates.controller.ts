@@ -20,6 +20,7 @@ import {
 import { VendorRatesService } from './vendor-rates.service';
 import { CreateVendorRateDto } from './dto/create-vendor-rate.dto';
 import { UpdateVendorRateDto } from './dto/update-vendor-rate.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -51,7 +52,7 @@ export class VendorRatesController {
     UserRole.OPERATIONS,
     UserRole.ACCOUNTING,
   )
-  @ApiOperation({ summary: 'Get all vendor rates for current tenant' })
+  @ApiOperation({ summary: 'Get all vendor rates for current tenant with pagination' })
   @ApiQuery({ name: 'vendorId', type: Number, required: false })
   @ApiResponse({
     status: 200,
@@ -59,9 +60,10 @@ export class VendorRatesController {
   })
   findAll(
     @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
     @Query('vendorId', new ParseIntPipe({ optional: true })) vendorId?: number,
   ) {
-    return this.vendorRatesService.findAll(tenantId, vendorId);
+    return this.vendorRatesService.findAll(tenantId, paginationDto, vendorId);
   }
 
   @Get(':id')

@@ -20,6 +20,7 @@ import {
 import { PaymentClientService } from './payment-client.service';
 import { CreatePaymentClientDto } from './dto/create-payment-client.dto';
 import { UpdatePaymentClientDto } from './dto/update-payment-client.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -67,10 +68,11 @@ export class PaymentClientController {
   })
   findAll(
     @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
     @Query('bookingId', new ParseIntPipe({ optional: true }))
     bookingId?: number,
   ) {
-    return this.paymentClientService.findAll(tenantId, bookingId);
+    return this.paymentClientService.findAll(tenantId, paginationDto, bookingId);
   }
 
   @Get('stats')

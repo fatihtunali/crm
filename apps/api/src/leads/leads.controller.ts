@@ -20,6 +20,7 @@ import {
 import { LeadsService } from './leads.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -43,11 +44,15 @@ export class LeadsController {
 
   @Get()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS)
-  @ApiOperation({ summary: 'Get all leads for current tenant' })
+  @ApiOperation({ summary: 'Get all leads for current tenant with pagination' })
   @ApiQuery({ name: 'status', enum: LeadStatus, required: false })
   @ApiResponse({ status: 200, description: 'Leads retrieved successfully' })
-  findAll(@TenantId() tenantId: number, @Query('status') status?: LeadStatus) {
-    return this.leadsService.findAll(tenantId, status);
+  findAll(
+    @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
+    @Query('status') status?: LeadStatus,
+  ) {
+    return this.leadsService.findAll(tenantId, paginationDto, status);
   }
 
   @Get('stats')

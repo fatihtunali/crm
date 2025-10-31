@@ -8,6 +8,7 @@ import {
   Delete,
   ParseIntPipe,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,6 +19,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -41,10 +43,13 @@ export class UsersController {
 
   @Get()
   @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Get all users for current tenant' })
+  @ApiOperation({ summary: 'Get all users for current tenant with pagination' })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
-  findAll(@TenantId() tenantId: number) {
-    return this.usersService.findAll(tenantId);
+  findAll(
+    @TenantId() tenantId: number,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.usersService.findAll(tenantId, paginationDto);
   }
 
   @Get(':id')

@@ -6,30 +6,42 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { LeadStatus } from '@tour-crm/shared';
 
 @Injectable()
 export class LeadsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number, status?: LeadStatus) {
-    return this.prisma.lead.findMany({
-      where: {
-        tenantId,
-        ...(status && { status }),
-      },
-      include: {
-        client: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
+  async findAll(tenantId: number, paginationDto: PaginationDto, status?: LeadStatus): Promise<PaginatedResponse<any>> {
+    const { skip, take, sortBy = 'inquiryDate', order = 'desc' } = paginationDto;
+    const where = {
+      tenantId,
+      ...(status && { status }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.lead.findMany({
+        where,
+        include: {
+          client: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
           },
         },
-      },
-      orderBy: { inquiryDate: 'desc' },
-    });
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.lead.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, paginationDto.page ?? 1, paginationDto.limit ?? 50);
   }
 
   async findOne(id: number, tenantId: number) {

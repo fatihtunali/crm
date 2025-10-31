@@ -6,16 +6,28 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateExchangeRateDto } from './dto/create-exchange-rate.dto';
 import { UpdateExchangeRateDto } from './dto/update-exchange-rate.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 
 @Injectable()
 export class ExchangeRatesService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number) {
-    return this.prisma.exchangeRate.findMany({
-      where: { tenantId },
-      orderBy: { rateDate: 'desc' },
-    });
+  async findAll(tenantId: number, paginationDto: PaginationDto): Promise<PaginatedResponse<any>> {
+    const { skip, take, sortBy = 'rateDate', order = 'desc' } = paginationDto;
+    const where = { tenantId };
+
+    const [data, total] = await Promise.all([
+      this.prisma.exchangeRate.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.exchangeRate.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, paginationDto.page ?? 1, paginationDto.limit ?? 50);
   }
 
   async findOne(id: number, tenantId: number) {

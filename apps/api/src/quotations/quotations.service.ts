@@ -2,39 +2,51 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { UpdateQuotationDto } from './dto/update-quotation.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { QuotationStatus } from '@tour-crm/shared';
 
 @Injectable()
 export class QuotationsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number, status?: QuotationStatus) {
-    return this.prisma.quotation.findMany({
-      where: {
-        tenantId,
-        ...(status && { status }),
-      },
-      include: {
-        lead: {
-          select: {
-            id: true,
-            source: true,
-            notes: true,
+  async findAll(tenantId: number, paginationDto: PaginationDto, status?: QuotationStatus): Promise<PaginatedResponse<any>> {
+    const { skip, take, sortBy = 'createdAt', order = 'desc' } = paginationDto;
+    const where = {
+      tenantId,
+      ...(status && { status }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.quotation.findMany({
+        where,
+        include: {
+          lead: {
+            select: {
+              id: true,
+              source: true,
+              notes: true,
+            },
+          },
+          tour: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+            },
+          },
+          _count: {
+            select: { bookings: true },
           },
         },
-        tour: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-          },
-        },
-        _count: {
-          select: { bookings: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.quotation.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, paginationDto.page ?? 1, paginationDto.limit ?? 50);
   }
 
   async findOne(id: number, tenantId: number) {

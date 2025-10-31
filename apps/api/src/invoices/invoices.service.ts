@@ -6,35 +6,47 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 
 @Injectable()
 export class InvoicesService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number, bookingId?: number) {
-    return this.prisma.invoice.findMany({
-      where: {
-        tenantId,
-        ...(bookingId && { bookingId }),
-      },
-      include: {
-        booking: {
-          select: {
-            id: true,
-            bookingCode: true,
-            startDate: true,
-            client: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
+  async findAll(tenantId: number, paginationDto: PaginationDto, bookingId?: number): Promise<PaginatedResponse<any>> {
+    const { skip, take, sortBy = 'issueDate', order = 'desc' } = paginationDto;
+    const where = {
+      tenantId,
+      ...(bookingId && { bookingId }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.invoice.findMany({
+        where,
+        include: {
+          booking: {
+            select: {
+              id: true,
+              bookingCode: true,
+              startDate: true,
+              client: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
               },
             },
           },
         },
-      },
-      orderBy: { issueDate: 'desc' },
-    });
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.invoice.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, paginationDto.page ?? 1, paginationDto.limit ?? 50);
   }
 
   async findOne(id: number, tenantId: number) {
