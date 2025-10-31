@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { PricingModel } from '@prisma/client';
 
-export class CreateTransferRateDto {
+export class CreateGuideRateDto {
   @ApiProperty({ description: 'Service offering ID' })
   @IsInt()
   serviceOfferingId!: number;
@@ -27,46 +27,35 @@ export class CreateTransferRateDto {
   @ApiPropertyOptional({
     description: 'Pricing model',
     enum: PricingModel,
-    default: PricingModel.PER_TRANSFER,
+    default: PricingModel.PER_DAY,
   })
   @IsOptional()
   @IsEnum(PricingModel)
   pricingModel?: PricingModel;
 
-  @ApiProperty({ description: 'Base cost in TRY' })
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  baseCostTry!: number;
-
-  @ApiPropertyOptional({ description: 'Included kilometers' })
+  @ApiPropertyOptional({ description: 'Full day cost in TRY' })
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  includedKm?: number;
+  dayCostTry?: number;
 
-  @ApiPropertyOptional({ description: 'Included hours' })
+  @ApiPropertyOptional({ description: 'Half day cost in TRY' })
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  includedHours?: number;
+  halfDayCostTry?: number;
 
-  @ApiPropertyOptional({ description: 'Extra kilometer cost in TRY' })
+  @ApiPropertyOptional({ description: 'Hourly cost in TRY' })
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  extraKmTry?: number;
+  hourCostTry?: number;
 
-  @ApiPropertyOptional({ description: 'Extra hour cost in TRY' })
+  @ApiPropertyOptional({ description: 'Overtime hourly cost in TRY' })
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  extraHourTry?: number;
-
-  @ApiPropertyOptional({ description: 'Night surcharge percentage', default: 0 })
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  nightSurchargePct?: number;
+  overtimeHourTry?: number;
 
   @ApiPropertyOptional({ description: 'Holiday surcharge percentage', default: 0 })
   @IsOptional()
@@ -74,11 +63,11 @@ export class CreateTransferRateDto {
   @Min(0)
   holidaySurchargePct?: number;
 
-  @ApiPropertyOptional({ description: 'Free waiting time in minutes', default: 0 })
+  @ApiPropertyOptional({ description: 'Minimum hours', default: 4 })
   @IsOptional()
   @IsInt()
-  @Min(0)
-  waitingTimeFree?: number;
+  @Min(1)
+  minHours?: number;
 
   @ApiPropertyOptional({ description: 'Notes' })
   @IsOptional()

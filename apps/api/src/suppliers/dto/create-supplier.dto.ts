@@ -15,14 +15,14 @@ import { SupplierType } from '@prisma/client';
 export class CreateSupplierDto {
   @ApiProperty({ description: 'Party ID' })
   @IsInt()
-  partyId: number;
+  partyId!: number;
 
   @ApiProperty({
     description: 'Supplier type',
     enum: SupplierType,
   })
   @IsEnum(SupplierType)
-  type: SupplierType;
+  type!: SupplierType;
 
   @ApiPropertyOptional({ description: 'Bank name', maxLength: 255 })
   @IsOptional()

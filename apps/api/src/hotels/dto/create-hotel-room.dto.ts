@@ -12,12 +12,12 @@ import {
 export class CreateHotelRoomDto {
   @ApiProperty({ description: 'Service offering ID' })
   @IsInt()
-  serviceOfferingId: number;
+  serviceOfferingId!: number;
 
   @ApiProperty({ description: 'Hotel name', maxLength: 255 })
   @IsString()
   @MaxLength(255)
-  hotelName: string;
+  hotelName!: string;
 
   @ApiPropertyOptional({ description: 'Star rating (1-5)' })
   @IsOptional()
@@ -52,7 +52,7 @@ export class CreateHotelRoomDto {
   @ApiProperty({ description: 'Room type (e.g., DBL, TWN, TRP, SUITE)', maxLength: 100 })
   @IsString()
   @MaxLength(100)
-  roomType: string;
+  roomType!: string;
 
   @ApiPropertyOptional({ description: 'Maximum occupancy', default: 2 })
   @IsOptional()

@@ -7,11 +7,12 @@ import {
   IsBoolean,
   IsEnum,
   IsDateString,
+  IsObject,
   Min,
 } from 'class-validator';
 import { PricingModel } from '@prisma/client';
 
-export class CreateTransferRateDto {
+export class CreateActivityRateDto {
   @ApiProperty({ description: 'Service offering ID' })
   @IsInt()
   serviceOfferingId!: number;
@@ -27,58 +28,47 @@ export class CreateTransferRateDto {
   @ApiPropertyOptional({
     description: 'Pricing model',
     enum: PricingModel,
-    default: PricingModel.PER_TRANSFER,
+    default: PricingModel.PER_PERSON,
   })
   @IsOptional()
   @IsEnum(PricingModel)
   pricingModel?: PricingModel;
 
-  @ApiProperty({ description: 'Base cost in TRY' })
+  @ApiProperty({ description: 'Base cost per person in TRY' })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   baseCostTry!: number;
 
-  @ApiPropertyOptional({ description: 'Included kilometers' })
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  includedKm?: number;
-
-  @ApiPropertyOptional({ description: 'Included hours' })
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  includedHours?: number;
-
-  @ApiPropertyOptional({ description: 'Extra kilometer cost in TRY' })
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  extraKmTry?: number;
-
-  @ApiPropertyOptional({ description: 'Extra hour cost in TRY' })
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  extraHourTry?: number;
-
-  @ApiPropertyOptional({ description: 'Night surcharge percentage', default: 0 })
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  nightSurchargePct?: number;
-
-  @ApiPropertyOptional({ description: 'Holiday surcharge percentage', default: 0 })
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  holidaySurchargePct?: number;
-
-  @ApiPropertyOptional({ description: 'Free waiting time in minutes', default: 0 })
+  @ApiPropertyOptional({ description: 'Minimum number of participants', default: 1 })
   @IsOptional()
   @IsInt()
+  @Min(1)
+  minPax?: number;
+
+  @ApiPropertyOptional({ description: 'Maximum number of participants' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxPax?: number;
+
+  @ApiPropertyOptional({
+    description: 'Tiered pricing (e.g., {"1-4": 100, "5-8": 80, "9+": 70})',
+  })
+  @IsOptional()
+  @IsObject()
+  tieredPricingJson?: Record<string, any>;
+
+  @ApiPropertyOptional({ description: 'Child discount percentage', default: 0 })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  waitingTimeFree?: number;
+  childDiscountPct?: number;
+
+  @ApiPropertyOptional({ description: 'Group discount percentage', default: 0 })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  groupDiscountPct?: number;
 
   @ApiPropertyOptional({ description: 'Notes' })
   @IsOptional()

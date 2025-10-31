@@ -34,6 +34,7 @@ import { TransfersModule } from './transfers/transfers.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { GuidesModule } from './guides/guides.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { PricingModule } from './pricing/pricing.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { ActivitiesModule } from './activities/activities.module';
     VehiclesModule,
     GuidesModule,
     ActivitiesModule,
+    PricingModule,
   ],
   providers: [
     {

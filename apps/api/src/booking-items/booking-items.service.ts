@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PricingService } from '../pricing/pricing.service';
 import { CreateBookingItemDto } from './dto/create-booking-item.dto';
 import { UpdateBookingItemDto } from './dto/update-booking-item.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
@@ -7,7 +8,10 @@ import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces
 
 @Injectable()
 export class BookingItemsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private pricingService: PricingService,
+  ) {}
 
   async findAll(tenantId: number, paginationDto: PaginationDto, bookingId?: number): Promise<PaginatedResponse<any>> {
     const { skip, take, sortBy = 'id', order = 'asc' } = paginationDto;
@@ -37,6 +41,23 @@ export class BookingItemsService {
               id: true,
               name: true,
               type: true,
+            },
+          },
+          serviceOffering: {
+            select: {
+              id: true,
+              title: true,
+              serviceType: true,
+              supplier: {
+                select: {
+                  id: true,
+                  party: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -70,6 +91,20 @@ export class BookingItemsService {
           },
         },
         vendor: true,
+        serviceOffering: {
+          include: {
+            supplier: {
+              include: {
+                party: true,
+              },
+            },
+            hotelRoom: true,
+            transfer: true,
+            vehicle: true,
+            guide: true,
+            activity: true,
+          },
+        },
       },
     });
 
@@ -92,7 +127,7 @@ export class BookingItemsService {
       );
     }
 
-    // Verify vendor exists if provided
+    // Verify vendor exists if provided (legacy path)
     if (createBookingItemDto.vendorId) {
       const vendor = await this.prisma.vendor.findFirst({
         where: { id: createBookingItemDto.vendorId, tenantId },
@@ -105,15 +140,66 @@ export class BookingItemsService {
       }
     }
 
+    let pricingSnapshot: any = null;
+    let calculatedUnitCostTry = createBookingItemDto.unitCostTry;
+    let qty = createBookingItemDto.qty || 1;
+
+    // If using catalog system, fetch pricing quote
+    if (createBookingItemDto.serviceOfferingId) {
+      if (!createBookingItemDto.serviceDate) {
+        throw new BadRequestException(
+          'serviceDate is required when using serviceOfferingId',
+        );
+      }
+
+      // Get pricing quote from catalog
+      const quote = await this.pricingService.getQuote(tenantId, {
+        serviceOfferingId: createBookingItemDto.serviceOfferingId,
+        serviceDate: createBookingItemDto.serviceDate,
+        pax: createBookingItemDto.pax,
+        nights: createBookingItemDto.nights,
+        days: createBookingItemDto.days,
+        hours: createBookingItemDto.hours,
+        distance: createBookingItemDto.distance,
+        children: createBookingItemDto.children,
+      });
+
+      // Store the full quote as snapshot
+      pricingSnapshot = {
+        quotedAt: new Date().toISOString(),
+        serviceDate: createBookingItemDto.serviceDate,
+        quote,
+      };
+
+      // Use calculated cost unless manually overridden
+      if (!createBookingItemDto.unitCostTry) {
+        calculatedUnitCostTry = quote.pricing.totalCostTry;
+        qty = 1; // Quote already includes all quantities
+      }
+    }
+
+    // Validate that we have pricing information
+    if (calculatedUnitCostTry === undefined) {
+      throw new BadRequestException(
+        'unitCostTry is required when not using catalog pricing',
+      );
+    }
+
+    if (createBookingItemDto.unitPriceEur === undefined) {
+      throw new BadRequestException('unitPriceEur is required');
+    }
+
     const bookingItem = await this.prisma.bookingItem.create({
       data: {
         tenantId,
         bookingId: createBookingItemDto.bookingId,
         itemType: createBookingItemDto.itemType,
         vendorId: createBookingItemDto.vendorId,
-        qty: createBookingItemDto.qty,
-        unitCostTry: createBookingItemDto.unitCostTry,
+        serviceOfferingId: createBookingItemDto.serviceOfferingId,
+        qty,
+        unitCostTry: calculatedUnitCostTry,
         unitPriceEur: createBookingItemDto.unitPriceEur,
+        pricingSnapshotJson: pricingSnapshot,
         notes: createBookingItemDto.notes,
       },
       include: {
@@ -134,6 +220,23 @@ export class BookingItemsService {
             id: true,
             name: true,
             type: true,
+          },
+        },
+        serviceOffering: {
+          select: {
+            id: true,
+            title: true,
+            serviceType: true,
+            supplier: {
+              select: {
+                id: true,
+                party: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
           },
         },
       },

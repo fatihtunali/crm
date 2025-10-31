@@ -14,29 +14,29 @@ import { TransferType } from '@prisma/client';
 export class CreateTransferDto {
   @ApiProperty({ description: 'Service offering ID' })
   @IsInt()
-  serviceOfferingId: number;
+  serviceOfferingId!: number;
 
   @ApiProperty({ description: 'Origin zone', maxLength: 255 })
   @IsString()
   @MaxLength(255)
-  originZone: string;
+  originZone!: string;
 
   @ApiProperty({ description: 'Destination zone', maxLength: 255 })
   @IsString()
   @MaxLength(255)
-  destZone: string;
+  destZone!: string;
 
   @ApiProperty({
     description: 'Transfer type',
     enum: TransferType,
   })
   @IsEnum(TransferType)
-  transferType: TransferType;
+  transferType!: TransferType;
 
   @ApiProperty({ description: 'Vehicle class (sedan, van, minibus, coach)', maxLength: 100 })
   @IsString()
   @MaxLength(100)
-  vehicleClass: string;
+  vehicleClass!: string;
 
   @ApiPropertyOptional({ description: 'Passenger capacity', default: 4 })
   @IsOptional()

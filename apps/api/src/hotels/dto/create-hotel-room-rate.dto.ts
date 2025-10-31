@@ -15,15 +15,15 @@ import { BoardType, PricingModel } from '@prisma/client';
 export class CreateHotelRoomRateDto {
   @ApiProperty({ description: 'Service offering ID' })
   @IsInt()
-  serviceOfferingId: number;
+  serviceOfferingId!: number;
 
   @ApiProperty({ description: 'Season start date (YYYY-MM-DD)' })
   @IsDateString()
-  seasonFrom: string;
+  seasonFrom!: string;
 
   @ApiProperty({ description: 'Season end date (YYYY-MM-DD)' })
   @IsDateString()
-  seasonTo: string;
+  seasonTo!: string;
 
   @ApiPropertyOptional({
     description: 'Pricing model',
@@ -39,7 +39,7 @@ export class CreateHotelRoomRateDto {
     enum: BoardType,
   })
   @IsEnum(BoardType)
-  boardType: BoardType;
+  boardType!: BoardType;
 
   @ApiPropertyOptional({ description: 'Number of adults', default: 2 })
   @IsOptional()
@@ -56,7 +56,7 @@ export class CreateHotelRoomRateDto {
   @ApiProperty({ description: 'Cost in TRY' })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  costTry: number;
+  costTry!: number;
 
   @ApiPropertyOptional({
     description: 'Child policy (e.g., {"age_0_2": "free", "age_3_6": "50%"})',

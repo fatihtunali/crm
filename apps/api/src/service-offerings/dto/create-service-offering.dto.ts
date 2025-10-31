@@ -12,19 +12,19 @@ import { ServiceType } from '@prisma/client';
 export class CreateServiceOfferingDto {
   @ApiProperty({ description: 'Supplier ID' })
   @IsInt()
-  supplierId: number;
+  supplierId!: number;
 
   @ApiProperty({
     description: 'Service type',
     enum: ServiceType,
   })
   @IsEnum(ServiceType)
-  serviceType: ServiceType;
+  serviceType!: ServiceType;
 
   @ApiProperty({ description: 'Service title', maxLength: 255 })
   @IsString()
   @MaxLength(255)
-  title: string;
+  title!: string;
 
   @ApiPropertyOptional({ description: 'Location', maxLength: 255 })
   @IsOptional()

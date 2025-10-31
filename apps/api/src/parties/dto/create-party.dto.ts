@@ -5,7 +5,7 @@ export class CreatePartyDto {
   @ApiProperty({ description: 'Party name', maxLength: 255 })
   @IsString()
   @MaxLength(255)
-  name: string;
+  name!: string;
 
   @ApiPropertyOptional({ description: 'Tax ID', maxLength: 100 })
   @IsOptional()

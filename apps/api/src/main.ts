@@ -43,6 +43,40 @@ Multi-tenant Tour Operator CRM API for Turkish tourism agencies.
 - Tenant ID is extracted from JWT; never accepted in request bodies
 - Multi-tenancy enforced at database level via row-level security
 
+## Supplier Catalog System
+The API includes a comprehensive supplier catalog for managing service offerings:
+
+### **Architecture**
+- **Parties**: Organizations (suppliers, vendors, clients) with unified contact management
+- **Contacts**: People associated with parties (sales reps, managers, etc.)
+- **Suppliers**: Specialized parties offering tourism services with typed catalog
+- **Service Offerings**: Catalog items linking to type-specific detail tables
+
+### **Service Types**
+- **HOTEL_ROOM**: Accommodation with board types, occupancy, room categories
+- **TRANSFER**: Airport/hotel transfers with vehicle classes, zones, km/hour pricing
+- **VEHICLE_HIRE**: Rental vehicles with/without driver, daily rates
+- **GUIDE_SERVICE**: Tour guides with language skills, hourly/daily rates
+- **ACTIVITY**: Tours, attractions, experiences with tiered pricing
+
+### **Rate Management**
+- Season-based rates with date ranges (seasonFrom/seasonTo)
+- Multiple pricing models: PER_ROOM_NIGHT, PER_PERSON, PER_DAY, PER_TRANSFER, PER_HOUR
+- Surcharges, discounts (child, group), included/extra km/hours
+- Rate resolution: system selects active rate matching service date
+
+### **Pricing API**
+- **POST /api/v1/pricing/quote**: Universal endpoint for all service types
+- Input: serviceOfferingId, serviceDate, parameters (pax, nights, days, hours, distance, children)
+- Output: Structured quote with breakdown, total cost, supplier details
+- Powers booking items with automatic cost calculation
+
+### **Booking Integration**
+- **Snapshot Pattern**: Booking items capture pricing snapshot at creation time
+- Historical bookings unaffected by future rate changes
+- Supports both catalog-based (auto-pricing) and manual pricing
+- Full audit trail with quotedAt timestamp and service details
+
 ## Finance Invariants
 - **Exchange Rate Locking**: When a quotation is accepted, it creates a booking and freezes \`locked_exchange_rate\` from the latest TRY→EUR rate on/before acceptance date
 - **Currency Rules**: Client payments are EUR only; vendor payments are TRY only
@@ -50,10 +84,10 @@ Multi-tenant Tour Operator CRM API for Turkish tourism agencies.
 - **Idempotency**: Payment endpoints require \`Idempotency-Key\` header for safe retries
 
 ## RBAC Matrix
-- **ADMIN**: Manage users, deactivate users
+- **ADMIN**: Manage users, deactivate users, manage supplier catalog
 - **ACCOUNTING**: Create/update client payments, vendor payments, invoices
-- **OPERATIONS**: Create/update booking-items, itineraries; transition bookings
-- **AGENT**: Create leads/quotations; send quotations; accept quotations
+- **OPERATIONS**: Create/update booking-items, itineraries; transition bookings; manage rates
+- **AGENT**: Create leads/quotations; send quotations; accept quotations; view catalog
 - **GUIDE**: Read-only access to assigned bookings
 - **VENDOR**: Read-only access to vendor portal for own vendorId
     `)

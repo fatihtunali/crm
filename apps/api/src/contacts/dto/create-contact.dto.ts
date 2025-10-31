@@ -11,17 +11,17 @@ import {
 export class CreateContactDto {
   @ApiProperty({ description: 'Party ID' })
   @IsInt()
-  partyId: number;
+  partyId!: number;
 
   @ApiProperty({ description: 'Contact type (e.g., operations, accounting, sales)', maxLength: 50 })
   @IsString()
   @MaxLength(50)
-  contactType: string;
+  contactType!: string;
 
   @ApiProperty({ description: 'Contact name', maxLength: 255 })
   @IsString()
   @MaxLength(255)
-  name: string;
+  name!: string;
 
   @ApiPropertyOptional({ description: 'Email address' })
   @IsOptional()
