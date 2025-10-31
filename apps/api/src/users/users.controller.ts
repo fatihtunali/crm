@@ -26,7 +26,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@tour-crm/shared';
 
 @ApiTags('Users')
-@ApiBearerAuth('JWT-auth')
+@ApiBearerAuth('bearerAuth')
 @Controller('users')
 @UseGuards(RolesGuard)
 export class UsersController {
@@ -76,8 +76,11 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Deactivate user (soft delete)' })
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Deactivate user (ADMIN only, soft delete)',
+    description: 'Only users with ADMIN role can deactivate other users',
+  })
   @ApiResponse({ status: 200, description: 'User deactivated successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
   remove(@Param('id', ParseIntPipe) id: number, @TenantId() tenantId: number) {

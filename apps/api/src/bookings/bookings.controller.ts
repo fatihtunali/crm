@@ -20,6 +20,7 @@ import {
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
+import { SearchBookingDto } from './dto/search-booking.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -27,7 +28,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole, BookingStatus } from '@tour-crm/shared';
 
 @ApiTags('Bookings')
-@ApiBearerAuth('JWT-auth')
+@ApiBearerAuth('bearerAuth')
 @Controller('bookings')
 @UseGuards(RolesGuard)
 export class BookingsController {
@@ -63,6 +64,26 @@ export class BookingsController {
     return this.bookingsService.findAll(tenantId, paginationDto, status);
   }
 
+  @Get('search')
+  @Roles(
+    UserRole.OWNER,
+    UserRole.ADMIN,
+    UserRole.AGENT,
+    UserRole.OPERATIONS,
+    UserRole.ACCOUNTING,
+  )
+  @ApiOperation({
+    summary: 'Search bookings with filters',
+    description: 'Advanced search for bookings by code, client name/email, status, and date range'
+  })
+  @ApiResponse({ status: 200, description: 'Bookings search results retrieved successfully' })
+  search(
+    @TenantId() tenantId: number,
+    @Query() searchDto: SearchBookingDto,
+  ) {
+    return this.bookingsService.search(tenantId, searchDto);
+  }
+
   @Get('stats')
   @Roles(
     UserRole.OWNER,
@@ -74,6 +95,38 @@ export class BookingsController {
   @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
   getStats(@TenantId() tenantId: number) {
     return this.bookingsService.getStatsByStatus(tenantId);
+  }
+
+  @Get(':id/pnl')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTING)
+  @ApiOperation({
+    summary: 'Calculate profit & loss for a booking',
+    description:
+      'Calculates P&L using formula: sum(item.unit_price_eur*qty) − (sum(item.unit_cost_try*qty) / locked_exchange_rate)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'P&L calculated successfully',
+    schema: {
+      example: {
+        bookingId: 1,
+        bookingCode: 'BK-2024-0001',
+        lockedExchangeRate: 32.5,
+        itemsCount: 5,
+        totalRevenueEur: 1500.0,
+        totalCostTry: 40000.0,
+        totalCostEur: 1230.77,
+        profitLossEur: 269.23,
+        marginPercent: 17.95,
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Booking not found' })
+  calculatePnL(
+    @Param('id', ParseIntPipe) id: number,
+    @TenantId() tenantId: number,
+  ) {
+    return this.bookingsService.calculatePnL(id, tenantId);
   }
 
   @Get(':id')

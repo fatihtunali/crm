@@ -16,6 +16,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiQuery,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { PaymentVendorService } from './payment-vendor.service';
 import { CreatePaymentVendorDto } from './dto/create-payment-vendor.dto';
@@ -28,7 +29,7 @@ import { Idempotent } from '../common/decorators/idempotent.decorator';
 import { UserRole } from '@tour-crm/shared';
 
 @ApiTags('Payment Vendor')
-@ApiBearerAuth('JWT-auth')
+@ApiBearerAuth('bearerAuth')
 @Controller('payment-vendor')
 @UseGuards(RolesGuard)
 export class PaymentVendorController {
@@ -36,8 +37,17 @@ export class PaymentVendorController {
 
   @Post()
   @Idempotent()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTING)
-  @ApiOperation({ summary: 'Create a new vendor payment (idempotent)' })
+  @Roles(UserRole.ACCOUNTING)
+  @ApiOperation({
+    summary: 'Create a new vendor payment (ACCOUNTING only, idempotent)',
+    description: 'Only users with ACCOUNTING role can create vendor payments',
+  })
+  @ApiHeader({
+    name: 'Idempotency-Key',
+    description: 'Unique key (UUID) to prevent duplicate payment creation',
+    required: true,
+    schema: { type: 'string', format: 'uuid' },
+  })
   @ApiResponse({
     status: 201,
     description: 'Vendor payment created successfully',

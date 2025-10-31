@@ -13,11 +13,18 @@ import { VendorType } from '@tour-crm/shared';
 export class VendorsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: number, paginationDto: PaginationDto, type?: VendorType): Promise<PaginatedResponse<any>> {
+  async findAll(
+    tenantId: number,
+    paginationDto: PaginationDto,
+    type?: VendorType,
+    includeInactive: boolean = false,
+  ): Promise<PaginatedResponse<any>> {
     const { skip, take, sortBy = 'name', order = 'asc' } = paginationDto;
     const where = {
       tenantId,
       ...(type && { type }),
+      // Soft delete: exclude inactive vendors by default
+      ...(!includeInactive && { isActive: true }),
     };
 
     const [data, total] = await Promise.all([

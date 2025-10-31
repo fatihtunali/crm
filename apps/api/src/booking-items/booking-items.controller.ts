@@ -27,15 +27,18 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@tour-crm/shared';
 
 @ApiTags('Booking Items')
-@ApiBearerAuth('JWT-auth')
+@ApiBearerAuth('bearerAuth')
 @Controller('booking-items')
 @UseGuards(RolesGuard)
 export class BookingItemsController {
   constructor(private readonly bookingItemsService: BookingItemsService) {}
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.OPERATIONS)
-  @ApiOperation({ summary: 'Create a new booking item' })
+  @Roles(UserRole.OPERATIONS)
+  @ApiOperation({
+    summary: 'Create a new booking item (OPERATIONS only)',
+    description: 'Only users with OPERATIONS role can create booking items',
+  })
   @ApiResponse({
     status: 201,
     description: 'Booking item created successfully',
@@ -97,8 +100,11 @@ export class BookingItemsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.OPERATIONS)
-  @ApiOperation({ summary: 'Update booking item' })
+  @Roles(UserRole.OPERATIONS)
+  @ApiOperation({
+    summary: 'Update booking item (OPERATIONS only)',
+    description: 'Only users with OPERATIONS role can update booking items',
+  })
   @ApiResponse({
     status: 200,
     description: 'Booking item updated successfully',
@@ -113,8 +119,11 @@ export class BookingItemsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.OPERATIONS)
-  @ApiOperation({ summary: 'Delete booking item' })
+  @Roles(UserRole.OPERATIONS)
+  @ApiOperation({
+    summary: 'Delete booking item (OPERATIONS only)',
+    description: 'Only users with OPERATIONS role can delete booking items',
+  })
   @ApiResponse({
     status: 200,
     description: 'Booking item deleted successfully',

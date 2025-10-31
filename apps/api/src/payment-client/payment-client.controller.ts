@@ -16,6 +16,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiQuery,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { PaymentClientService } from './payment-client.service';
 import { CreatePaymentClientDto } from './dto/create-payment-client.dto';
@@ -28,7 +29,7 @@ import { Idempotent } from '../common/decorators/idempotent.decorator';
 import { UserRole } from '@tour-crm/shared';
 
 @ApiTags('Payment Client')
-@ApiBearerAuth('JWT-auth')
+@ApiBearerAuth('bearerAuth')
 @Controller('payment-client')
 @UseGuards(RolesGuard)
 export class PaymentClientController {
@@ -36,8 +37,17 @@ export class PaymentClientController {
 
   @Post()
   @Idempotent()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTING)
-  @ApiOperation({ summary: 'Create a new client payment (idempotent)' })
+  @Roles(UserRole.ACCOUNTING)
+  @ApiOperation({
+    summary: 'Create a new client payment (ACCOUNTING only, idempotent)',
+    description: 'Only users with ACCOUNTING role can create client payments',
+  })
+  @ApiHeader({
+    name: 'Idempotency-Key',
+    description: 'Unique key (UUID) to prevent duplicate payment creation',
+    required: true,
+    schema: { type: 'string', format: 'uuid' },
+  })
   @ApiResponse({
     status: 201,
     description: 'Client payment created successfully',

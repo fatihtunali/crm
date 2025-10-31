@@ -30,15 +30,18 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@tour-crm/shared';
 
 @ApiTags('Invoices')
-@ApiBearerAuth('JWT-auth')
+@ApiBearerAuth('bearerAuth')
 @Controller('invoices')
 @UseGuards(RolesGuard)
 export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}
 
   @Post()
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTING)
-  @ApiOperation({ summary: 'Create a new invoice' })
+  @Roles(UserRole.ACCOUNTING)
+  @ApiOperation({
+    summary: 'Create a new invoice (ACCOUNTING only)',
+    description: 'Only users with ACCOUNTING role can create invoices',
+  })
   @ApiResponse({
     status: 201,
     description: 'Invoice created successfully',

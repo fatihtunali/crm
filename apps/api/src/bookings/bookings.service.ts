@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
+import { SearchBookingDto } from './dto/search-booking.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { BookingStatus } from '@tour-crm/shared';
@@ -274,5 +275,143 @@ export class BookingsService {
       totalCostTry: stat._sum.totalCostTry || 0,
       totalSellEur: stat._sum.totalSellEur || 0,
     }));
+  }
+
+  async search(tenantId: number, searchDto: SearchBookingDto): Promise<PaginatedResponse<any>> {
+    const {
+      skip,
+      take,
+      sortBy = 'startDate',
+      order = 'desc',
+      bookingCode,
+      clientName,
+      clientEmail,
+      status,
+      startDateFrom,
+      startDateTo,
+    } = searchDto;
+
+    const where: any = {
+      tenantId,
+      ...(bookingCode && {
+        bookingCode: {
+          contains: bookingCode,
+          mode: 'insensitive'
+        }
+      }),
+      ...(status && { status }),
+      ...(startDateFrom || startDateTo ? {
+        startDate: {
+          ...(startDateFrom && { gte: new Date(startDateFrom) }),
+          ...(startDateTo && { lte: new Date(startDateTo) }),
+        }
+      } : {}),
+      ...(clientName || clientEmail ? {
+        client: {
+          ...(clientName && {
+            name: {
+              contains: clientName,
+              mode: 'insensitive'
+            }
+          }),
+          ...(clientEmail && {
+            email: {
+              contains: clientEmail,
+              mode: 'insensitive'
+            }
+          }),
+        }
+      } : {}),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.booking.findMany({
+        where,
+        include: {
+          client: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+          quotation: {
+            select: {
+              id: true,
+              status: true,
+            },
+          },
+          _count: {
+            select: {
+              items: true,
+              paymentsClient: true,
+              invoices: true,
+            },
+          },
+        },
+        skip,
+        take,
+        orderBy: { [sortBy]: order },
+      }),
+      this.prisma.booking.count({ where }),
+    ]);
+
+    return createPaginatedResponse(data, total, searchDto.page ?? 1, searchDto.limit ?? 50);
+  }
+
+  async calculatePnL(id: number, tenantId: number) {
+    // Fetch booking with items
+    const booking = await this.prisma.booking.findFirst({
+      where: { id, tenantId },
+      include: {
+        items: true,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException(`Booking with ID ${id} not found`);
+    }
+
+    if (!booking.lockedExchangeRate || Number(booking.lockedExchangeRate) === 0) {
+      throw new Error(
+        'Cannot calculate P&L: Locked exchange rate is not set for this booking.',
+      );
+    }
+
+    // Calculate totals
+    // Revenue (EUR): sum(item.unit_price_eur * qty)
+    const totalRevenueEur = booking.items.reduce(
+      (sum, item) => sum + Number(item.unitPriceEur) * item.qty,
+      0,
+    );
+
+    // Cost (TRY): sum(item.unit_cost_try * qty)
+    const totalCostTry = booking.items.reduce(
+      (sum, item) => sum + Number(item.unitCostTry) * item.qty,
+      0,
+    );
+
+    // Convert cost to EUR using locked exchange rate
+    const totalCostEur = totalCostTry / Number(booking.lockedExchangeRate);
+
+    // P&L = Revenue - Cost (both in EUR)
+    const profitLossEur = totalRevenueEur - totalCostEur;
+
+    // Calculate margin percentage
+    const marginPercent =
+      totalRevenueEur > 0 ? (profitLossEur / totalRevenueEur) * 100 : 0;
+
+    return {
+      bookingId: booking.id,
+      bookingCode: booking.bookingCode,
+      lockedExchangeRate: Number(booking.lockedExchangeRate),
+      itemsCount: booking.items.length,
+      totalRevenueEur: Number(totalRevenueEur.toFixed(2)),
+      totalCostTry: Number(totalCostTry.toFixed(2)),
+      totalCostEur: Number(totalCostEur.toFixed(2)),
+      profitLossEur: Number(profitLossEur.toFixed(2)),
+      marginPercent: Number(marginPercent.toFixed(2)),
+    };
   }
 }

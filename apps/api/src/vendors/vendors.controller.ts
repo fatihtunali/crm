@@ -27,7 +27,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole, VendorType } from '@tour-crm/shared';
 
 @ApiTags('Vendors')
-@ApiBearerAuth('JWT-auth')
+@ApiBearerAuth('bearerAuth')
 @Controller('vendors')
 @UseGuards(RolesGuard)
 export class VendorsController {
@@ -43,15 +43,26 @@ export class VendorsController {
 
   @Get()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS, UserRole.ACCOUNTING)
-  @ApiOperation({ summary: 'Get all vendors for current tenant with pagination' })
+  @ApiOperation({
+    summary: 'Get all vendors for current tenant with pagination',
+    description: 'By default, excludes inactive (soft-deleted) vendors. Use ?include=inactive to include them.',
+  })
   @ApiQuery({ name: 'type', enum: VendorType, required: false })
+  @ApiQuery({
+    name: 'include',
+    required: false,
+    description: 'Set to "inactive" to include soft-deleted records',
+    example: 'inactive',
+  })
   @ApiResponse({ status: 200, description: 'Vendors retrieved successfully' })
   findAll(
     @TenantId() tenantId: number,
     @Query() paginationDto: PaginationDto,
     @Query('type') type?: VendorType,
+    @Query('include') include?: string,
   ) {
-    return this.vendorsService.findAll(tenantId, paginationDto, type);
+    const includeInactive = include === 'inactive';
+    return this.vendorsService.findAll(tenantId, paginationDto, type, includeInactive);
   }
 
   @Get('search')
