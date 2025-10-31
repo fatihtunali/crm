@@ -173,12 +173,16 @@ export interface HotelRoomRate {
   serviceOfferingId: number;
   seasonFrom: string;
   seasonTo: string;
-  pricingModel: PricingModel;
   boardType: BoardType;
-  occupancyAdults: number;
-  occupancyChildren: number;
-  costTry: number;
-  childPolicyJson?: Record<string, any>;
+  // Pricing structure
+  pricePerPersonDouble: number; // Base price per person in double room
+  singleSupplement: number; // Extra charge for single occupancy
+  pricePerPersonTriple: number; // Price per person in triple room
+  // Child pricing slabs (per night)
+  childPrice0to2: number; // 00-02.99 years
+  childPrice3to5: number; // 03-05.99 years
+  childPrice6to11: number; // 06-11.99 years
+  // Additional fields
   allotment?: number;
   releaseDays?: number;
   minStay?: number;
@@ -192,12 +196,16 @@ export interface CreateHotelRoomRateDto {
   serviceOfferingId: number;
   seasonFrom: string;
   seasonTo: string;
-  pricingModel?: PricingModel;
   boardType: BoardType;
-  occupancyAdults?: number;
-  occupancyChildren?: number;
-  costTry: number;
-  childPolicyJson?: Record<string, any>;
+  // Pricing structure
+  pricePerPersonDouble: number;
+  singleSupplement: number;
+  pricePerPersonTriple: number;
+  // Child pricing slabs
+  childPrice0to2: number;
+  childPrice3to5: number;
+  childPrice6to11: number;
+  // Additional fields
   allotment?: number;
   releaseDays?: number;
   minStay?: number;
@@ -208,12 +216,16 @@ export interface CreateHotelRoomRateDto {
 export interface UpdateHotelRoomRateDto {
   seasonFrom?: string;
   seasonTo?: string;
-  pricingModel?: PricingModel;
   boardType?: BoardType;
-  occupancyAdults?: number;
-  occupancyChildren?: number;
-  costTry?: number;
-  childPolicyJson?: Record<string, any>;
+  // Pricing structure
+  pricePerPersonDouble?: number;
+  singleSupplement?: number;
+  pricePerPersonTriple?: number;
+  // Child pricing slabs
+  childPrice0to2?: number;
+  childPrice3to5?: number;
+  childPrice6to11?: number;
+  // Additional fields
   allotment?: number;
   releaseDays?: number;
   minStay?: number;

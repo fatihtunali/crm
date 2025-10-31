@@ -8,7 +8,7 @@ import {
   useUpdateHotelRoomRate,
   useDeleteHotelRoomRate,
 } from '@/lib/api/hooks/use-hotel-rates';
-import { BoardType, PricingModel } from '@/lib/api/endpoints/suppliers';
+import { BoardType } from '@/lib/api/endpoints/suppliers';
 import type { HotelRoomRate, CreateHotelRoomRateDto, ServiceOffering } from '@/lib/api/endpoints/suppliers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,18 +49,6 @@ const boardTypeLabels: Record<BoardType, string> = {
   [BoardType.AI]: 'All Inclusive',
 };
 
-const pricingModelLabels: Record<PricingModel, string> = {
-  [PricingModel.PER_ROOM_NIGHT]: 'Per Room / Night',
-  [PricingModel.PER_PERSON_NIGHT]: 'Per Person / Night',
-  [PricingModel.PER_TRANSFER]: 'Per Transfer',
-  [PricingModel.PER_KM]: 'Per KM',
-  [PricingModel.PER_HOUR]: 'Per Hour',
-  [PricingModel.PER_DAY]: 'Per Day',
-  [PricingModel.PER_HALF_DAY]: 'Per Half Day',
-  [PricingModel.PER_PERSON]: 'Per Person',
-  [PricingModel.PER_GROUP]: 'Per Group',
-};
-
 interface HotelRoomRatesPageProps {
   offeringId: number;
   offering: ServiceOffering;
@@ -82,10 +70,13 @@ export default function HotelRoomRatesPage({ offeringId, offering }: HotelRoomRa
 
   const [formData, setFormData] = useState<Partial<CreateHotelRoomRateDto>>({
     serviceOfferingId: offeringId,
-    pricingModel: PricingModel.PER_ROOM_NIGHT,
     boardType: BoardType.BB,
-    occupancyAdults: 2,
-    occupancyChildren: 0,
+    pricePerPersonDouble: 0,
+    singleSupplement: 0,
+    pricePerPersonTriple: 0,
+    childPrice0to2: 0,
+    childPrice3to5: 0,
+    childPrice6to11: 0,
     minStay: 1,
     isActive: true,
   });
@@ -97,11 +88,13 @@ export default function HotelRoomRatesPage({ offeringId, offering }: HotelRoomRa
         serviceOfferingId: rate.serviceOfferingId,
         seasonFrom: rate.seasonFrom,
         seasonTo: rate.seasonTo,
-        pricingModel: rate.pricingModel,
         boardType: rate.boardType,
-        occupancyAdults: rate.occupancyAdults,
-        occupancyChildren: rate.occupancyChildren,
-        costTry: rate.costTry,
+        pricePerPersonDouble: rate.pricePerPersonDouble,
+        singleSupplement: rate.singleSupplement,
+        pricePerPersonTriple: rate.pricePerPersonTriple,
+        childPrice0to2: rate.childPrice0to2,
+        childPrice3to5: rate.childPrice3to5,
+        childPrice6to11: rate.childPrice6to11,
         allotment: rate.allotment,
         releaseDays: rate.releaseDays,
         minStay: rate.minStay,
@@ -112,10 +105,13 @@ export default function HotelRoomRatesPage({ offeringId, offering }: HotelRoomRa
       setEditingRate(null);
       setFormData({
         serviceOfferingId: offeringId,
-        pricingModel: PricingModel.PER_ROOM_NIGHT,
         boardType: BoardType.BB,
-        occupancyAdults: 2,
-        occupancyChildren: 0,
+        pricePerPersonDouble: 0,
+        singleSupplement: 0,
+        pricePerPersonTriple: 0,
+        childPrice0to2: 0,
+        childPrice3to5: 0,
+        childPrice6to11: 0,
         minStay: 1,
         isActive: true,
       });
@@ -137,11 +133,13 @@ export default function HotelRoomRatesPage({ offeringId, offering }: HotelRoomRa
         data: {
           seasonFrom: formData.seasonFrom,
           seasonTo: formData.seasonTo,
-          pricingModel: formData.pricingModel,
           boardType: formData.boardType,
-          occupancyAdults: formData.occupancyAdults,
-          occupancyChildren: formData.occupancyChildren,
-          costTry: formData.costTry,
+          pricePerPersonDouble: formData.pricePerPersonDouble,
+          singleSupplement: formData.singleSupplement,
+          pricePerPersonTriple: formData.pricePerPersonTriple,
+          childPrice0to2: formData.childPrice0to2,
+          childPrice3to5: formData.childPrice3to5,
+          childPrice6to11: formData.childPrice6to11,
           allotment: formData.allotment,
           releaseDays: formData.releaseDays,
           minStay: formData.minStay,
@@ -204,11 +202,11 @@ export default function HotelRoomRatesPage({ offeringId, offering }: HotelRoomRa
               <TableRow>
                 <TableHead>Season</TableHead>
                 <TableHead>Board Type</TableHead>
-                <TableHead>Pricing Model</TableHead>
-                <TableHead>Occupancy</TableHead>
-                <TableHead>Cost (TRY)</TableHead>
+                <TableHead>Per Person Double</TableHead>
+                <TableHead>Single Supp.</TableHead>
+                <TableHead>Per Person Triple</TableHead>
+                <TableHead>Child Prices</TableHead>
                 <TableHead>Allotment</TableHead>
-                <TableHead>Min Stay</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -237,24 +235,23 @@ export default function HotelRoomRatesPage({ offeringId, offering }: HotelRoomRa
                       <Badge variant="outline">{boardTypeLabels[rate.boardType]}</Badge>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm">{pricingModelLabels[rate.pricingModel]}</span>
+                      <span className="font-medium">₺{rate.pricePerPersonDouble.toLocaleString()}</span>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        <div>{rate.occupancyAdults} Adults</div>
-                        {rate.occupancyChildren > 0 && (
-                          <div className="text-gray-500">{rate.occupancyChildren} Children</div>
-                        )}
+                      <span className="text-sm">₺{rate.singleSupplement.toLocaleString()}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm">₺{rate.pricePerPersonTriple.toLocaleString()}</span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs space-y-1">
+                        <div>0-2.99: ₺{rate.childPrice0to2.toLocaleString()}</div>
+                        <div>3-5.99: ₺{rate.childPrice3to5.toLocaleString()}</div>
+                        <div>6-11.99: ₺{rate.childPrice6to11.toLocaleString()}</div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">₺{rate.costTry.toLocaleString()}</span>
-                    </TableCell>
-                    <TableCell>
                       <span className="text-sm">{rate.allotment || '-'}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{rate.minStay || 1} night(s)</span>
                     </TableCell>
                     <TableCell>
                       <Badge variant={rate.isActive ? 'default' : 'secondary'}>
@@ -294,13 +291,13 @@ export default function HotelRoomRatesPage({ offeringId, offering }: HotelRoomRa
 
       {/* Add/Edit Rate Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingRate ? 'Edit Rate' : 'Add New Rate'}</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSubmit}>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* Season Dates */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -325,92 +322,125 @@ export default function HotelRoomRatesPage({ offeringId, offering }: HotelRoomRa
                 </div>
               </div>
 
-              {/* Board Type and Pricing Model */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="boardType">Board Type *</Label>
-                  <Select
-                    value={formData.boardType}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, boardType: value as BoardType })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(boardTypeLabels).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="pricingModel">Pricing Model *</Label>
-                  <Select
-                    value={formData.pricingModel}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, pricingModel: value as PricingModel })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={PricingModel.PER_ROOM_NIGHT}>
-                        {pricingModelLabels[PricingModel.PER_ROOM_NIGHT]}
-                      </SelectItem>
-                      <SelectItem value={PricingModel.PER_PERSON_NIGHT}>
-                        {pricingModelLabels[PricingModel.PER_PERSON_NIGHT]}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Occupancy */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="occupancyAdults">Adults *</Label>
-                  <Input
-                    id="occupancyAdults"
-                    type="number"
-                    min="0"
-                    value={formData.occupancyAdults || 0}
-                    onChange={(e) =>
-                      setFormData({ ...formData, occupancyAdults: parseInt(e.target.value) })
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="occupancyChildren">Children</Label>
-                  <Input
-                    id="occupancyChildren"
-                    type="number"
-                    min="0"
-                    value={formData.occupancyChildren || 0}
-                    onChange={(e) =>
-                      setFormData({ ...formData, occupancyChildren: parseInt(e.target.value) })
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Cost */}
+              {/* Board Type */}
               <div>
-                <Label htmlFor="costTry">Cost (TRY) *</Label>
-                <Input
-                  id="costTry"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.costTry || ''}
-                  onChange={(e) => setFormData({ ...formData, costTry: parseFloat(e.target.value) })}
-                  required
-                />
+                <Label htmlFor="boardType">Board Type *</Label>
+                <Select
+                  value={formData.boardType}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, boardType: value as BoardType })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(boardTypeLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Adult Pricing */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-900">Adult Pricing (TRY per person per night)</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="pricePerPersonDouble">Per Person in Double *</Label>
+                    <Input
+                      id="pricePerPersonDouble"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.pricePerPersonDouble || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, pricePerPersonDouble: parseFloat(e.target.value) })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="singleSupplement">Single Supplement *</Label>
+                    <Input
+                      id="singleSupplement"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.singleSupplement || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, singleSupplement: parseFloat(e.target.value) })
+                      }
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Extra charge for single occupancy</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="pricePerPersonTriple">Per Person in Triple *</Label>
+                    <Input
+                      id="pricePerPersonTriple"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.pricePerPersonTriple || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, pricePerPersonTriple: parseFloat(e.target.value) })
+                      }
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Child Pricing */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-900">Child Pricing (TRY per child per night)</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="childPrice0to2">Age 0-2.99 years *</Label>
+                    <Input
+                      id="childPrice0to2"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.childPrice0to2 || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, childPrice0to2: parseFloat(e.target.value) })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="childPrice3to5">Age 3-5.99 years *</Label>
+                    <Input
+                      id="childPrice3to5"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.childPrice3to5 || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, childPrice3to5: parseFloat(e.target.value) })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="childPrice6to11">Age 6-11.99 years *</Label>
+                    <Input
+                      id="childPrice6to11"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.childPrice6to11 || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, childPrice6to11: parseFloat(e.target.value) })
+                      }
+                      required
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Additional Fields */}
