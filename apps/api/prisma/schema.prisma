@@ -398,26 +398,30 @@ enum PricingModel {
 }
 
 model HotelRoomRate {
-  id                  Int           @id @default(autoincrement())
-  tenantId            Int           @map("tenant_id")
-  tenant              Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  serviceOfferingId   Int           @map("service_offering_id")
-  serviceOffering     ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
-  seasonFrom          DateTime      @map("season_from") @db.Date
-  seasonTo            DateTime      @map("season_to") @db.Date
-  pricingModel        PricingModel  @default(PER_ROOM_NIGHT) @map("pricing_model")
-  boardType           BoardType     @map("board_type")
-  occupancyAdults     Int           @default(2) @map("occupancy_adults")
-  occupancyChildren   Int           @default(0) @map("occupancy_children")
-  costTry             Decimal       @map("cost_try") @db.Decimal(12, 2)
-  childPolicyJson     Json?         @map("child_policy_json") // e.g., {"age_0_2": "free", "age_3_6": "50%"}
-  allotment           Int?          // Number of rooms contracted
-  releaseDays         Int?          @map("release_days") // Days before check-in to release
-  minStay             Int?          @default(1) @map("min_stay")
-  notes               String?       @db.Text
-  isActive            Boolean       @default(true) @map("is_active")
-  createdAt           DateTime      @default(now()) @map("created_at")
-  updatedAt           DateTime      @updatedAt @map("updated_at")
+  id                    Int             @id @default(autoincrement())
+  tenantId              Int             @map("tenant_id")
+  tenant                Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  serviceOfferingId     Int             @map("service_offering_id")
+  serviceOffering       ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  seasonFrom            DateTime        @map("season_from") @db.Date
+  seasonTo              DateTime        @map("season_to") @db.Date
+  boardType             BoardType       @map("board_type")
+  // Pricing structure
+  pricePerPersonDouble  Decimal         @map("price_per_person_double") @db.Decimal(12, 2) // Base price per person in double room
+  singleSupplement      Decimal         @map("single_supplement") @db.Decimal(12, 2) // Extra charge for single occupancy
+  pricePerPersonTriple  Decimal         @map("price_per_person_triple") @db.Decimal(12, 2) // Price per person in triple room
+  // Child pricing slabs (per night)
+  childPrice0to2        Decimal         @map("child_price_0_to_2") @db.Decimal(12, 2) // 00-02.99 years
+  childPrice3to5        Decimal         @map("child_price_3_to_5") @db.Decimal(12, 2) // 03-05.99 years
+  childPrice6to11       Decimal         @map("child_price_6_to_11") @db.Decimal(12, 2) // 06-11.99 years
+  // Additional fields
+  allotment             Int?            // Number of rooms contracted
+  releaseDays           Int?            @map("release_days") // Days before check-in to release
+  minStay               Int?            @default(1) @map("min_stay")
+  notes                 String?         @db.Text
+  isActive              Boolean         @default(true) @map("is_active")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
 
   @@index([tenantId])
   @@index([serviceOfferingId])

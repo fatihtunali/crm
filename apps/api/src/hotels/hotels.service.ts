@@ -224,6 +224,8 @@ export class HotelsService {
     return this.prisma.hotelRoomRate.create({
       data: {
         ...dto,
+        seasonFrom: new Date(dto.seasonFrom),
+        seasonTo: new Date(dto.seasonTo),
         tenantId,
       },
       include: {
@@ -302,7 +304,7 @@ export class HotelsService {
           },
         },
       },
-      orderBy: [{ seasonFrom: 'asc' }, { costTry: 'asc' }],
+      orderBy: [{ seasonFrom: 'asc' }, { pricePerPersonDouble: 'asc' }],
     });
   }
 
@@ -345,7 +347,11 @@ export class HotelsService {
 
     return this.prisma.hotelRoomRate.update({
       where: { id },
-      data: dto,
+      data: {
+        ...dto,
+        ...(dto.seasonFrom ? { seasonFrom: new Date(dto.seasonFrom) } : {}),
+        ...(dto.seasonTo ? { seasonTo: new Date(dto.seasonTo) } : {}),
+      },
       include: {
         serviceOffering: {
           include: {

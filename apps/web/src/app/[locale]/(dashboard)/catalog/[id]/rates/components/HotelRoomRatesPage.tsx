@@ -510,11 +510,23 @@ export default function HotelRoomRatesPage({ offeringId, offering }: HotelRoomRa
             </div>
 
             <DialogFooter className="mt-6">
-              <Button type="button" variant="outline" onClick={handleCloseDialog}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseDialog}
+                disabled={createRate.isPending || updateRate.isPending}
+              >
                 Cancel
               </Button>
-              <Button type="submit">
-                {editingRate ? 'Update Rate' : 'Create Rate'}
+              <Button
+                type="submit"
+                disabled={createRate.isPending || updateRate.isPending}
+              >
+                {createRate.isPending || updateRate.isPending
+                  ? 'Saving...'
+                  : editingRate
+                  ? 'Update Rate'
+                  : 'Create Rate'}
               </Button>
             </DialogFooter>
           </form>

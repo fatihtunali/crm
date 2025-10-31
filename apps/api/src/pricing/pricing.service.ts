@@ -54,7 +54,8 @@ export class PricingService {
     dto: QuoteRequestDto,
   ) {
     const nights = dto.nights || 1;
-    const rooms = Math.ceil((dto.pax || 2) / (offering.hotelRoom?.maxOccupancy || 2));
+    const adults = (dto.pax || 2) - (dto.children || 0);
+    const children = dto.children || 0;
 
     // Find applicable rate
     const rate = await this.prisma.hotelRoomRate.findFirst({
@@ -72,7 +73,15 @@ export class PricingService {
       throw new NotFoundException('No active rate found for the selected date');
     }
 
-    const baseCost = Number(rate.costTry) * nights * rooms;
+    // Simplified calculation assuming double occupancy
+    // For a proper implementation, you'd need detailed room configuration and child ages
+    const adultCost = adults * Number(rate.pricePerPersonDouble) * nights;
+
+    // Use middle child age bracket as default (3-5.99 years)
+    const childCost = children * Number(rate.childPrice3to5) * nights;
+
+    const totalCost = adultCost + childCost;
+    const rooms = Math.ceil(adults / 2); // Rough estimate
 
     return {
       serviceOfferingId: offering.id,
@@ -86,15 +95,19 @@ export class PricingService {
         boardType: rate.boardType,
         nights,
         rooms,
+        adults,
+        children,
         pax: dto.pax || 2,
       },
       pricing: {
         rateId: rate.id,
-        pricingModel: rate.pricingModel,
-        unitCostTry: Number(rate.costTry),
-        quantity: nights * rooms,
-        baseCostTry: baseCost,
-        totalCostTry: baseCost,
+        pricingModel: 'PER_PERSON_NIGHT',
+        pricePerPersonDouble: Number(rate.pricePerPersonDouble),
+        adultCostTry: adultCost,
+        childCostTry: childCost,
+        baseCostTry: totalCost,
+        totalCostTry: totalCost,
+        note: 'Simplified pricing: assumes double occupancy for adults and 3-5.99 age bracket for children',
       },
     };
   }

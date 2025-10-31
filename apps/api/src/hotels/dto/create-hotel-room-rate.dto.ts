@@ -7,10 +7,9 @@ import {
   IsBoolean,
   IsEnum,
   IsDateString,
-  IsObject,
   Min,
 } from 'class-validator';
-import { BoardType, PricingModel } from '@prisma/client';
+import { BoardType } from '@prisma/client';
 
 export class CreateHotelRoomRateDto {
   @ApiProperty({ description: 'Service offering ID' })
@@ -25,15 +24,6 @@ export class CreateHotelRoomRateDto {
   @IsDateString()
   seasonTo!: string;
 
-  @ApiPropertyOptional({
-    description: 'Pricing model',
-    enum: PricingModel,
-    default: PricingModel.PER_ROOM_NIGHT,
-  })
-  @IsOptional()
-  @IsEnum(PricingModel)
-  pricingModel?: PricingModel;
-
   @ApiProperty({
     description: 'Board type',
     enum: BoardType,
@@ -41,30 +31,39 @@ export class CreateHotelRoomRateDto {
   @IsEnum(BoardType)
   boardType!: BoardType;
 
-  @ApiPropertyOptional({ description: 'Number of adults', default: 2 })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  occupancyAdults?: number;
-
-  @ApiPropertyOptional({ description: 'Number of children', default: 0 })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  occupancyChildren?: number;
-
-  @ApiProperty({ description: 'Cost in TRY' })
+  // Adult Pricing
+  @ApiProperty({ description: 'Price per person in double room (TRY per night)' })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  costTry!: number;
+  pricePerPersonDouble!: number;
 
-  @ApiPropertyOptional({
-    description: 'Child policy (e.g., {"age_0_2": "free", "age_3_6": "50%"})',
-  })
-  @IsOptional()
-  @IsObject()
-  childPolicyJson?: Record<string, any>;
+  @ApiProperty({ description: 'Single supplement (extra charge for single occupancy in TRY per night)' })
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  singleSupplement!: number;
 
+  @ApiProperty({ description: 'Price per person in triple room (TRY per night)' })
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  pricePerPersonTriple!: number;
+
+  // Child Pricing Slabs
+  @ApiProperty({ description: 'Child price for age 0-2.99 years (TRY per night)' })
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  childPrice0to2!: number;
+
+  @ApiProperty({ description: 'Child price for age 3-5.99 years (TRY per night)' })
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  childPrice3to5!: number;
+
+  @ApiProperty({ description: 'Child price for age 6-11.99 years (TRY per night)' })
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  childPrice6to11!: number;
+
+  // Additional Fields
   @ApiPropertyOptional({ description: 'Number of rooms contracted' })
   @IsOptional()
   @IsInt()
