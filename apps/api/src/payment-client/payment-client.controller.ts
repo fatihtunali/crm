@@ -24,6 +24,7 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Idempotent } from '../common/decorators/idempotent.decorator';
 import { UserRole } from '@tour-crm/shared';
 
 @ApiTags('Payment Client')
@@ -34,11 +35,16 @@ export class PaymentClientController {
   constructor(private readonly paymentClientService: PaymentClientService) {}
 
   @Post()
+  @Idempotent()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTING)
-  @ApiOperation({ summary: 'Create a new client payment' })
+  @ApiOperation({ summary: 'Create a new client payment (idempotent)' })
   @ApiResponse({
     status: 201,
     description: 'Client payment created successfully',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Idempotency-Key header is required',
   })
   create(
     @Body() createPaymentClientDto: CreatePaymentClientDto,

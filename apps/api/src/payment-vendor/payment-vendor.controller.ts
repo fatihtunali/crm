@@ -24,6 +24,7 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Idempotent } from '../common/decorators/idempotent.decorator';
 import { UserRole } from '@tour-crm/shared';
 
 @ApiTags('Payment Vendor')
@@ -34,11 +35,16 @@ export class PaymentVendorController {
   constructor(private readonly paymentVendorService: PaymentVendorService) {}
 
   @Post()
+  @Idempotent()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTING)
-  @ApiOperation({ summary: 'Create a new vendor payment' })
+  @ApiOperation({ summary: 'Create a new vendor payment (idempotent)' })
   @ApiResponse({
     status: 201,
     description: 'Vendor payment created successfully',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Idempotency-Key header is required',
   })
   create(
     @Body() createPaymentVendorDto: CreatePaymentVendorDto,
