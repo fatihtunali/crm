@@ -7,8 +7,11 @@ export * from './use-leads';
 // Client hooks
 export * from './use-clients';
 
-// Vendor hooks
-export * from './use-vendors';
+// Supplier hooks
+export * from './use-suppliers';
+
+// Party hooks
+export * from './use-parties';
 
 // Tour hooks
 export * from './use-tours';

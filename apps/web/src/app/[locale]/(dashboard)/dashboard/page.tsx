@@ -188,20 +188,20 @@ export default function DashboardPage() {
           </Card>
         </Link>
 
-        {/* Vendors Card */}
-        <Link href={`/${locale}/vendors`} className="block">
+        {/* Suppliers Card */}
+        <Link href={`/${locale}/suppliers`} className="block">
           <Card className="hover:shadow-lg transition-all hover:scale-105 cursor-pointer h-full">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center justify-between text-base">
-                <span>Vendors</span>
+                <span>Suppliers</span>
                 <Package className="h-5 w-5 text-orange-600" />
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-gray-900 mb-1">-</div>
-              <p className="text-sm text-gray-600 mb-3">Manage your vendors</p>
+              <p className="text-sm text-gray-600 mb-3">Manage your suppliers</p>
               <div className="flex items-center text-indigo-600 text-sm font-medium">
-                View Vendors <ArrowRight className="ml-1 h-4 w-4" />
+                View Suppliers <ArrowRight className="ml-1 h-4 w-4" />
               </div>
             </CardContent>
           </Card>
