@@ -17,6 +17,7 @@ import { PaymentClientModule } from './payment-client/payment-client.module';
 import { PaymentVendorModule } from './payment-vendor/payment-vendor.module';
 import { InvoicesModule } from './invoices/invoices.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     PaymentClientModule,
     PaymentVendorModule,
     InvoicesModule,
+    HealthModule,
   ],
   providers: [
     {
