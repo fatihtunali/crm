@@ -182,8 +182,6 @@ export class PricingService {
     serviceDate: Date,
     dto: QuoteRequestDto,
   ) {
-    const days = dto.days || 1;
-
     const rate = await this.prisma.vehicleRate.findFirst({
       where: {
         tenantId,
@@ -199,14 +197,46 @@ export class PricingService {
       throw new NotFoundException('No active rate found for the selected date');
     }
 
-    let totalCost = Number(rate.baseCostTry) * days;
-    const breakdown: any = { baseCost: Number(rate.baseCostTry), days };
+    let totalCost = 0;
+    let pricingModel = '';
+    const breakdown: any = {};
 
-    // Add driver cost if applicable
-    if (offering.vehicle.withDriver && rate.driverDailyTry) {
-      const driverCost = Number(rate.driverDailyTry) * days;
-      breakdown.driver = { days, cost: driverCost };
-      totalCost += driverCost;
+    // Determine if using daily or hourly pricing
+    if (dto.days) {
+      // Daily rental
+      const days = dto.days;
+      totalCost = Number(rate.dailyRateTry) * days;
+      breakdown.dailyRate = { days, unitCost: Number(rate.dailyRateTry), cost: totalCost };
+      pricingModel = 'DAILY';
+
+      // Add daily driver cost if applicable
+      if (offering.vehicle.withDriver && rate.driverDailyTry) {
+        const driverCost = Number(rate.driverDailyTry) * days;
+        breakdown.driver = { days, cost: driverCost };
+        totalCost += driverCost;
+      }
+
+      // Calculate extra kilometers if applicable
+      if (dto.distance && rate.dailyKmIncluded) {
+        const includedKm = Number(rate.dailyKmIncluded) * days;
+        if (dto.distance > includedKm) {
+          const extraKm = dto.distance - includedKm;
+          const extraKmCost = extraKm * Number(rate.extraKmTry || 0);
+          breakdown.extraKm = { km: extraKm, cost: extraKmCost };
+          totalCost += extraKmCost;
+        }
+      }
+    } else {
+      // Hourly rental
+      const hours = dto.hours || rate.minHours || 4;
+      const billableHours = Math.max(hours, rate.minHours || 4);
+      totalCost = Number(rate.hourlyRateTry) * billableHours;
+      breakdown.hourlyRate = { hours: billableHours, unitCost: Number(rate.hourlyRateTry), cost: totalCost };
+      pricingModel = 'HOURLY';
+
+      if (hours < billableHours) {
+        breakdown.note = `Minimum ${rate.minHours} hours applies`;
+      }
     }
 
     return {
@@ -220,11 +250,12 @@ export class PricingService {
         model: offering.vehicle.model,
         vehicleClass: offering.vehicle.vehicleClass,
         withDriver: offering.vehicle.withDriver,
-        days,
+        days: dto.days,
+        hours: dto.hours,
       },
       pricing: {
         rateId: rate.id,
-        pricingModel: rate.pricingModel,
+        pricingModel,
         breakdown,
         totalCostTry: totalCost,
       },

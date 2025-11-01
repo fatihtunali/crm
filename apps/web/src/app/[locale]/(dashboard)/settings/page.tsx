@@ -3,7 +3,7 @@
 import { useAuth } from '@/lib/auth/auth-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { User, Bell, Globe, Lock, Palette } from 'lucide-react';
+import { User, Bell, Globe, Lock } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user } = useAuth();

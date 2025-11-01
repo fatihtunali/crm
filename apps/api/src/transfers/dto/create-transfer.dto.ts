@@ -9,12 +9,17 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { TransferType } from '@prisma/client';
+import { TransferType, VehicleClass } from '@prisma/client';
 
 export class CreateTransferDto {
   @ApiProperty({ description: 'Service offering ID' })
   @IsInt()
   serviceOfferingId!: number;
+
+  @ApiProperty({ description: 'City (e.g., Istanbul, Cappadocia)', maxLength: 100 })
+  @IsString()
+  @MaxLength(100)
+  city!: string;
 
   @ApiProperty({ description: 'Origin zone', maxLength: 255 })
   @IsString()
@@ -33,16 +38,18 @@ export class CreateTransferDto {
   @IsEnum(TransferType)
   transferType!: TransferType;
 
-  @ApiProperty({ description: 'Vehicle class (sedan, van, minibus, coach)', maxLength: 100 })
-  @IsString()
-  @MaxLength(100)
-  vehicleClass!: string;
+  @ApiProperty({
+    description: 'Vehicle class',
+    enum: VehicleClass,
+    example: 'VITO',
+  })
+  @IsEnum(VehicleClass)
+  vehicleClass!: VehicleClass;
 
-  @ApiPropertyOptional({ description: 'Passenger capacity', default: 4 })
-  @IsOptional()
+  @ApiProperty({ description: 'Maximum passengers', example: 4 })
   @IsInt()
   @Min(1)
-  capacity?: number;
+  maxPassengers!: number;
 
   @ApiPropertyOptional({ description: 'Meet and greet service', default: false })
   @IsOptional()

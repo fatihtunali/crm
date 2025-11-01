@@ -279,11 +279,12 @@ export class TransfersService {
           include: {
             transfer: {
               select: {
+                city: true,
                 originZone: true,
                 destZone: true,
                 transferType: true,
                 vehicleClass: true,
-                capacity: true,
+                maxPassengers: true,
               },
             },
             supplier: {
@@ -376,9 +377,9 @@ export class TransfersService {
           isActive: true,
         },
         OR: [
+          { city: { contains: searchTerm, mode: 'insensitive' } },
           { originZone: { contains: searchTerm, mode: 'insensitive' } },
           { destZone: { contains: searchTerm, mode: 'insensitive' } },
-          { vehicleClass: { contains: searchTerm, mode: 'insensitive' } },
         ],
       },
       include: {

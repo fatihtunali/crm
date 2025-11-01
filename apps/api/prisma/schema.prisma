@@ -441,14 +441,22 @@ enum TransferType {
   SHUTTLE
 }
 
+enum VehicleClass {
+  VITO          // Max 4 pax
+  SPRINTER      // Max 12 pax
+  ISUZU         // Max 20 pax
+  COACH         // Max 44 pax
+}
+
 model Transfer {
   serviceOfferingId Int          @id @map("service_offering_id")
   serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
-  originZone        String       @map("origin_zone") @db.VarChar(255)
-  destZone          String       @map("dest_zone") @db.VarChar(255)
+  city              String       @db.VarChar(100) // Istanbul, Cappadocia, Antalya, etc.
+  originZone        String       @map("origin_zone") @db.VarChar(255) // Airport, Hotel Zone, etc.
+  destZone          String       @map("dest_zone") @db.VarChar(255) // Airport, Hotel Zone, etc.
   transferType      TransferType @map("transfer_type")
-  vehicleClass      String       @map("vehicle_class") @db.VarChar(100) // sedan, van, minibus, coach
-  capacity          Int          @default(4) // Number of passengers
+  vehicleClass      VehicleClass @map("vehicle_class")
+  maxPassengers     Int          @map("max_passengers") // Max capacity: Vito=4, Sprinter=12, Isuzu=20, Coach=44
   meetGreet         Boolean      @default(false) @map("meet_greet")
   luggageAllowance  String?      @map("luggage_allowance") @db.VarChar(100)
   duration          Int?         @db.Integer // Estimated duration in minutes
@@ -496,12 +504,12 @@ model TransferRate {
 model Vehicle {
   serviceOfferingId Int             @id @map("service_offering_id")
   serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
-  make              String          @db.VarChar(100)
-  model             String          @db.VarChar(100)
+  make              String          @db.VarChar(100) // Mercedes, Ford, etc.
+  model             String          @db.VarChar(100) // Vito, Sprinter, etc.
   year              Int?
   plateNumber       String?         @map("plate_number") @db.VarChar(50)
-  seats             Int             @default(5)
-  vehicleClass      String          @map("vehicle_class") @db.VarChar(100) // economy, comfort, luxury, SUV, van
+  vehicleClass      VehicleClass    @map("vehicle_class") // VITO, SPRINTER, ISUZU, COACH
+  maxPassengers     Int             @map("max_passengers") // Max capacity based on class
   transmission      String?         @db.VarChar(50) // automatic, manual
   fuelType          String?         @map("fuel_type") @db.VarChar(50) // petrol, diesel, electric, hybrid
   withDriver        Boolean         @default(false) @map("with_driver")
@@ -522,10 +530,17 @@ model VehicleRate {
   serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
   seasonFrom        DateTime        @map("season_from") @db.Date
   seasonTo          DateTime        @map("season_to") @db.Date
-  pricingModel      PricingModel    @default(PER_DAY) @map("pricing_model")
-  baseCostTry       Decimal         @map("base_cost_try") @db.Decimal(12, 2)
-  dailyKmIncluded   Decimal?        @map("daily_km_included") @db.Decimal(8, 2)
-  extraKmTry        Decimal?        @map("extra_km_try") @db.Decimal(8, 2)
+
+  // Daily rental rates
+  dailyRateTry      Decimal         @map("daily_rate_try") @db.Decimal(12, 2) // Daily rental rate
+  dailyKmIncluded   Decimal?        @map("daily_km_included") @db.Decimal(8, 2) // KM included per day
+
+  // Hourly rental rates
+  hourlyRateTry     Decimal         @map("hourly_rate_try") @db.Decimal(12, 2) // Hourly rental rate
+  minHours          Int?            @default(4) @map("min_hours") // Minimum billable hours
+
+  // Common pricing fields
+  extraKmTry        Decimal?        @map("extra_km_try") @db.Decimal(8, 2) // Cost per extra KM
   driverDailyTry    Decimal?        @map("driver_daily_try") @db.Decimal(8, 2) // If with driver
   oneWayFeeTry      Decimal?        @map("one_way_fee_try") @db.Decimal(8, 2)
   depositTry        Decimal?        @map("deposit_try") @db.Decimal(12, 2)

@@ -15,7 +15,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   TrendingUp,
-  TrendingDown,
   Users,
   Calendar,
   FileText,
@@ -27,9 +26,6 @@ import {
   Loader2,
   BarChart3,
   Upload,
-  CheckCircle,
-  XCircle,
-  Clock,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -38,9 +34,9 @@ export default function DashboardPage() {
   const { data: leadStats, isLoading: leadStatsLoading } = useLeadStats();
   const { data: bookingStats, isLoading: bookingStatsLoading } = useBookingStats();
   const { data: clientPaymentStats, isLoading: clientPaymentLoading } = useClientPaymentStats();
-  const { data: vendorPaymentStats, isLoading: vendorPaymentLoading } = useVendorPaymentStats();
-  const { data: invoiceStats, isLoading: invoiceStatsLoading } = useInvoiceStats();
-  const { data: webhookStats, isLoading: webhookStatsLoading } = useWebhookStats();
+  const { data: vendorPaymentStats } = useVendorPaymentStats();
+  const { data: invoiceStats } = useInvoiceStats();
+  const { data: webhookStats } = useWebhookStats();
   const { data: pnlReport, isLoading: pnlLoading } = usePnLReport();
 
   // Show loading state while initial data is fetching
@@ -85,8 +81,12 @@ export default function DashboardPage() {
     invoiceStats?.reduce((sum, stat) => sum + (stat._sum.grossAmount || 0), 0) || 0;
 
   // Calculate webhook success rate
-  const totalWebhooks = webhookStats?.reduce((sum, stat) => sum + stat.count, 0) || 0;
-  const successWebhooks = webhookStats?.find((s) => s.status === 'SUCCESS')?.count || 0;
+  const totalWebhooks = Array.isArray(webhookStats)
+    ? webhookStats.reduce((sum, stat) => sum + stat.count, 0)
+    : 0;
+  const successWebhooks = Array.isArray(webhookStats)
+    ? webhookStats.find((s) => s.status === 'SUCCESS')?.count || 0
+    : 0;
   const webhookSuccessRate =
     totalWebhooks > 0 ? ((successWebhooks / totalWebhooks) * 100).toFixed(1) : '0';
 

@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toursApi } from '../endpoints/tours';
 import {
-  Tour,
   CreateTourDto,
   UpdateTourDto,
   QueryParams,

@@ -65,12 +65,18 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRate, setEditingRate] = useState<TransferRate | null>(null);
 
-  const { data: rates, isLoading } = useTransferRates({
+  const { data: rates, isLoading, error } = useTransferRates({
     serviceOfferingId: offeringId,
   });
   const createRate = useCreateTransferRate();
   const updateRate = useUpdateTransferRate();
   const deleteRate = useDeleteTransferRate();
+
+  // Debug logging
+  console.log('TransferRatesPage - offeringId:', offeringId);
+  console.log('TransferRatesPage - rates:', rates);
+  console.log('TransferRatesPage - isLoading:', isLoading);
+  console.log('TransferRatesPage - error:', error);
 
   const [formData, setFormData] = useState<Partial<CreateTransferRateDto>>({
     serviceOfferingId: offeringId,
@@ -86,15 +92,14 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
         seasonFrom: rate.seasonFrom,
         seasonTo: rate.seasonTo,
         pricingModel: rate.pricingModel,
-        costTry: rate.costTry,
+        baseCostTry: rate.baseCostTry,
         includedKm: rate.includedKm,
         includedHours: rate.includedHours,
-        extraKmChargeTry: rate.extraKmChargeTry,
-        extraHourChargeTry: rate.extraHourChargeTry,
-        nightSurchargePercent: rate.nightSurchargePercent,
-        holidaySurchargePercent: rate.holidaySurchargePercent,
-        waitingTimeFreeMinutes: rate.waitingTimeFreeMinutes,
-        waitingTimeChargePerHourTry: rate.waitingTimeChargePerHourTry,
+        extraKmTry: rate.extraKmTry,
+        extraHourTry: rate.extraHourTry,
+        nightSurchargePct: rate.nightSurchargePct,
+        holidaySurchargePct: rate.holidaySurchargePct,
+        waitingTimeFree: rate.waitingTimeFree,
         notes: rate.notes,
         isActive: rate.isActive,
       });
@@ -124,15 +129,14 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
           seasonFrom: formData.seasonFrom,
           seasonTo: formData.seasonTo,
           pricingModel: formData.pricingModel,
-          costTry: formData.costTry,
+          baseCostTry: formData.baseCostTry,
           includedKm: formData.includedKm,
           includedHours: formData.includedHours,
-          extraKmChargeTry: formData.extraKmChargeTry,
-          extraHourChargeTry: formData.extraHourChargeTry,
-          nightSurchargePercent: formData.nightSurchargePercent,
-          holidaySurchargePercent: formData.holidaySurchargePercent,
-          waitingTimeFreeMinutes: formData.waitingTimeFreeMinutes,
-          waitingTimeChargePerHourTry: formData.waitingTimeChargePerHourTry,
+          extraKmTry: formData.extraKmTry,
+          extraHourTry: formData.extraHourTry,
+          nightSurchargePct: formData.nightSurchargePct,
+          holidaySurchargePct: formData.holidaySurchargePct,
+          waitingTimeFree: formData.waitingTimeFree,
           notes: formData.notes,
           isActive: formData.isActive,
         },
@@ -184,7 +188,7 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
 
       <Card>
         <CardHeader>
-          <CardTitle>{rates?.data?.length || 0} Rate(s)</CardTitle>
+          <CardTitle>{rates?.length || 0} Rate(s)</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -197,18 +201,18 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
                 <TableHead>Extra Charges</TableHead>
                 <TableHead>Surcharges</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rates?.data?.length === 0 ? (
+              {rates?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center text-gray-500 py-8">
                     No rates configured yet
                   </TableCell>
                 </TableRow>
               ) : (
-                rates?.data?.map((rate) => (
+                rates?.map((rate) => (
                   <TableRow key={rate.id}>
                     <TableCell>
                       <div className="text-sm">
@@ -224,7 +228,7 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
                       <Badge variant="outline">{pricingModelLabels[rate.pricingModel]}</Badge>
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">₺{rate.costTry.toLocaleString()}</span>
+                      <span className="font-medium">₺{rate.baseCostTry.toLocaleString()}</span>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
@@ -235,16 +239,16 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {rate.extraKmChargeTry && <div>₺{rate.extraKmChargeTry}/km</div>}
-                        {rate.extraHourChargeTry && <div>₺{rate.extraHourChargeTry}/hr</div>}
-                        {!rate.extraKmChargeTry && !rate.extraHourChargeTry && <span className="text-gray-400">-</span>}
+                        {rate.extraKmTry && <div>₺{rate.extraKmTry}/km</div>}
+                        {rate.extraHourTry && <div>₺{rate.extraHourTry}/hr</div>}
+                        {!rate.extraKmTry && !rate.extraHourTry && <span className="text-gray-400">-</span>}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {rate.nightSurchargePercent && <div>Night: {rate.nightSurchargePercent}%</div>}
-                        {rate.holidaySurchargePercent && <div>Holiday: {rate.holidaySurchargePercent}%</div>}
-                        {!rate.nightSurchargePercent && !rate.holidaySurchargePercent && <span className="text-gray-400">-</span>}
+                        {rate.nightSurchargePct && <div>Night: {rate.nightSurchargePct}%</div>}
+                        {rate.holidaySurchargePct && <div>Holiday: {rate.holidaySurchargePct}%</div>}
+                        {!rate.nightSurchargePct && !rate.holidaySurchargePct && <span className="text-gray-400">-</span>}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -343,14 +347,14 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="costTry">Base Cost (TRY) *</Label>
+                  <Label htmlFor="baseCostTry">Base Cost (TRY) *</Label>
                   <Input
-                    id="costTry"
+                    id="baseCostTry"
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.costTry || ''}
-                    onChange={(e) => setFormData({ ...formData, costTry: parseFloat(e.target.value) })}
+                    value={formData.baseCostTry || ''}
+                    onChange={(e) => setFormData({ ...formData, baseCostTry: parseFloat(e.target.value) })}
                     required
                   />
                 </div>
@@ -390,29 +394,29 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
               {/* Extra Charges */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="extraKmChargeTry">Extra KM Charge (TRY)</Label>
+                  <Label htmlFor="extraKmTry">Extra KM Charge (TRY)</Label>
                   <Input
-                    id="extraKmChargeTry"
+                    id="extraKmTry"
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.extraKmChargeTry || ''}
+                    value={formData.extraKmTry || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, extraKmChargeTry: parseFloat(e.target.value) || undefined })
+                      setFormData({ ...formData, extraKmTry: parseFloat(e.target.value) || undefined })
                     }
                     placeholder="Per km beyond included"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="extraHourChargeTry">Extra Hour Charge (TRY)</Label>
+                  <Label htmlFor="extraHourTry">Extra Hour Charge (TRY)</Label>
                   <Input
-                    id="extraHourChargeTry"
+                    id="extraHourTry"
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.extraHourChargeTry || ''}
+                    value={formData.extraHourTry || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, extraHourChargeTry: parseFloat(e.target.value) || undefined })
+                      setFormData({ ...formData, extraHourTry: parseFloat(e.target.value) || undefined })
                     }
                     placeholder="Per hour beyond included"
                   />
@@ -422,31 +426,31 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
               {/* Surcharges */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="nightSurchargePercent">Night Surcharge (%)</Label>
+                  <Label htmlFor="nightSurchargePct">Night Surcharge (%)</Label>
                   <Input
-                    id="nightSurchargePercent"
+                    id="nightSurchargePct"
                     type="number"
                     min="0"
                     max="100"
                     step="0.1"
-                    value={formData.nightSurchargePercent || ''}
+                    value={formData.nightSurchargePct || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, nightSurchargePercent: parseFloat(e.target.value) || undefined })
+                      setFormData({ ...formData, nightSurchargePct: parseFloat(e.target.value) || undefined })
                     }
                     placeholder="e.g., 25 for 25%"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="holidaySurchargePercent">Holiday Surcharge (%)</Label>
+                  <Label htmlFor="holidaySurchargePct">Holiday Surcharge (%)</Label>
                   <Input
-                    id="holidaySurchargePercent"
+                    id="holidaySurchargePct"
                     type="number"
                     min="0"
                     max="100"
                     step="0.1"
-                    value={formData.holidaySurchargePercent || ''}
+                    value={formData.holidaySurchargePct || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, holidaySurchargePercent: parseFloat(e.target.value) || undefined })
+                      setFormData({ ...formData, holidaySurchargePct: parseFloat(e.target.value) || undefined })
                     }
                     placeholder="e.g., 30 for 30%"
                   />
@@ -454,34 +458,18 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
               </div>
 
               {/* Waiting Time Policy */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="waitingTimeFreeMinutes">Free Waiting Time (minutes)</Label>
-                  <Input
-                    id="waitingTimeFreeMinutes"
-                    type="number"
-                    min="0"
-                    value={formData.waitingTimeFreeMinutes || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, waitingTimeFreeMinutes: parseInt(e.target.value) || undefined })
-                    }
-                    placeholder="e.g., 30"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="waitingTimeChargePerHourTry">Waiting Time Charge (TRY/hour)</Label>
-                  <Input
-                    id="waitingTimeChargePerHourTry"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.waitingTimeChargePerHourTry || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, waitingTimeChargePerHourTry: parseFloat(e.target.value) || undefined })
-                    }
-                    placeholder="After free time expires"
-                  />
-                </div>
+              <div>
+                <Label htmlFor="waitingTimeFree">Free Waiting Time (minutes)</Label>
+                <Input
+                  id="waitingTimeFree"
+                  type="number"
+                  min="0"
+                  value={formData.waitingTimeFree || ''}
+                  onChange={(e) =>
+                    setFormData({ ...formData, waitingTimeFree: parseInt(e.target.value) || undefined })
+                  }
+                  placeholder="e.g., 30"
+                />
               </div>
 
               {/* Notes */}

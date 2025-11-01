@@ -259,15 +259,14 @@ export interface TransferRate {
   seasonFrom: string;
   seasonTo: string;
   pricingModel: PricingModel;
-  costTry: number;
+  baseCostTry: number;
   includedKm?: number;
   includedHours?: number;
-  extraKmChargeTry?: number;
-  extraHourChargeTry?: number;
-  nightSurchargePercent?: number;
-  holidaySurchargePercent?: number;
-  waitingTimeFreeMinutes?: number;
-  waitingTimeChargePerHourTry?: number;
+  extraKmTry?: number;
+  extraHourTry?: number;
+  nightSurchargePct?: number;
+  holidaySurchargePct?: number;
+  waitingTimeFree?: number;
   notes?: string;
   isActive: boolean;
   createdAt: string;
@@ -279,15 +278,14 @@ export interface CreateTransferRateDto {
   seasonFrom: string;
   seasonTo: string;
   pricingModel: PricingModel;
-  costTry: number;
+  baseCostTry: number;
   includedKm?: number;
   includedHours?: number;
-  extraKmChargeTry?: number;
-  extraHourChargeTry?: number;
-  nightSurchargePercent?: number;
-  holidaySurchargePercent?: number;
-  waitingTimeFreeMinutes?: number;
-  waitingTimeChargePerHourTry?: number;
+  extraKmTry?: number;
+  extraHourTry?: number;
+  nightSurchargePct?: number;
+  holidaySurchargePct?: number;
+  waitingTimeFree?: number;
   notes?: string;
   isActive?: boolean;
 }
@@ -296,35 +294,44 @@ export interface UpdateTransferRateDto {
   seasonFrom?: string;
   seasonTo?: string;
   pricingModel?: PricingModel;
-  costTry?: number;
+  baseCostTry?: number;
   includedKm?: number;
   includedHours?: number;
-  extraKmChargeTry?: number;
-  extraHourChargeTry?: number;
-  nightSurchargePercent?: number;
-  holidaySurchargePercent?: number;
-  waitingTimeFreeMinutes?: number;
-  waitingTimeChargePerHourTry?: number;
+  extraKmTry?: number;
+  extraHourTry?: number;
+  nightSurchargePct?: number;
+  holidaySurchargePct?: number;
+  waitingTimeFree?: number;
   notes?: string;
   isActive?: boolean;
 }
 
 // Transfer Rates API
 export const transferRatesApi = {
-  getAll: (params?: { serviceOfferingId?: number; seasonFrom?: string; seasonTo?: string }) =>
-    api.get<TransferRate[]>('/transfers/rates', { params }),
+  getAll: async (params?: { serviceOfferingId?: number; seasonFrom?: string; seasonTo?: string }) => {
+    const response = await api.get<TransferRate[]>('/transfers/rates', { params });
+    return response.data;
+  },
 
-  getOne: (id: number) =>
-    api.get<TransferRate>(`/transfers/rates/${id}`),
+  getOne: async (id: number) => {
+    const response = await api.get<TransferRate>(`/transfers/rates/${id}`);
+    return response.data;
+  },
 
-  create: (data: CreateTransferRateDto) =>
-    api.post<TransferRate>('/transfers/rates', data),
+  create: async (data: CreateTransferRateDto) => {
+    const response = await api.post<TransferRate>('/transfers/rates', data);
+    return response.data;
+  },
 
-  update: (id: number, data: UpdateTransferRateDto) =>
-    api.patch<TransferRate>(`/transfers/rates/${id}`, data),
+  update: async (id: number, data: UpdateTransferRateDto) => {
+    const response = await api.patch<TransferRate>(`/transfers/rates/${id}`, data);
+    return response.data;
+  },
 
-  delete: (id: number) =>
-    api.delete<{ message: string }>(`/transfers/rates/${id}`),
+  delete: async (id: number) => {
+    const response = await api.delete<{ message: string }>(`/transfers/rates/${id}`);
+    return response.data;
+  },
 };
 
 // Vehicle Hire Rate Types

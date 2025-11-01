@@ -66,7 +66,15 @@ export function priceFromCost(costTry: number, markupPct: number, rate: number):
   const sellPriceEur = costWithMarkup / rate;
 
   // Round to 2 decimals
-  return Math.round(sellPriceEur * 100) / 100;
+  let rounded = Math.round(sellPriceEur * 100) / 100;
+
+  // Ensure minimum price of 0.01 EUR if original value was greater than 0
+  // This prevents very small costs from rounding to 0.00 EUR (free items)
+  if (rounded <= 0 && costTry > 0) {
+    rounded = 0.01; // Minimum price is 1 cent
+  }
+
+  return rounded;
 }
 
 /**

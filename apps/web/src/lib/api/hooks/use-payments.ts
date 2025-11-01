@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { paymentsClientApi, paymentsVendorApi } from '../endpoints/payments';
 import {
-  ClientPayment,
-  VendorPayment,
   CreateClientPaymentDto,
   CreateVendorPaymentDto,
   UpdateClientPaymentDto,

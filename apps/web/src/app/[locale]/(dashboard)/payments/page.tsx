@@ -89,13 +89,13 @@ export default function PaymentsPage() {
 
   const getClientStatusCount = (status: PaymentStatus) => {
     return (
-      clientStats?.find((s) => s.status === status)?.totalAmount || 0
+      clientStats?.find((s) => s.status === status)?._sum?.amountEur || 0
     );
   };
 
   const getVendorStatusCount = (status: PaymentStatus) => {
     return (
-      vendorStats?.find((s) => s.status === status)?.totalAmount || 0
+      vendorStats?.find((s) => s.status === status)?._sum?.amountTry || 0
     );
   };
 
@@ -430,7 +430,7 @@ export default function PaymentsPage() {
                               : '-'}
                           </td>
                           <td className="p-4 text-sm text-gray-600">
-                            {new Date(payment.dueDate).toLocaleDateString()}
+                            {new Date(payment.dueAt).toLocaleDateString()}
                           </td>
                           <td className="p-4 text-sm">
                             <span

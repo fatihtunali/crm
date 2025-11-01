@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoicesApi } from '../endpoints/invoices';
 import {
-  Invoice,
   CreateInvoiceDto,
   UpdateInvoiceDto,
 } from '../types';

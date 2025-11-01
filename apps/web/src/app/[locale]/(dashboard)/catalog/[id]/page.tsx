@@ -68,8 +68,6 @@ export default function EditServiceOfferingPage() {
     await updateOffering.mutateAsync({
       id,
       data: {
-        supplierId: parseInt(formData.supplierId),
-        serviceType: formData.serviceType,
         title: formData.title,
         location: formData.location || undefined,
         description: formData.description || undefined,

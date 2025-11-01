@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   transferRatesApi,
-  type TransferRate,
   type CreateTransferRateDto,
   type UpdateTransferRateDto,
 } from '../endpoints/suppliers';

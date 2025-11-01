@@ -5,11 +5,9 @@ import {
   IsInt,
   IsNumber,
   IsBoolean,
-  IsEnum,
   IsDateString,
   Min,
 } from 'class-validator';
-import { PricingModel } from '@prisma/client';
 
 export class CreateVehicleRateDto {
   @ApiProperty({ description: 'Service offering ID' })
@@ -24,19 +22,21 @@ export class CreateVehicleRateDto {
   @IsDateString()
   seasonTo!: string;
 
-  @ApiPropertyOptional({
-    description: 'Pricing model',
-    enum: PricingModel,
-    default: PricingModel.PER_DAY,
-  })
-  @IsOptional()
-  @IsEnum(PricingModel)
-  pricingModel?: PricingModel;
-
-  @ApiProperty({ description: 'Base cost in TRY' })
+  @ApiProperty({ description: 'Daily rental rate in TRY', example: 2400.00 })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  baseCostTry!: number;
+  dailyRateTry!: number;
+
+  @ApiProperty({ description: 'Hourly rental rate in TRY', example: 400.00 })
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  hourlyRateTry!: number;
+
+  @ApiPropertyOptional({ description: 'Minimum billable hours', default: 4 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  minHours?: number;
 
   @ApiPropertyOptional({ description: 'Daily kilometers included' })
   @IsOptional()

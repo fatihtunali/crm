@@ -9,7 +9,7 @@ import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { CreateVehicleRateDto } from './dto/create-vehicle-rate.dto';
 import { UpdateVehicleRateDto } from './dto/update-vehicle-rate.dto';
-import { ServiceType } from '@prisma/client';
+import { ServiceType, VehicleClass } from '@prisma/client';
 
 @Injectable()
 export class VehiclesService {
@@ -62,7 +62,7 @@ export class VehiclesService {
 
   async findAllVehicles(
     tenantId: number,
-    vehicleClass?: string,
+    vehicleClass?: VehicleClass,
     withDriver?: boolean,
     supplierId?: number,
   ) {
@@ -73,7 +73,7 @@ export class VehiclesService {
           isActive: true,
           ...(supplierId ? { supplierId } : {}),
         },
-        ...(vehicleClass ? { vehicleClass: { contains: vehicleClass, mode: 'insensitive' } } : {}),
+        ...(vehicleClass ? { vehicleClass } : {}),
         ...(withDriver !== undefined ? { withDriver } : {}),
       },
       include: {
@@ -281,7 +281,7 @@ export class VehiclesService {
                 model: true,
                 year: true,
                 vehicleClass: true,
-                seats: true,
+                maxPassengers: true,
                 withDriver: true,
               },
             },
@@ -298,7 +298,7 @@ export class VehiclesService {
           },
         },
       },
-      orderBy: [{ seasonFrom: 'asc' }, { baseCostTry: 'asc' }],
+      orderBy: [{ seasonFrom: 'asc' }, { dailyRateTry: 'asc' }],
     });
   }
 
@@ -377,7 +377,6 @@ export class VehiclesService {
         OR: [
           { make: { contains: searchTerm, mode: 'insensitive' } },
           { model: { contains: searchTerm, mode: 'insensitive' } },
-          { vehicleClass: { contains: searchTerm, mode: 'insensitive' } },
           { plateNumber: { contains: searchTerm, mode: 'insensitive' } },
         ],
       },

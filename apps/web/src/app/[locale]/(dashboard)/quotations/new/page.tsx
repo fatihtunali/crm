@@ -219,7 +219,7 @@ export default function NewQuotationPage() {
             </div>
 
             {/* Profit Calculation Display */}
-            {formData.sellPriceEur > 0 && formData.exchangeRateUsed > 0 && (
+            {(formData.sellPriceEur ?? 0) > 0 && (formData.exchangeRateUsed ?? 0) > 0 && (
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
                 <div className="text-sm font-semibold text-gray-700 mb-2">
                   Estimated Profit
@@ -227,15 +227,15 @@ export default function NewQuotationPage() {
                 <div className="text-2xl font-bold text-indigo-900">
                   €
                   {(
-                    formData.sellPriceEur -
-                    (formData.calcCostTry || 0) / formData.exchangeRateUsed
+                    (formData.sellPriceEur ?? 0) -
+                    (formData.calcCostTry || 0) / (formData.exchangeRateUsed ?? 1)
                   ).toFixed(2)}{' '}
                   (
-                  {formData.sellPriceEur > 0
+                  {(formData.sellPriceEur ?? 0) > 0
                     ? (
-                        ((formData.sellPriceEur -
-                          (formData.calcCostTry || 0) / formData.exchangeRateUsed) /
-                          formData.sellPriceEur) *
+                        (((formData.sellPriceEur ?? 0) -
+                          (formData.calcCostTry || 0) / (formData.exchangeRateUsed ?? 1)) /
+                          (formData.sellPriceEur ?? 1)) *
                         100
                       ).toFixed(1)
                     : 0}

@@ -5,9 +5,11 @@ import {
   IsInt,
   IsBoolean,
   IsObject,
+  IsEnum,
   MaxLength,
   Min,
 } from 'class-validator';
+import { VehicleClass } from '@prisma/client';
 
 export class CreateVehicleDto {
   @ApiProperty({ description: 'Service offering ID' })
@@ -36,16 +38,18 @@ export class CreateVehicleDto {
   @MaxLength(50)
   plateNumber?: string;
 
-  @ApiPropertyOptional({ description: 'Number of seats', default: 5 })
-  @IsOptional()
+  @ApiProperty({
+    description: 'Vehicle class',
+    enum: VehicleClass,
+    example: 'VITO',
+  })
+  @IsEnum(VehicleClass)
+  vehicleClass!: VehicleClass;
+
+  @ApiProperty({ description: 'Maximum passengers', example: 4 })
   @IsInt()
   @Min(1)
-  seats?: number;
-
-  @ApiProperty({ description: 'Vehicle class (economy, comfort, luxury, SUV, van)', maxLength: 100 })
-  @IsString()
-  @MaxLength(100)
-  vehicleClass!: string;
+  maxPassengers!: number;
 
   @ApiPropertyOptional({ description: 'Transmission type (automatic, manual)', maxLength: 50 })
   @IsOptional()

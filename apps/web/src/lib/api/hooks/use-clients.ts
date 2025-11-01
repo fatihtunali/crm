@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clientsApi } from '../endpoints/clients';
 import {
-  Client,
   CreateClientDto,
   UpdateClientDto,
   QueryParams,

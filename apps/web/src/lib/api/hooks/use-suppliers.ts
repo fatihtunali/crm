@@ -2,10 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   suppliersApi,
   serviceOfferingsApi,
-  type Supplier,
   type CreateSupplierDto,
   type UpdateSupplierDto,
-  type ServiceOffering,
   type CreateServiceOfferingDto,
   type UpdateServiceOfferingDto,
   type SupplierType,

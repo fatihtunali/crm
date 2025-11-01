@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useBookings } from '@/lib/api/hooks/use-bookings';
-import { useVendors } from '@/lib/api/hooks/use-vendors';
+// import { useVendors } from '@/lib/api/hooks/use-vendors'; // Legacy - not implemented
 import {
   useCreateClientPayment,
   useCreateVendorPayment,
@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Users, Building2 } from 'lucide-react';
 import Link from 'next/link';
@@ -54,7 +53,8 @@ export default function NewPaymentPage() {
   });
 
   const { data: bookingsData } = useBookings({ page: 1, limit: 100 });
-  const { data: vendorsData } = useVendors({ page: 1, limit: 100 });
+  // const { data: vendorsData } = useVendors({ page: 1, limit: 100 }); // Legacy - not implemented
+  const vendorsData: { data: any[] } = { data: [] }; // Stub for now - vendor system deprecated
   const createClientPayment = useCreateClientPayment();
   const createVendorPayment = useCreateVendorPayment();
 
@@ -161,12 +161,13 @@ export default function NewPaymentPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="client-booking">Booking *</Label>
-                  <Select
+                  <select
                     id="client-booking"
                     value={clientForm.bookingId}
                     onChange={(e) =>
                       setClientForm({ ...clientForm, bookingId: e.target.value })
                     }
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required
                   >
                     <option value="">Select booking...</option>
@@ -175,7 +176,7 @@ export default function NewPaymentPage() {
                         {booking.bookingCode} - {booking.client?.name}
                       </option>
                     ))}
-                  </Select>
+                  </select>
                 </div>
 
                 <div>
@@ -195,12 +196,13 @@ export default function NewPaymentPage() {
 
                 <div>
                   <Label htmlFor="client-method">Payment Method *</Label>
-                  <Select
+                  <select
                     id="client-method"
                     value={clientForm.method}
                     onChange={(e) =>
                       setClientForm({ ...clientForm, method: e.target.value as PaymentMethod })
                     }
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required
                   >
                     <option value="CASH">Cash</option>
@@ -208,7 +210,7 @@ export default function NewPaymentPage() {
                     <option value="BANK_TRANSFER">Bank Transfer</option>
                     <option value="ONLINE">Online</option>
                     <option value="OTHER">Other</option>
-                  </Select>
+                  </select>
                 </div>
 
                 <div>
@@ -239,19 +241,20 @@ export default function NewPaymentPage() {
 
                 <div>
                   <Label htmlFor="client-status">Status *</Label>
-                  <Select
+                  <select
                     id="client-status"
                     value={clientForm.status}
                     onChange={(e) =>
                       setClientForm({ ...clientForm, status: e.target.value as PaymentStatus })
                     }
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required
                   >
                     <option value="PENDING">Pending</option>
                     <option value="COMPLETED">Completed</option>
                     <option value="FAILED">Failed</option>
                     <option value="REFUNDED">Refunded</option>
-                  </Select>
+                  </select>
                 </div>
               </div>
 
@@ -297,12 +300,13 @@ export default function NewPaymentPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="vendor-booking">Booking *</Label>
-                  <Select
+                  <select
                     id="vendor-booking"
                     value={vendorForm.bookingId}
                     onChange={(e) =>
                       setVendorForm({ ...vendorForm, bookingId: e.target.value })
                     }
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required
                   >
                     <option value="">Select booking...</option>
@@ -311,17 +315,18 @@ export default function NewPaymentPage() {
                         {booking.bookingCode} - {booking.client?.name}
                       </option>
                     ))}
-                  </Select>
+                  </select>
                 </div>
 
                 <div>
                   <Label htmlFor="vendor-vendor">Vendor *</Label>
-                  <Select
+                  <select
                     id="vendor-vendor"
                     value={vendorForm.vendorId}
                     onChange={(e) =>
                       setVendorForm({ ...vendorForm, vendorId: e.target.value })
                     }
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required
                   >
                     <option value="">Select vendor...</option>
@@ -330,7 +335,7 @@ export default function NewPaymentPage() {
                         {vendor.name} ({vendor.type})
                       </option>
                     ))}
-                  </Select>
+                  </select>
                 </div>
 
                 <div>
@@ -375,19 +380,20 @@ export default function NewPaymentPage() {
 
                 <div>
                   <Label htmlFor="vendor-status">Status *</Label>
-                  <Select
+                  <select
                     id="vendor-status"
                     value={vendorForm.status}
                     onChange={(e) =>
                       setVendorForm({ ...vendorForm, status: e.target.value as PaymentStatus })
                     }
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required
                   >
                     <option value="PENDING">Pending</option>
                     <option value="COMPLETED">Completed</option>
                     <option value="FAILED">Failed</option>
                     <option value="REFUNDED">Refunded</option>
-                  </Select>
+                  </select>
                 </div>
               </div>
 

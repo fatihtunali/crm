@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bookingsApi } from '../endpoints/bookings';
 import {
-  Booking,
   CreateBookingDto,
   UpdateBookingDto,
   BookingStatus,

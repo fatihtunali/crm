@@ -2,10 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   partiesApi,
   contactsApi,
-  type Party,
   type CreatePartyDto,
   type UpdatePartyDto,
-  type Contact,
   type CreateContactDto,
   type UpdateContactDto,
 } from '../endpoints/parties';

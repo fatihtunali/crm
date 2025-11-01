@@ -45,10 +45,10 @@ export default function ServiceRatesPage() {
       return <VehicleRatesPage offeringId={offeringId} offering={offering.data} />;
 
     case ServiceType.GUIDE_SERVICE:
-      return <GuideRatesPage offeringId={offeringId} offering={offering.data} />;
+      return <GuideRatesPage offering={offering.data} />;
 
     case ServiceType.ACTIVITY:
-      return <ActivityRatesPage offeringId={offeringId} offering={offering.data} />;
+      return <ActivityRatesPage offering={offering.data} />;
 
     default:
       return (

@@ -27,6 +27,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@tour-crm/shared';
 import { TenantId } from '../common/decorators/current-user.decorator';
+import { VehicleClass } from '@prisma/client';
 
 @ApiTags('Vehicles')
 @Controller('vehicles')
@@ -52,7 +53,7 @@ export class VehiclesController {
   @Get()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS)
   @ApiOperation({ summary: 'Get all vehicles' })
-  @ApiQuery({ name: 'vehicleClass', required: false, type: String })
+  @ApiQuery({ name: 'vehicleClass', required: false, enum: VehicleClass })
   @ApiQuery({ name: 'withDriver', required: false, type: Boolean })
   @ApiQuery({ name: 'supplierId', required: false, type: Number })
   findAllVehicles(
@@ -63,7 +64,7 @@ export class VehiclesController {
   ) {
     return this.vehiclesService.findAllVehicles(
       tenantId,
-      vehicleClass,
+      vehicleClass as VehicleClass | undefined,
       withDriver ? withDriver === 'true' : undefined,
       supplierId ? parseInt(supplierId, 10) : undefined,
     );

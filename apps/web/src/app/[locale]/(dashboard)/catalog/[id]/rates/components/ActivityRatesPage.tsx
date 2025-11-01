@@ -8,11 +8,10 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 interface ActivityRatesPageProps {
-  offeringId: number;
   offering: ServiceOffering;
 }
 
-export default function ActivityRatesPage({ offeringId, offering }: ActivityRatesPageProps) {
+export default function ActivityRatesPage({ offering }: ActivityRatesPageProps) {
   const params = useParams();
   const locale = params.locale as string;
 

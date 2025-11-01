@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Users,
   UserPlus,
-  Building2,
   Map,
   FileText,
   Calendar,
@@ -19,7 +18,6 @@ import {
   Settings,
   Webhook,
   ShoppingBag,
-  Package,
   Hotel,
   Car,
   Truck,
@@ -186,7 +184,7 @@ export function Sidebar() {
                 </button>
                 {isExpanded && (
                   <div className="ml-4 mt-1 space-y-1">
-                    {item.subItems.map((subItem) => {
+                    {item.subItems?.map((subItem) => {
                       const SubIcon = subItem.icon;
                       const active = isActive(subItem.href);
                       return (

@@ -40,9 +40,9 @@ export default function DashboardPage() {
   const { data: leadStats, isLoading: leadStatsLoading } = useLeadStats();
   const { data: bookingStats, isLoading: bookingStatsLoading } = useBookingStats();
   const { data: clientPaymentStats, isLoading: clientPaymentLoading } = useClientPaymentStats();
-  const { data: vendorPaymentStats, isLoading: vendorPaymentLoading } = useVendorPaymentStats();
-  const { data: invoiceStats, isLoading: invoiceStatsLoading } = useInvoiceStats();
-  const { data: webhookStats, isLoading: webhookStatsLoading } = useWebhookStats();
+  const { data: vendorPaymentStats } = useVendorPaymentStats();
+  const { data: invoiceStats } = useInvoiceStats();
+  const { data: webhookStats } = useWebhookStats();
   const { data: pnlReport, isLoading: pnlLoading } = usePnLReport();
 
   // Show loading state while initial data is fetching

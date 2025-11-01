@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { quotationsApi } from '../endpoints/quotations';
 import {
-  Quotation,
   CreateQuotationDto,
   UpdateQuotationDto,
   QuotationStatus,

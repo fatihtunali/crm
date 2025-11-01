@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
 import {
   Webhook,
   RefreshCw,
@@ -170,44 +169,10 @@ export default function WebhooksPage() {
 
             <div>
               <Label htmlFor="eventType">Event Type</Label>
-              <Select
-                id="eventType"
-                value={filters.eventType || ''}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    eventType: e.target.value as WebhookEventType,
-                  })
-                }
-              >
-                <option value="">All</option>
-                <option value="PAYMENT_SUCCESS">Payment Success</option>
-                <option value="PAYMENT_FAILED">Payment Failed</option>
-                <option value="PAYMENT_PENDING">Payment Pending</option>
-                <option value="REFUND_PROCESSED">Refund Processed</option>
-                <option value="REFUND_FAILED">Refund Failed</option>
-              </Select>
             </div>
 
             <div>
               <Label htmlFor="status">Status</Label>
-              <Select
-                id="status"
-                value={filters.status || ''}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    status: e.target.value as WebhookEventStatus,
-                  })
-                }
-              >
-                <option value="">All</option>
-                <option value="PENDING">Pending</option>
-                <option value="PROCESSING">Processing</option>
-                <option value="SUCCESS">Success</option>
-                <option value="FAILED">Failed</option>
-                <option value="RETRY">Retry</option>
-              </Select>
             </div>
 
             <div>

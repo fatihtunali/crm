@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useCreateServiceOffering } from '@/lib/api/hooks/use-suppliers';
 import { useSuppliers } from '@/lib/api/hooks/use-suppliers';
