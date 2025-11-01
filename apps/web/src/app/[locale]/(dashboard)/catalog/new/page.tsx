@@ -89,7 +89,7 @@ export default function NewServiceOfferingPage() {
                 <Label htmlFor="serviceType">Service Type *</Label>
                 <Select
                   value={formData.serviceType}
-                  onValueChange={(value) =>
+                  onValueChange={(value: string) =>
                     setFormData({ ...formData, serviceType: value as ServiceType })
                   }
                 >
@@ -109,7 +109,7 @@ export default function NewServiceOfferingPage() {
                 <Label htmlFor="supplierId">Supplier *</Label>
                 <Select
                   value={formData.supplierId}
-                  onValueChange={(value) => setFormData({ ...formData, supplierId: value })}
+                  onValueChange={(value: string) => setFormData({ ...formData, supplierId: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select supplier" />
@@ -173,11 +173,11 @@ export default function NewServiceOfferingPage() {
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>What's Next?</CardTitle>
+          <CardTitle>What&apos;s Next?</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-gray-600">
-            After creating the service offering, you'll be able to:
+            After creating the service offering, you&apos;ll be able to:
           </p>
           <ul className="list-disc list-inside mt-2 space-y-1 text-gray-600">
             <li>Add type-specific details (room types, vehicle specs, etc.)</li>

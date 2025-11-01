@@ -381,7 +381,7 @@ export default function NewTourPage() {
               ))
             ) : (
               <p className="text-gray-500 text-center py-4">
-                No itinerary days added yet. Click "Add Day" to start building your tour itinerary.
+                No itinerary days added yet. Click &quot;Add Day&quot; to start building your tour itinerary.
               </p>
             )}
           </CardContent>

@@ -5,6 +5,11 @@ import {
   type UpdateHotelRoomRateDto,
 } from '../endpoints/suppliers';
 import { useToast } from '@/hooks/use-toast';
+import { AxiosError } from 'axios';
+
+interface ApiErrorResponse {
+  message?: string;
+}
 
 export function useHotelRoomRates(params?: {
   serviceOfferingId?: number;
@@ -39,7 +44,7 @@ export function useCreateHotelRoomRate() {
         description: 'Hotel room rate created successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to create hotel room rate',
@@ -64,7 +69,7 @@ export function useUpdateHotelRoomRate() {
         description: 'Hotel room rate updated successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to update hotel room rate',
@@ -87,7 +92,7 @@ export function useDeleteHotelRoomRate() {
         description: 'Hotel room rate deleted successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to delete hotel room rate',

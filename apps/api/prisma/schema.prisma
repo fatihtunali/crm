@@ -15,47 +15,61 @@ datasource db {
 // ============================================
 
 model Tenant {
-  id               Int      @id @default(autoincrement())
-  name             String   @db.VarChar(255)
-  code             String   @unique @db.VarChar(50)
-  brandingLogoUrl  String?  @map("branding_logo_url") @db.VarChar(500)
-  defaultCurrency  String   @default("EUR") @map("default_currency") @db.VarChar(3)
-  taxId            String?  @map("tax_id") @db.VarChar(100)
-  address          String?  @db.Text
-  phone            String?  @db.VarChar(50)
-  email            String?  @db.VarChar(255)
-  isActive         Boolean  @default(true) @map("is_active")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id              Int      @id @default(autoincrement())
+  name            String   @db.VarChar(255)
+  code            String   @unique @db.VarChar(50)
+  brandingLogoUrl String?  @map("branding_logo_url") @db.VarChar(500)
+  defaultCurrency String   @default("EUR") @map("default_currency") @db.VarChar(3)
+  taxId           String?  @map("tax_id") @db.VarChar(100)
+  address         String?  @db.Text
+  phone           String?  @db.VarChar(50)
+  email           String?  @db.VarChar(255)
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   // Relations
-  users            User[]
-  clients          Client[]
-  leads            Lead[]
-  tours            Tour[]
-  itineraries      Itinerary[]
-  vendors          Vendor[]
-  vendorRates      VendorRate[]
-  exchangeRates    ExchangeRate[]
-  quotations       Quotation[]
-  bookings         Booking[]
-  bookingItems     BookingItem[]
-  paymentsClient   PaymentClient[]
-  paymentsVendor   PaymentVendor[]
-  invoices         Invoice[]
-  auditLogs        AuditLog[]
-  idempotencyKeys  IdempotencyKey[]
-  files            File[]
-  webhookEvents    WebhookEvent[]
-  parties          Party[]
-  suppliers        Supplier[]
-  contacts         Contact[]
-  serviceOfferings ServiceOffering[]
-  hotelRoomRates   HotelRoomRate[]
-  transferRates    TransferRate[]
-  vehicleRates     VehicleRate[]
-  guideRates       GuideRate[]
-  activityRates    ActivityRate[]
+  users               User[]
+  clients             Client[]
+  leads               Lead[]
+  tours               Tour[]
+  itineraries         Itinerary[]
+  vendors             Vendor[]
+  vendorRates         VendorRate[]
+  exchangeRates       ExchangeRate[]
+  quotations          Quotation[]
+  bookings            Booking[]
+  bookingItems        BookingItem[]
+  paymentsClient      PaymentClient[]
+  paymentsVendor      PaymentVendor[]
+  invoices            Invoice[]
+  auditLogs           AuditLog[]
+  idempotencyKeys     IdempotencyKey[]
+  files               File[]
+  webhookEvents       WebhookEvent[]
+  parties             Party[]
+  suppliers           Supplier[]
+  contacts            Contact[]
+  serviceOfferings    ServiceOffering[]
+  hotelRoomRates      HotelRoomRate[]
+  transferRates       TransferRate[]
+  vehicleRates        VehicleRate[]
+  guideRates          GuideRate[]
+  activityRates       ActivityRate[]
+  // Quotation System Relations
+  cities              City[]
+  quoteHotels         QuoteHotel[]
+  quoteHotelPricing   QuoteHotelPricing[]
+  restaurants         Restaurant[]
+  restaurantMenus     RestaurantMenu[]
+  sicTours            SICTour[]
+  sicTourPricing      SICTourPricing[]
+  sightseeingFees     SightseeingFee[]
+  catalogVehicles     CatalogVehicle[]
+  intercityTransfers  IntercityTransfer[]
+  manualQuotes        ManualQuote[]
+  // AI Itinerary System Relations
+  customerItineraries CustomerItinerary[]
 
   @@index([code])
   @@index([isActive])
@@ -102,21 +116,21 @@ model User {
 // ============================================
 
 model Client {
-  id                 Int       @id @default(autoincrement())
-  tenantId           Int       @map("tenant_id")
-  tenant             Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name               String    @db.VarChar(255)
-  email              String?   @db.VarChar(255)
-  phone              String?   @db.VarChar(50)
-  nationality        String?   @db.VarChar(100)
-  preferredLanguage  String    @default("en") @map("preferred_language") @db.VarChar(10)
-  passportNumber     String?   @map("passport_number") @db.VarChar(50)
-  dateOfBirth        DateTime? @map("date_of_birth") @db.Date
-  notes              String?   @db.Text
-  tags               String[]
-  isActive           Boolean   @default(true) @map("is_active")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
+  id                Int       @id @default(autoincrement())
+  tenantId          Int       @map("tenant_id")
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name              String    @db.VarChar(255)
+  email             String?   @db.VarChar(255)
+  phone             String?   @db.VarChar(50)
+  nationality       String?   @db.VarChar(100)
+  preferredLanguage String    @default("en") @map("preferred_language") @db.VarChar(10)
+  passportNumber    String?   @map("passport_number") @db.VarChar(50)
+  dateOfBirth       DateTime? @map("date_of_birth") @db.Date
+  notes             String?   @db.Text
+  tags              String[]
+  isActive          Boolean   @default(true) @map("is_active")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   // Relations
   leads    Lead[]
@@ -137,21 +151,21 @@ enum LeadStatus {
 }
 
 model Lead {
-  id           Int        @id @default(autoincrement())
-  tenantId     Int        @map("tenant_id")
-  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  clientId     Int?       @map("client_id")
-  client       Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  source       String?    @db.VarChar(100)
-  inquiryDate  DateTime   @map("inquiry_date")
-  destination  String?    @db.VarChar(255)
-  paxAdults    Int        @default(0) @map("pax_adults")
-  paxChildren  Int        @default(0) @map("pax_children")
-  budgetEur    Decimal?   @map("budget_eur") @db.Decimal(12, 2)
-  status       LeadStatus @default(NEW)
-  notes        String?    @db.Text
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  id          Int        @id @default(autoincrement())
+  tenantId    Int        @map("tenant_id")
+  tenant      Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  clientId    Int?       @map("client_id")
+  client      Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  source      String?    @db.VarChar(100)
+  inquiryDate DateTime   @map("inquiry_date")
+  destination String?    @db.VarChar(255)
+  paxAdults   Int        @default(0) @map("pax_adults")
+  paxChildren Int        @default(0) @map("pax_children")
+  budgetEur   Decimal?   @map("budget_eur") @db.Decimal(12, 2)
+  status      LeadStatus @default(NEW)
+  notes       String?    @db.Text
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
 
   // Relations
   quotations Quotation[]
@@ -363,24 +377,24 @@ enum BoardType {
 }
 
 model HotelRoom {
-  serviceOfferingId Int      @id @map("service_offering_id")
-  serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
-  hotelName         String   @map("hotel_name") @db.VarChar(255)
-  stars             Int?     // 1-5 stars
-  address           String?  @db.Text
-  city              String?  @db.VarChar(100)
-  country           String?  @db.VarChar(100)
-  geo               String?  @db.VarChar(100) // e.g., "41.0082,28.9784"
-  roomType          String   @map("room_type") @db.VarChar(100) // DBL, TWN, TRP, SUITE, etc.
-  maxOccupancy      Int      @default(2) @map("max_occupancy")
-  boardTypes        Json?    @map("board_types") // Available board types: ["BB", "HB", "FB", "AI"]
-  amenities         Json?    // ["wifi", "pool", "spa", "parking"]
-  checkInTime       String?  @map("check_in_time") @db.VarChar(10) // e.g., "14:00"
-  checkOutTime      String?  @map("check_out_time") @db.VarChar(10) // e.g., "11:00"
-  cancellationPolicy String? @map("cancellation_policy") @db.Text
-  notes             String?  @db.Text
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  serviceOfferingId  Int             @id @map("service_offering_id")
+  serviceOffering    ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  hotelName          String          @map("hotel_name") @db.VarChar(255)
+  stars              Int? // 1-5 stars
+  address            String?         @db.Text
+  city               String?         @db.VarChar(100)
+  country            String?         @db.VarChar(100)
+  geo                String?         @db.VarChar(100) // e.g., "41.0082,28.9784"
+  roomType           String          @map("room_type") @db.VarChar(100) // DBL, TWN, TRP, SUITE, etc.
+  maxOccupancy       Int             @default(2) @map("max_occupancy")
+  boardTypes         Json?           @map("board_types") // Available board types: ["BB", "HB", "FB", "AI"]
+  amenities          Json? // ["wifi", "pool", "spa", "parking"]
+  checkInTime        String?         @map("check_in_time") @db.VarChar(10) // e.g., "14:00"
+  checkOutTime       String?         @map("check_out_time") @db.VarChar(10) // e.g., "11:00"
+  cancellationPolicy String?         @map("cancellation_policy") @db.Text
+  notes              String?         @db.Text
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
 
   @@map("hotel_rooms")
 }
@@ -398,30 +412,30 @@ enum PricingModel {
 }
 
 model HotelRoomRate {
-  id                    Int             @id @default(autoincrement())
-  tenantId              Int             @map("tenant_id")
-  tenant                Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  serviceOfferingId     Int             @map("service_offering_id")
-  serviceOffering       ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
-  seasonFrom            DateTime        @map("season_from") @db.Date
-  seasonTo              DateTime        @map("season_to") @db.Date
-  boardType             BoardType       @map("board_type")
+  id                   Int             @id @default(autoincrement())
+  tenantId             Int             @map("tenant_id")
+  tenant               Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  serviceOfferingId    Int             @map("service_offering_id")
+  serviceOffering      ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  seasonFrom           DateTime        @map("season_from") @db.Date
+  seasonTo             DateTime        @map("season_to") @db.Date
+  boardType            BoardType       @map("board_type")
   // Pricing structure
-  pricePerPersonDouble  Decimal         @map("price_per_person_double") @db.Decimal(12, 2) // Base price per person in double room
-  singleSupplement      Decimal         @map("single_supplement") @db.Decimal(12, 2) // Extra charge for single occupancy
-  pricePerPersonTriple  Decimal         @map("price_per_person_triple") @db.Decimal(12, 2) // Price per person in triple room
+  pricePerPersonDouble Decimal         @map("price_per_person_double") @db.Decimal(12, 2) // Base price per person in double room
+  singleSupplement     Decimal         @map("single_supplement") @db.Decimal(12, 2) // Extra charge for single occupancy
+  pricePerPersonTriple Decimal         @map("price_per_person_triple") @db.Decimal(12, 2) // Price per person in triple room
   // Child pricing slabs (per night)
-  childPrice0to2        Decimal         @map("child_price_0_to_2") @db.Decimal(12, 2) // 00-02.99 years
-  childPrice3to5        Decimal         @map("child_price_3_to_5") @db.Decimal(12, 2) // 03-05.99 years
-  childPrice6to11       Decimal         @map("child_price_6_to_11") @db.Decimal(12, 2) // 06-11.99 years
+  childPrice0to2       Decimal         @map("child_price_0_to_2") @db.Decimal(12, 2) // 00-02.99 years
+  childPrice3to5       Decimal         @map("child_price_3_to_5") @db.Decimal(12, 2) // 03-05.99 years
+  childPrice6to11      Decimal         @map("child_price_6_to_11") @db.Decimal(12, 2) // 06-11.99 years
   // Additional fields
-  allotment             Int?            // Number of rooms contracted
-  releaseDays           Int?            @map("release_days") // Days before check-in to release
-  minStay               Int?            @default(1) @map("min_stay")
-  notes                 String?         @db.Text
-  isActive              Boolean         @default(true) @map("is_active")
-  createdAt             DateTime        @default(now()) @map("created_at")
-  updatedAt             DateTime        @updatedAt @map("updated_at")
+  allotment            Int? // Number of rooms contracted
+  releaseDays          Int?            @map("release_days") // Days before check-in to release
+  minStay              Int?            @default(1) @map("min_stay")
+  notes                String?         @db.Text
+  isActive             Boolean         @default(true) @map("is_active")
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @updatedAt @map("updated_at")
 
   @@index([tenantId])
   @@index([serviceOfferingId])
@@ -442,28 +456,28 @@ enum TransferType {
 }
 
 enum VehicleClass {
-  VITO          // Max 4 pax
-  SPRINTER      // Max 12 pax
-  ISUZU         // Max 20 pax
-  COACH         // Max 44 pax
+  VITO // Max 4 pax
+  SPRINTER // Max 12 pax
+  ISUZU // Max 20 pax
+  COACH // Max 44 pax
 }
 
 model Transfer {
-  serviceOfferingId Int          @id @map("service_offering_id")
+  serviceOfferingId Int             @id @map("service_offering_id")
   serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
-  city              String       @db.VarChar(100) // Istanbul, Cappadocia, Antalya, etc.
-  originZone        String       @map("origin_zone") @db.VarChar(255) // Airport, Hotel Zone, etc.
-  destZone          String       @map("dest_zone") @db.VarChar(255) // Airport, Hotel Zone, etc.
-  transferType      TransferType @map("transfer_type")
-  vehicleClass      VehicleClass @map("vehicle_class")
-  maxPassengers     Int          @map("max_passengers") // Max capacity: Vito=4, Sprinter=12, Isuzu=20, Coach=44
-  meetGreet         Boolean      @default(false) @map("meet_greet")
-  luggageAllowance  String?      @map("luggage_allowance") @db.VarChar(100)
-  duration          Int?         @db.Integer // Estimated duration in minutes
-  distance          Decimal?     @db.Decimal(8, 2) // Distance in km
-  notes             String?      @db.Text
-  createdAt         DateTime     @default(now()) @map("created_at")
-  updatedAt         DateTime     @updatedAt @map("updated_at")
+  city              String          @db.VarChar(100) // Istanbul, Cappadocia, Antalya, etc.
+  originZone        String          @map("origin_zone") @db.VarChar(255) // Airport, Hotel Zone, etc.
+  destZone          String          @map("dest_zone") @db.VarChar(255) // Airport, Hotel Zone, etc.
+  transferType      TransferType    @map("transfer_type")
+  vehicleClass      VehicleClass    @map("vehicle_class")
+  maxPassengers     Int             @map("max_passengers") // Max capacity: Vito=4, Sprinter=12, Isuzu=20, Coach=44
+  meetGreet         Boolean         @default(false) @map("meet_greet")
+  luggageAllowance  String?         @map("luggage_allowance") @db.VarChar(100)
+  duration          Int?            @db.Integer // Estimated duration in minutes
+  distance          Decimal?        @db.Decimal(8, 2) // Distance in km
+  notes             String?         @db.Text
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
 
   @@map("transfers")
 }
@@ -513,7 +527,7 @@ model Vehicle {
   transmission      String?         @db.VarChar(50) // automatic, manual
   fuelType          String?         @map("fuel_type") @db.VarChar(50) // petrol, diesel, electric, hybrid
   withDriver        Boolean         @default(false) @map("with_driver")
-  features          Json?           // ["GPS", "child_seat", "wifi", "AC"]
+  features          Json? // ["GPS", "child_seat", "wifi", "AC"]
   insuranceIncluded Boolean         @default(true) @map("insurance_included")
   notes             String?         @db.Text
   createdAt         DateTime        @default(now()) @map("created_at")
@@ -532,23 +546,23 @@ model VehicleRate {
   seasonTo          DateTime        @map("season_to") @db.Date
 
   // Daily rental rates
-  dailyRateTry      Decimal         @map("daily_rate_try") @db.Decimal(12, 2) // Daily rental rate
-  dailyKmIncluded   Decimal?        @map("daily_km_included") @db.Decimal(8, 2) // KM included per day
+  dailyRateTry    Decimal  @map("daily_rate_try") @db.Decimal(12, 2) // Daily rental rate
+  dailyKmIncluded Decimal? @map("daily_km_included") @db.Decimal(8, 2) // KM included per day
 
   // Hourly rental rates
-  hourlyRateTry     Decimal         @map("hourly_rate_try") @db.Decimal(12, 2) // Hourly rental rate
-  minHours          Int?            @default(4) @map("min_hours") // Minimum billable hours
+  hourlyRateTry Decimal @map("hourly_rate_try") @db.Decimal(12, 2) // Hourly rental rate
+  minHours      Int?    @default(4) @map("min_hours") // Minimum billable hours
 
   // Common pricing fields
-  extraKmTry        Decimal?        @map("extra_km_try") @db.Decimal(8, 2) // Cost per extra KM
-  driverDailyTry    Decimal?        @map("driver_daily_try") @db.Decimal(8, 2) // If with driver
-  oneWayFeeTry      Decimal?        @map("one_way_fee_try") @db.Decimal(8, 2)
-  depositTry        Decimal?        @map("deposit_try") @db.Decimal(12, 2)
-  minRentalDays     Int?            @default(1) @map("min_rental_days")
-  notes             String?         @db.Text
-  isActive          Boolean         @default(true) @map("is_active")
-  createdAt         DateTime        @default(now()) @map("created_at")
-  updatedAt         DateTime        @updatedAt @map("updated_at")
+  extraKmTry     Decimal? @map("extra_km_try") @db.Decimal(8, 2) // Cost per extra KM
+  driverDailyTry Decimal? @map("driver_daily_try") @db.Decimal(8, 2) // If with driver
+  oneWayFeeTry   Decimal? @map("one_way_fee_try") @db.Decimal(8, 2)
+  depositTry     Decimal? @map("deposit_try") @db.Decimal(12, 2)
+  minRentalDays  Int?     @default(1) @map("min_rental_days")
+  notes          String?  @db.Text
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
   @@index([serviceOfferingId])
@@ -566,9 +580,9 @@ model Guide {
   serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
   guideName         String          @map("guide_name") @db.VarChar(255)
   licenseNo         String?         @map("license_no") @db.VarChar(100)
-  languages         Json            // ["English", "Turkish", "Spanish"]
-  regions           Json?           // ["Istanbul", "Cappadocia", "Ephesus"]
-  specializations   Json?           // ["historical", "adventure", "culinary"]
+  languages         Json // ["English", "Turkish", "Spanish"]
+  regions           Json? // ["Istanbul", "Cappadocia", "Ephesus"]
+  specializations   Json? // ["historical", "adventure", "culinary"]
   maxGroupSize      Int?            @default(20) @map("max_group_size")
   rating            Decimal?        @db.Decimal(3, 2) // e.g., 4.85
   phone             String?         @db.VarChar(50)
@@ -612,45 +626,45 @@ model GuideRate {
 // ============================================
 
 model Activity {
-  serviceOfferingId Int             @id @map("service_offering_id")
-  serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
-  operatorName      String          @map("operator_name") @db.VarChar(255)
-  activityType      String          @map("activity_type") @db.VarChar(100) // tour, attraction, experience
-  durationMinutes   Int?            @map("duration_minutes")
-  capacity          Int?            // Maximum participants
-  minAge            Int?            @map("min_age")
-  maxAge            Int?            @map("max_age")
-  difficulty        String?         @db.VarChar(50) // easy, moderate, difficult
-  includedItems     Json?           @map("included_items") // ["entrance", "guide", "lunch", "equipment"]
-  meetingPoint      String?         @map("meeting_point") @db.Text
-  pickupAvailable   Boolean         @default(false) @map("pickup_available")
-  cancellationPolicy String?        @map("cancellation_policy") @db.Text
-  notes             String?         @db.Text
-  createdAt         DateTime        @default(now()) @map("created_at")
-  updatedAt         DateTime        @updatedAt @map("updated_at")
+  serviceOfferingId  Int             @id @map("service_offering_id")
+  serviceOffering    ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  operatorName       String          @map("operator_name") @db.VarChar(255)
+  activityType       String          @map("activity_type") @db.VarChar(100) // tour, attraction, experience
+  durationMinutes    Int?            @map("duration_minutes")
+  capacity           Int? // Maximum participants
+  minAge             Int?            @map("min_age")
+  maxAge             Int?            @map("max_age")
+  difficulty         String?         @db.VarChar(50) // easy, moderate, difficult
+  includedItems      Json?           @map("included_items") // ["entrance", "guide", "lunch", "equipment"]
+  meetingPoint       String?         @map("meeting_point") @db.Text
+  pickupAvailable    Boolean         @default(false) @map("pickup_available")
+  cancellationPolicy String?         @map("cancellation_policy") @db.Text
+  notes              String?         @db.Text
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
 
   @@map("activities")
 }
 
 model ActivityRate {
-  id                  Int             @id @default(autoincrement())
-  tenantId            Int             @map("tenant_id")
-  tenant              Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  serviceOfferingId   Int             @map("service_offering_id")
-  serviceOffering     ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
-  seasonFrom          DateTime        @map("season_from") @db.Date
-  seasonTo            DateTime        @map("season_to") @db.Date
-  pricingModel        PricingModel    @default(PER_PERSON) @map("pricing_model")
-  baseCostTry         Decimal         @map("base_cost_try") @db.Decimal(12, 2)
-  minPax              Int?            @default(1) @map("min_pax")
-  maxPax              Int?            @map("max_pax")
-  tieredPricingJson   Json?           @map("tiered_pricing_json") // {"1-4": 100, "5-8": 80, "9+": 70}
-  childDiscountPct    Decimal?        @default(0) @map("child_discount_pct") @db.Decimal(5, 2)
-  groupDiscountPct    Decimal?        @default(0) @map("group_discount_pct") @db.Decimal(5, 2)
-  notes               String?         @db.Text
-  isActive            Boolean         @default(true) @map("is_active")
-  createdAt           DateTime        @default(now()) @map("created_at")
-  updatedAt           DateTime        @updatedAt @map("updated_at")
+  id                Int             @id @default(autoincrement())
+  tenantId          Int             @map("tenant_id")
+  tenant            Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  serviceOfferingId Int             @map("service_offering_id")
+  serviceOffering   ServiceOffering @relation(fields: [serviceOfferingId], references: [id], onDelete: Cascade)
+  seasonFrom        DateTime        @map("season_from") @db.Date
+  seasonTo          DateTime        @map("season_to") @db.Date
+  pricingModel      PricingModel    @default(PER_PERSON) @map("pricing_model")
+  baseCostTry       Decimal         @map("base_cost_try") @db.Decimal(12, 2)
+  minPax            Int?            @default(1) @map("min_pax")
+  maxPax            Int?            @map("max_pax")
+  tieredPricingJson Json?           @map("tiered_pricing_json") // {"1-4": 100, "5-8": 80, "9+": 70}
+  childDiscountPct  Decimal?        @default(0) @map("child_discount_pct") @db.Decimal(5, 2)
+  groupDiscountPct  Decimal?        @default(0) @map("group_discount_pct") @db.Decimal(5, 2)
+  notes             String?         @db.Text
+  isActive          Boolean         @default(true) @map("is_active")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
 
   @@index([tenantId])
   @@index([serviceOfferingId])
@@ -833,31 +847,31 @@ enum ItemType {
 }
 
 model BookingItem {
-  id                  Int              @id @default(autoincrement())
-  tenantId            Int              @map("tenant_id")
-  tenant              Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  bookingId           Int              @map("booking_id")
-  booking             Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  itemType            ItemType         @map("item_type")
+  id        Int      @id @default(autoincrement())
+  tenantId  Int      @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bookingId Int      @map("booking_id")
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  itemType  ItemType @map("item_type")
 
   // Legacy vendor reference (deprecated, kept for backward compatibility)
-  vendorId            Int?             @map("vendor_id")
-  vendor              Vendor?          @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  vendorId Int?    @map("vendor_id")
+  vendor   Vendor? @relation(fields: [vendorId], references: [id], onDelete: SetNull)
 
   // New catalog reference
-  serviceOfferingId   Int?             @map("service_offering_id")
-  serviceOffering     ServiceOffering? @relation(fields: [serviceOfferingId], references: [id], onDelete: SetNull)
+  serviceOfferingId Int?             @map("service_offering_id")
+  serviceOffering   ServiceOffering? @relation(fields: [serviceOfferingId], references: [id], onDelete: SetNull)
 
-  qty                 Int              @default(1)
-  unitCostTry         Decimal          @default(0) @map("unit_cost_try") @db.Decimal(12, 2)
-  unitPriceEur        Decimal          @default(0) @map("unit_price_eur") @db.Decimal(12, 2)
+  qty          Int     @default(1)
+  unitCostTry  Decimal @default(0) @map("unit_cost_try") @db.Decimal(12, 2)
+  unitPriceEur Decimal @default(0) @map("unit_price_eur") @db.Decimal(12, 2)
 
   // Pricing snapshot to freeze details at booking time
-  pricingSnapshotJson Json?            @map("pricing_snapshot_json")
+  pricingSnapshotJson Json? @map("pricing_snapshot_json")
 
-  notes               String?          @db.Text
-  createdAt           DateTime         @default(now()) @map("created_at")
-  updatedAt           DateTime         @updatedAt @map("updated_at")
+  notes     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId])
   @@index([bookingId])
@@ -934,21 +948,21 @@ model PaymentVendor {
 // ============================================
 
 model Invoice {
-  id         Int      @id @default(autoincrement())
-  tenantId   Int      @map("tenant_id")
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  bookingId  Int      @map("booking_id")
-  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  number     String   @db.VarChar(100)
-  issueDate  DateTime @map("issue_date") @db.Date
-  currency   String   @default("EUR") @db.VarChar(3)
-  netAmount  Decimal  @map("net_amount") @db.Decimal(12, 2)
-  vatAmount  Decimal  @map("vat_amount") @db.Decimal(12, 2)
-  grossAmount Decimal @map("gross_amount") @db.Decimal(12, 2)
-  vatRate    Decimal  @default(20.00) @map("vat_rate") @db.Decimal(5, 2)
-  pdfUrl     String?  @map("pdf_url") @db.VarChar(500)
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id          Int      @id @default(autoincrement())
+  tenantId    Int      @map("tenant_id")
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bookingId   Int      @map("booking_id")
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  number      String   @db.VarChar(100)
+  issueDate   DateTime @map("issue_date") @db.Date
+  currency    String   @default("EUR") @db.VarChar(3)
+  netAmount   Decimal  @map("net_amount") @db.Decimal(12, 2)
+  vatAmount   Decimal  @map("vat_amount") @db.Decimal(12, 2)
+  grossAmount Decimal  @map("gross_amount") @db.Decimal(12, 2)
+  vatRate     Decimal  @default(20.00) @map("vat_rate") @db.Decimal(5, 2)
+  pdfUrl      String?  @map("pdf_url") @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@unique([tenantId, number])
   @@index([tenantId])
@@ -962,18 +976,18 @@ model Invoice {
 // ============================================
 
 model AuditLog {
-  id         Int      @id @default(autoincrement())
-  tenantId   Int      @map("tenant_id")
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId     Int?     @map("user_id")
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  entity     String   @db.VarChar(100)
-  entityId   Int      @map("entity_id")
-  action     String   @db.VarChar(50)
-  diffJson   Json?    @map("diff_json")
-  ipAddress  String?  @map("ip_address") @db.VarChar(45)
-  userAgent  String?  @map("user_agent") @db.Text
-  createdAt  DateTime @default(now()) @map("created_at")
+  id        Int      @id @default(autoincrement())
+  tenantId  Int      @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    Int?     @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  entity    String   @db.VarChar(100)
+  entityId  Int      @map("entity_id")
+  action    String   @db.VarChar(50)
+  diffJson  Json?    @map("diff_json")
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  userAgent String?  @map("user_agent") @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([tenantId])
   @@index([entity, entityId])
@@ -1084,4 +1098,438 @@ model WebhookEvent {
   @@index([status])
   @@index([createdAt])
   @@map("webhook_events")
+}
+
+// ============================================
+// QUOTATION SYSTEM (From ruzgargucu)
+// ============================================
+
+// Cities - Master list of destinations (includes airports)
+model City {
+  id             Int      @id @default(autoincrement())
+  tenantId       Int      @map("tenant_id")
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name           String   @db.VarChar(255)
+  normalizedName String   @map("normalized_name") @db.VarChar(255) // lowercase for matching
+  country        String   @default("Turkey") @db.VarChar(100)
+  isAirport      Boolean  @default(false) @map("is_airport") // true for airport locations
+  linkedCityId   Int?     @map("linked_city_id") // Links airport to its city (e.g., "Istanbul Airport" -> "Istanbul")
+  linkedCity     City?    @relation("AirportToCity", fields: [linkedCityId], references: [id], onDelete: SetNull)
+  airports       City[]   @relation("AirportToCity") // Reverse relation
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  hotels                 QuoteHotel[]
+  restaurants            Restaurant[]
+  sicTours               SICTour[]
+  sightseeingFees        SightseeingFee[]
+  catalogVehicles        CatalogVehicle[]
+  intercityTransfersFrom IntercityTransfer[] @relation("CityFrom")
+  intercityTransfersTo   IntercityTransfer[] @relation("CityTo")
+
+  @@unique([tenantId, normalizedName])
+  @@index([tenantId])
+  @@index([name])
+  @@map("cities")
+}
+
+// Hotels for quotation pricing (can link to Supplier catalog)
+model QuoteHotel {
+  id               Int      @id @default(autoincrement())
+  tenantId         Int      @map("tenant_id")
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cityId           Int      @map("city_id")
+  city             City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  supplierId       Int?     @map("supplier_id") // Optional link to supplier catalog
+  hotelName        String   @map("hotel_name") @db.VarChar(255)
+  category         String   @db.VarChar(50) // "3 stars", "4 stars", "5 stars"
+  address          String?  @db.Text
+  // TQA Extended Fields (Google Places Integration)
+  googlePlaceId    String?  @unique @map("google_place_id") @db.VarChar(255)
+  starRating       Int?     @map("star_rating")
+  hotelCategory    String?  @map("hotel_category") @db.VarChar(50) // TQA: budget/standard_3star/etc
+  roomCount        Int?     @map("room_count")
+  isBoutique       Boolean? @default(false) @map("is_boutique")
+  latitude         Decimal? @db.Decimal(10, 8)
+  longitude        Decimal? @db.Decimal(11, 8)
+  googleMapsUrl    String?  @map("google_maps_url") @db.VarChar(500)
+  contactPhone     String?  @map("contact_phone") @db.VarChar(50)
+  contactEmail     String?  @map("contact_email") @db.VarChar(255)
+  notes            String?  @db.Text
+  photoUrl1        String?  @map("photo_url_1") @db.VarChar(1000)
+  photoUrl2        String?  @map("photo_url_2") @db.VarChar(1000)
+  photoUrl3        String?  @map("photo_url_3") @db.VarChar(1000)
+  rating           Decimal? @db.Decimal(2, 1) // Google rating 0.0-5.0
+  userRatingsTotal Int?     @map("user_ratings_total")
+  website          String?  @db.VarChar(500)
+  editorialSummary String?  @map("editorial_summary") @db.Text
+  placeTypes       Json?    @map("place_types") // Google place types
+  priceLevel       Int?     @map("price_level") // 0-4 price level
+  businessStatus   String?  @map("business_status") @db.VarChar(50)
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pricing QuoteHotelPricing[]
+
+  @@unique([tenantId, cityId, hotelName, category])
+  @@index([tenantId])
+  @@index([cityId])
+  @@index([supplierId])
+  @@index([hotelName])
+  @@index([isBoutique])
+  @@map("quote_hotels")
+}
+
+// Hotel pricing - per person per night model
+model QuoteHotelPricing {
+  id               Int        @id @default(autoincrement())
+  tenantId         Int        @map("tenant_id")
+  tenant           Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  hotelId          Int        @map("hotel_id")
+  hotel            QuoteHotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  startDate        DateTime?  @map("start_date") @db.Date
+  endDate          DateTime?  @map("end_date") @db.Date
+  ppDblRate        Decimal    @map("pp_dbl_rate") @db.Decimal(10, 2) // Per person in double room
+  singleSupplement Decimal?   @map("single_supplement") @db.Decimal(10, 2)
+  child0to2        Decimal?   @map("child_0to2") @db.Decimal(10, 2)
+  child3to5        Decimal?   @map("child_3to5") @db.Decimal(10, 2)
+  child6to11       Decimal?   @map("child_6to11") @db.Decimal(10, 2)
+  isActive         Boolean    @default(true) @map("is_active")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([hotelId])
+  @@index([startDate, endDate])
+  @@map("quote_hotel_pricing")
+}
+
+// Restaurants / Meals
+model Restaurant {
+  id        Int      @id @default(autoincrement())
+  tenantId  Int      @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cityId    Int      @map("city_id")
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  name      String   @db.VarChar(255)
+  category  String?  @db.VarChar(100) // "Lunch", "Dinner", "Fast Food", etc.
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  menus RestaurantMenu[]
+
+  @@index([tenantId])
+  @@index([cityId])
+  @@index([name])
+  @@map("restaurants")
+}
+
+model RestaurantMenu {
+  id             Int        @id @default(autoincrement())
+  tenantId       Int        @map("tenant_id")
+  tenant         Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  restaurantId   Int        @map("restaurant_id")
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuName       String     @map("menu_name") @db.VarChar(255)
+  description    String?    @db.Text
+  pricePerPerson Decimal    @map("price_per_person") @db.Decimal(10, 2)
+  startDate      DateTime?  @map("start_date") @db.Date
+  endDate        DateTime?  @map("end_date") @db.Date
+  isActive       Boolean    @default(true) @map("is_active")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([restaurantId])
+  @@index([startDate, endDate])
+  @@map("restaurant_menus")
+}
+
+// SIC (Seat-in-Coach) Tours
+model SICTour {
+  id               Int      @id @default(autoincrement())
+  tenantId         Int      @map("tenant_id")
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cityId           Int      @map("city_id")
+  city             City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  tourName         String   @map("tour_name") @db.VarChar(255)
+  description      String?  @db.Text
+  duration         String?  @db.VarChar(100) // "Full Day", "Half Day", "3 hours", etc.
+  // TQA Extended Fields (Google Places Integration)
+  googlePlaceId    String?  @unique @map("google_place_id") @db.VarChar(255)
+  tourCode         String?  @map("tour_code") @db.VarChar(50)
+  durationDays     Int?     @default(1) @map("duration_days")
+  durationHours    Decimal? @map("duration_hours") @db.Decimal(3, 1)
+  durationType     String?  @default("days") @map("duration_type") @db.VarChar(10) // "hours" or "days"
+  latitude         Decimal? @db.Decimal(10, 8)
+  longitude        Decimal? @db.Decimal(11, 8)
+  googleMapsUrl    String?  @map("google_maps_url") @db.VarChar(500)
+  tourType         String?  @map("tour_type") @db.VarChar(10) // "SIC" or "PRIVATE"
+  inclusions       String?  @db.Text
+  exclusions       String?  @db.Text
+  photoUrl1        String?  @map("photo_url_1") @db.VarChar(1000)
+  photoUrl2        String?  @map("photo_url_2") @db.VarChar(1000)
+  photoUrl3        String?  @map("photo_url_3") @db.VarChar(1000)
+  rating           Decimal? @db.Decimal(2, 1)
+  userRatingsTotal Int?     @map("user_ratings_total")
+  website          String?  @db.VarChar(500)
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pricing SICTourPricing[]
+
+  @@index([tenantId])
+  @@index([cityId])
+  @@index([tourName])
+  @@map("sic_tours")
+}
+
+model SICTourPricing {
+  id            Int       @id @default(autoincrement())
+  tenantId      Int       @map("tenant_id")
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sicTourId     Int       @map("sic_tour_id")
+  sicTour       SICTour   @relation(fields: [sicTourId], references: [id], onDelete: Cascade)
+  seasonName    String?   @map("season_name") @db.VarChar(100)
+  startDate     DateTime? @map("start_date") @db.Date
+  endDate       DateTime? @map("end_date") @db.Date
+  currency      String?   @default("EUR") @db.VarChar(3)
+  sicPrice2Pax  Decimal?  @map("sic_price_2_pax") @db.Decimal(10, 2)
+  sicPrice4Pax  Decimal?  @map("sic_price_4_pax") @db.Decimal(10, 2)
+  sicPrice6Pax  Decimal?  @map("sic_price_6_pax") @db.Decimal(10, 2)
+  sicPrice8Pax  Decimal?  @map("sic_price_8_pax") @db.Decimal(10, 2)
+  sicPrice10Pax Decimal?  @map("sic_price_10_pax") @db.Decimal(10, 2)
+  pvtPrice2Pax  Decimal?  @map("pvt_price_2_pax") @db.Decimal(10, 2) // Private tour pricing
+  pvtPrice4Pax  Decimal?  @map("pvt_price_4_pax") @db.Decimal(10, 2)
+  pvtPrice6Pax  Decimal?  @map("pvt_price_6_pax") @db.Decimal(10, 2)
+  pvtPrice8Pax  Decimal?  @map("pvt_price_8_pax") @db.Decimal(10, 2)
+  pvtPrice10Pax Decimal?  @map("pvt_price_10_pax") @db.Decimal(10, 2)
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([sicTourId])
+  @@index([startDate, endDate])
+  @@map("sic_tour_pricing")
+}
+
+// Sightseeing / Entrance Fees
+model SightseeingFee {
+  id             Int      @id @default(autoincrement())
+  tenantId       Int      @map("tenant_id")
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cityId         Int      @map("city_id")
+  city           City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  siteName       String   @map("site_name") @db.VarChar(255)
+  description    String?  @db.Text
+  pricePerPerson Decimal  @map("price_per_person") @db.Decimal(10, 2)
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([cityId])
+  @@index([siteName])
+  @@map("sightseeing_fees")
+}
+
+// Catalog Vehicles for transfers and tours (TQA vehicle types)
+model CatalogVehicle {
+  id           Int          @id @default(autoincrement())
+  tenantId     Int          @map("tenant_id")
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cityId       Int?         @map("city_id") // Optional - some vehicles can be used anywhere
+  city         City?        @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  vehicleType  VehicleClass @map("vehicle_type")
+  maxCapacity  Int          @map("max_capacity")
+  description  String?      @db.Text
+  isActive     Boolean      @default(true) @map("is_active")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  transfers IntercityTransfer[]
+
+  @@index([tenantId])
+  @@index([cityId])
+  @@index([vehicleType])
+  @@map("catalog_vehicles")
+}
+
+// Intercity Transfers
+model IntercityTransfer {
+  id                      Int           @id @default(autoincrement())
+  tenantId                Int           @map("tenant_id")
+  tenant                  Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  fromCityId              Int           @map("from_city_id")
+  fromCity                City          @relation("CityFrom", fields: [fromCityId], references: [id], onDelete: Cascade)
+  toCityId                Int              @map("to_city_id")
+  toCity                  City             @relation("CityTo", fields: [toCityId], references: [id], onDelete: Cascade)
+  catalogVehicleId        Int?             @map("catalog_vehicle_id")
+  catalogVehicle          CatalogVehicle?  @relation(fields: [catalogVehicleId], references: [id], onDelete: SetNull)
+  vehicleClass            VehicleClass? @map("vehicle_class") // VITO, SPRINTER, ISUZU, COACH (legacy)
+  maxPassengers           Int?          @map("max_passengers") // Legacy field
+  price                   Decimal?      @db.Decimal(10, 2) // Legacy single price field
+  priceOneway             Decimal?      @map("price_oneway") @db.Decimal(10, 2)
+  priceRoundtrip          Decimal?      @map("price_roundtrip") @db.Decimal(10, 2)
+  estimatedDurationHours  Decimal?      @map("estimated_duration_hours") @db.Decimal(4, 1)
+  notes                   String?       @db.Text
+  seasonName              String?       @map("season_name") @db.VarChar(100)
+  startDate               DateTime?     @map("start_date") @db.Date
+  endDate                 DateTime?     @map("end_date") @db.Date
+  isActive                Boolean       @default(true) @map("is_active")
+  createdAt               DateTime      @default(now()) @map("created_at")
+  updatedAt               DateTime      @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([fromCityId])
+  @@index([toCityId])
+  @@index([catalogVehicleId])
+  @@index([vehicleClass])
+  @@index([startDate, endDate])
+  @@map("intercity_transfers")
+}
+
+// Manual Quotes (from quotation system)
+enum QuoteCategory {
+  FIXED_DEPARTURES
+  GROUPS
+  B2B
+  B2C
+}
+
+enum TourTypeEnum {
+  SIC // Seat-in-Coach
+  PRIVATE // Private tour
+}
+
+model ManualQuote {
+  id                   Int           @id @default(autoincrement())
+  tenantId             Int           @map("tenant_id")
+  tenant               Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  quoteName            String        @map("quote_name") @db.VarChar(255)
+  category             QuoteCategory @default(B2C)
+  seasonName           String?       @map("season_name") @db.VarChar(255)
+  validFrom            DateTime?     @map("valid_from") @db.Date
+  validTo              DateTime?     @map("valid_to") @db.Date
+  startDate            DateTime      @map("start_date") @db.Date
+  endDate              DateTime      @map("end_date") @db.Date
+  tourType             TourTypeEnum  @map("tour_type")
+  pax                  Int // Number of passengers
+  markup               Decimal       @db.Decimal(5, 2) // Markup percentage
+  tax                  Decimal       @db.Decimal(5, 2) // Tax percentage
+  transportPricingMode String        @default("total") @map("transport_pricing_mode") @db.VarChar(20) // "total" or "vehicle"
+  pricingTable         Json?         @map("pricing_table") // Calculated pricing for different PAX slabs
+  isActive             Boolean       @default(true) @map("is_active")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  days ManualQuoteDay[]
+
+  @@index([tenantId])
+  @@index([category])
+  @@index([tourType])
+  @@index([startDate, endDate])
+  @@map("manual_quotes")
+}
+
+model ManualQuoteDay {
+  id        Int         @id @default(autoincrement())
+  quoteId   Int         @map("quote_id")
+  quote     ManualQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  dayNumber Int         @map("day_number")
+  date      DateTime    @db.Date
+
+  // Relations
+  expenses ManualQuoteExpense[]
+
+  @@index([quoteId])
+  @@index([dayNumber])
+  @@map("manual_quote_days")
+}
+
+model ManualQuoteExpense {
+  id               Int            @id @default(autoincrement())
+  quoteDayId       Int            @map("quote_day_id")
+  quoteDay         ManualQuoteDay @relation(fields: [quoteDayId], references: [id], onDelete: Cascade)
+  category         String         @db.VarChar(100) // hotelAccommodation, meals, entranceFees, sicTourCost, tips, transportation, guide, guideDriverAccommodation, parking
+  hotelCategory    String?        @map("hotel_category") @db.VarChar(50) // "3 stars", "4 stars", "5 stars"
+  location         String?        @db.VarChar(255)
+  description      String?        @db.Text
+  price            Decimal        @default(0) @db.Decimal(10, 2)
+  singleSupplement Decimal?       @map("single_supplement") @db.Decimal(10, 2)
+  child0to2        Decimal?       @map("child_0to2") @db.Decimal(10, 2)
+  child3to5        Decimal?       @map("child_3to5") @db.Decimal(10, 2)
+  child6to11       Decimal?       @map("child_6to11") @db.Decimal(10, 2)
+  vehicleCount     Int?           @map("vehicle_count")
+  pricePerVehicle  Decimal?       @map("price_per_vehicle") @db.Decimal(10, 2)
+
+  @@index([quoteDayId])
+  @@index([category])
+  @@map("manual_quote_expenses")
+}
+
+// ============================================
+// AI ITINERARY SYSTEM (From TQA)
+// ============================================
+
+enum ItineraryStatus {
+  PENDING
+  CONFIRMED
+  BOOKED
+  COMPLETED
+  CANCELLED
+}
+
+enum ItinerarySource {
+  ONLINE
+  MANUAL
+}
+
+enum TourTypeItinerary {
+  SIC
+  PRIVATE
+}
+
+// Customer Itineraries (AI-generated) - Exact TQA Structure
+model CustomerItinerary {
+  id                 Int                @id @default(autoincrement())
+  uuid               String             @unique @db.VarChar(36)
+  tenantId           Int                @map("tenant_id")
+  tenant             Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customerName       String             @map("customer_name") @db.VarChar(255)
+  customerEmail      String             @map("customer_email") @db.VarChar(255)
+  customerPhone      String?            @map("customer_phone") @db.VarChar(50)
+  destination        String             @db.VarChar(500)
+  cityNights         Json               @map("city_nights") // [{city: string, nights: number}]
+  startDate          DateTime           @map("start_date") @db.Date
+  endDate            DateTime           @map("end_date") @db.Date
+  adults             Int                @default(1)
+  children           Int                @default(0)
+  hotelCategory      String?            @map("hotel_category") @db.VarChar(10)
+  tourType           TourTypeItinerary? @map("tour_type")
+  specialRequests    String?            @map("special_requests") @db.Text
+  itineraryData      Json               @map("itinerary_data") // Full day-by-day itinerary
+  totalPrice         Decimal            @map("total_price") @db.Decimal(10, 2)
+  pricePerPerson     Decimal            @map("price_per_person") @db.Decimal(10, 2)
+  status             ItineraryStatus    @default(PENDING)
+  bookingRequestedAt DateTime?          @map("booking_requested_at")
+  source             ItinerarySource    @default(ONLINE)
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([customerEmail])
+  @@index([status])
+  @@index([createdAt])
+  @@map("customer_itineraries")
 }

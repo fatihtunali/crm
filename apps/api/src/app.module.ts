@@ -35,6 +35,9 @@ import { VehiclesModule } from './vehicles/vehicles.module';
 import { GuidesModule } from './guides/guides.module';
 import { ActivitiesModule } from './activities/activities.module';
 import { PricingModule } from './pricing/pricing.module';
+import { CatalogModule } from './catalog/catalog.module';
+import { ManualQuotesModule } from './manual-quotes/manual-quotes.module';
+import { CustomerItinerariesModule } from './customer-itineraries/customer-itineraries.module';
 
 @Module({
   imports: [
@@ -43,6 +46,9 @@ import { PricingModule } from './pricing/pricing.module';
       envFilePath: '.env',
     }),
     PrismaModule,
+    CatalogModule,
+    ManualQuotesModule,
+    CustomerItinerariesModule,
     AuthModule,
     UsersModule,
     ClientsModule,

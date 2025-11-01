@@ -54,7 +54,7 @@ export default function NewPaymentPage() {
 
   const { data: bookingsData } = useBookings({ page: 1, limit: 100 });
   // const { data: vendorsData } = useVendors({ page: 1, limit: 100 }); // Legacy - not implemented
-  const vendorsData: { data: any[] } = { data: [] }; // Stub for now - vendor system deprecated
+  const vendorsData: { data: Array<{ id: number; name: string; type: string }> } = { data: [] }; // Stub for now - vendor system deprecated
   const createClientPayment = useCreateClientPayment();
   const createVendorPayment = useCreateVendorPayment();
 

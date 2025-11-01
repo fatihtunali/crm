@@ -46,3 +46,16 @@ prisma/migrations/
 
 # Claude Code
 .claude/settings.local.json
+
+# Build artifacts
+*.tsbuildinfo
+*-build.txt
+*-output.txt
+possibilities.txt
+
+# Migration and staging (temp data)
+migration/
+staging/
+
+# Test files
+test-*.js

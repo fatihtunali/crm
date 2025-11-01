@@ -107,11 +107,34 @@ export interface ServiceOffering {
   createdAt: string;
   updatedAt: string;
   // Type-specific relations loaded optionally
-  hotelRoom?: any;
-  transfer?: any;
-  vehicle?: any;
-  guide?: any;
-  activity?: any;
+  hotelRoom?: HotelRoomRate;
+  transfer?: TransferRate;
+  vehicle?: VehicleRate;
+  guide?: GuideServiceRate;
+  activity?: ActivityRate;
+}
+
+// Type definitions for service-specific rates
+export interface GuideServiceRate {
+  id: number;
+  tenantId: number;
+  serviceOfferingId: number;
+  pricingModel: PricingModel;
+  costTry: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ActivityRate {
+  id: number;
+  tenantId: number;
+  serviceOfferingId: number;
+  pricingModel: PricingModel;
+  costTry: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateServiceOfferingDto {

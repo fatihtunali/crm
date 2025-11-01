@@ -5,6 +5,11 @@ import {
   type UpdateVehicleRateDto,
 } from '../endpoints/suppliers';
 import { useToast } from '@/hooks/use-toast';
+import { AxiosError } from 'axios';
+
+interface ApiErrorResponse {
+  message?: string;
+}
 
 export function useVehicleRates(params?: {
   serviceOfferingId?: number;
@@ -39,7 +44,7 @@ export function useCreateVehicleRate() {
         description: 'Vehicle rate created successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to create vehicle rate',
@@ -64,7 +69,7 @@ export function useUpdateVehicleRate() {
         description: 'Vehicle rate updated successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to update vehicle rate',
@@ -87,7 +92,7 @@ export function useDeleteVehicleRate() {
         description: 'Vehicle rate deleted successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to delete vehicle rate',

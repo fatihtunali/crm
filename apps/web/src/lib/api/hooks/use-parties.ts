@@ -8,6 +8,11 @@ import {
   type UpdateContactDto,
 } from '../endpoints/parties';
 import { useToast } from '@/hooks/use-toast';
+import { AxiosError } from 'axios';
+
+interface ApiErrorResponse {
+  message?: string;
+}
 
 // Parties Hooks
 export function useParties(params?: { search?: string; includeInactive?: boolean }) {
@@ -38,7 +43,7 @@ export function useCreateParty() {
         description: 'Party created successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to create party',
@@ -63,7 +68,7 @@ export function useUpdateParty() {
         description: 'Party updated successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to update party',
@@ -86,7 +91,7 @@ export function useDeleteParty() {
         description: 'Party deactivated successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to deactivate party',
@@ -126,7 +131,7 @@ export function useCreateContact() {
         description: 'Contact created successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to create contact',
@@ -151,7 +156,7 @@ export function useUpdateContact() {
         description: 'Contact updated successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to update contact',
@@ -174,7 +179,7 @@ export function useDeleteContact() {
         description: 'Contact deleted successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to delete contact',

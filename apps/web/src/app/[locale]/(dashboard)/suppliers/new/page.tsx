@@ -127,7 +127,7 @@ export default function NewSupplierPage() {
                 <Label>Select Existing Company (Optional)</Label>
                 <Select
                   value={selectedPartyId?.toString() || ''}
-                  onValueChange={(value) => setSelectedPartyId(value ? parseInt(value) : null)}
+                  onValueChange={(value: string) => setSelectedPartyId(value ? parseInt(value) : null)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a company or create new" />
@@ -243,7 +243,7 @@ export default function NewSupplierPage() {
                   <Label htmlFor="type">Supplier Type *</Label>
                   <Select
                     value={supplierData.type}
-                    onValueChange={(value) =>
+                    onValueChange={(value: string) =>
                       setSupplierData({ ...supplierData, type: value as SupplierType })
                     }
                   >
@@ -263,7 +263,7 @@ export default function NewSupplierPage() {
                   <Label htmlFor="defaultCurrency">Default Currency</Label>
                   <Select
                     value={supplierData.defaultCurrency}
-                    onValueChange={(value) =>
+                    onValueChange={(value: string) =>
                       setSupplierData({ ...supplierData, defaultCurrency: value })
                     }
                   >

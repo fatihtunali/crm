@@ -5,6 +5,11 @@ import {
   type UpdateTransferRateDto,
 } from '../endpoints/suppliers';
 import { useToast } from '@/hooks/use-toast';
+import { AxiosError } from 'axios';
+
+interface ApiErrorResponse {
+  message?: string;
+}
 
 export function useTransferRates(params?: {
   serviceOfferingId?: number;
@@ -39,7 +44,7 @@ export function useCreateTransferRate() {
         description: 'Transfer rate created successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to create transfer rate',
@@ -64,7 +69,7 @@ export function useUpdateTransferRate() {
         description: 'Transfer rate updated successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to update transfer rate',
@@ -87,7 +92,7 @@ export function useDeleteTransferRate() {
         description: 'Transfer rate deleted successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to delete transfer rate',

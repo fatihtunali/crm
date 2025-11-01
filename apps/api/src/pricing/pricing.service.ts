@@ -341,7 +341,7 @@ export class PricingService {
       throw new NotFoundException('No active rate found for the selected date');
     }
 
-    let unitCost = Number(rate.baseCostTry);
+    const unitCost = Number(rate.baseCostTry);
     const breakdown: any = { baseCostPerPerson: unitCost };
 
     // Apply child discount if applicable

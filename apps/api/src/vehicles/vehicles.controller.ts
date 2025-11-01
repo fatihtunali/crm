@@ -77,43 +77,8 @@ export class VehiclesController {
     return this.vehiclesService.searchVehicles(tenantId, searchTerm);
   }
 
-  @Get(':serviceOfferingId')
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS)
-  @ApiOperation({ summary: 'Get vehicle by service offering ID' })
-  findOneVehicle(
-    @Param('serviceOfferingId', ParseIntPipe) serviceOfferingId: number,
-    @TenantId() tenantId: number,
-  ) {
-    return this.vehiclesService.findOneVehicle(serviceOfferingId, tenantId);
-  }
-
-  @Patch(':serviceOfferingId')
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update vehicle' })
-  updateVehicle(
-    @Param('serviceOfferingId', ParseIntPipe) serviceOfferingId: number,
-    @TenantId() tenantId: number,
-    @Body() updateVehicleDto: UpdateVehicleDto,
-  ) {
-    return this.vehiclesService.updateVehicle(
-      serviceOfferingId,
-      tenantId,
-      updateVehicleDto,
-    );
-  }
-
-  @Delete(':serviceOfferingId')
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Delete vehicle (soft delete)' })
-  removeVehicle(
-    @Param('serviceOfferingId', ParseIntPipe) serviceOfferingId: number,
-    @TenantId() tenantId: number,
-  ) {
-    return this.vehiclesService.removeVehicle(serviceOfferingId, tenantId);
-  }
-
   // ============================================
-  // VEHICLE RATES
+  // VEHICLE RATES (Must come before generic :serviceOfferingId route)
   // ============================================
 
   @Post('rates')
@@ -182,5 +147,44 @@ export class VehiclesController {
     @TenantId() tenantId: number,
   ) {
     return this.vehiclesService.removeVehicleRate(id, tenantId);
+  }
+
+  // ============================================
+  // VEHICLES (Generic routes - must come after specific routes)
+  // ============================================
+
+  @Get(':serviceOfferingId')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS)
+  @ApiOperation({ summary: 'Get vehicle by service offering ID' })
+  findOneVehicle(
+    @Param('serviceOfferingId', ParseIntPipe) serviceOfferingId: number,
+    @TenantId() tenantId: number,
+  ) {
+    return this.vehiclesService.findOneVehicle(serviceOfferingId, tenantId);
+  }
+
+  @Patch(':serviceOfferingId')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update vehicle' })
+  updateVehicle(
+    @Param('serviceOfferingId', ParseIntPipe) serviceOfferingId: number,
+    @TenantId() tenantId: number,
+    @Body() updateVehicleDto: UpdateVehicleDto,
+  ) {
+    return this.vehiclesService.updateVehicle(
+      serviceOfferingId,
+      tenantId,
+      updateVehicleDto,
+    );
+  }
+
+  @Delete(':serviceOfferingId')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete vehicle (soft delete)' })
+  removeVehicle(
+    @Param('serviceOfferingId', ParseIntPipe) serviceOfferingId: number,
+    @TenantId() tenantId: number,
+  ) {
+    return this.vehiclesService.removeVehicle(serviceOfferingId, tenantId);
   }
 }

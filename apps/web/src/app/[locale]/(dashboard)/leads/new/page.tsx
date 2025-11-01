@@ -64,8 +64,11 @@ export default function NewLeadPage() {
 
       await createLeadMutation.mutateAsync(payload);
       router.push(`/${locale}/leads`);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create lead');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error && 'response' in err
+        ? (err.response as { data?: { message?: string } })?.data?.message
+        : undefined;
+      setError(errorMessage || 'Failed to create lead');
     }
   };
 

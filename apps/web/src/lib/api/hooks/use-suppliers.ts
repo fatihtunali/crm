@@ -10,6 +10,11 @@ import {
   type ServiceType,
 } from '../endpoints/suppliers';
 import { useToast } from '@/hooks/use-toast';
+import { AxiosError } from 'axios';
+
+interface ApiErrorResponse {
+  message?: string;
+}
 
 // Suppliers Hooks
 export function useSuppliers(params?: { type?: SupplierType; includeInactive?: boolean }) {
@@ -40,7 +45,7 @@ export function useCreateSupplier() {
         description: 'Supplier created successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to create supplier',
@@ -65,7 +70,7 @@ export function useUpdateSupplier() {
         description: 'Supplier updated successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to update supplier',
@@ -88,7 +93,7 @@ export function useDeleteSupplier() {
         description: 'Supplier deactivated successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to deactivate supplier',
@@ -131,7 +136,7 @@ export function useCreateServiceOffering() {
         description: 'Service offering created successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to create service offering',
@@ -156,7 +161,7 @@ export function useUpdateServiceOffering() {
         description: 'Service offering updated successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to update service offering',
@@ -179,7 +184,7 @@ export function useDeleteServiceOffering() {
         description: 'Service offering deactivated successfully',
       });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiErrorResponse>) => {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to deactivate service offering',

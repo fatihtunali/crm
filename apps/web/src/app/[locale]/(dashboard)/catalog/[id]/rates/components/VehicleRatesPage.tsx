@@ -330,7 +330,7 @@ export default function VehicleRatesPage({ offeringId, offering }: VehicleRatesP
                   <Label htmlFor="pricingModel">Pricing Model *</Label>
                   <Select
                     value={formData.pricingModel}
-                    onValueChange={(value) =>
+                    onValueChange={(value: string) =>
                       setFormData({ ...formData, pricingModel: value as PricingModel })
                     }
                   >

@@ -25,6 +25,9 @@ import {
   Activity,
   ChevronDown,
   ChevronRight,
+  FileEdit,
+  BookOpen,
+  Inbox,
 } from 'lucide-react';
 
 interface SubNavItem {
@@ -96,6 +99,37 @@ const navItems: NavItem[] = [
     title: 'Tours',
     href: '/tours',
     icon: Map,
+  },
+  {
+    title: 'Catalog',
+    icon: BookOpen,
+    subItems: [
+      {
+        title: 'Hotels',
+        href: '/catalog/hotels',
+        icon: Hotel,
+      },
+      {
+        title: 'Tours',
+        href: '/catalog/tours',
+        icon: Map,
+      },
+      {
+        title: 'Transfers',
+        href: '/catalog/transfers',
+        icon: Truck,
+      },
+    ],
+  },
+  {
+    title: 'Manual Quotes',
+    href: '/manual-quotes',
+    icon: FileEdit,
+  },
+  {
+    title: 'Customer Requests',
+    href: '/customer-requests',
+    icon: Inbox,
   },
   {
     title: 'Quotations',

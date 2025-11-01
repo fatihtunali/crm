@@ -327,7 +327,7 @@ export default function HotelRoomRatesPage({ offeringId, offering }: HotelRoomRa
                 <Label htmlFor="boardType">Board Type *</Label>
                 <Select
                   value={formData.boardType}
-                  onValueChange={(value) =>
+                  onValueChange={(value: string) =>
                     setFormData({ ...formData, boardType: value as BoardType })
                   }
                 >

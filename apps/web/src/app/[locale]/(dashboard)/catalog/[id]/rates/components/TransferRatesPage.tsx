@@ -72,11 +72,29 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
   const updateRate = useUpdateTransferRate();
   const deleteRate = useDeleteTransferRate();
 
-  // Debug logging
-  console.log('TransferRatesPage - offeringId:', offeringId);
-  console.log('TransferRatesPage - rates:', rates);
-  console.log('TransferRatesPage - isLoading:', isLoading);
-  console.log('TransferRatesPage - error:', error);
+  // Enhanced debug logging
+  console.log('=== TransferRatesPage Debug Info ===');
+  console.log('offeringId:', offeringId, '(type:', typeof offeringId, ')');
+  console.log('offeringId is valid?:', !!offeringId && offeringId > 0);
+  console.log('Query will execute?:', !!offeringId);
+  console.log('isLoading:', isLoading);
+  console.log('error:', error);
+  console.log('rates data:', rates);
+  console.log('rates count:', rates?.length ?? 'N/A');
+  console.log('offering:', offering);
+
+  if (!offeringId || offeringId <= 0) {
+    console.warn('⚠️ WARNING: Invalid offeringId - query will not execute!');
+  }
+
+  if (error) {
+    console.error('❌ ERROR loading transfer rates:', error);
+  }
+
+  if (rates && rates.length === 0) {
+    console.info('ℹ️ No transfer rates found for this offering');
+  }
+  console.log('===================================');
 
   const [formData, setFormData] = useState<Partial<CreateTransferRateDto>>({
     serviceOfferingId: offeringId,
@@ -158,6 +176,65 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
     return (
       <div className="p-8">
         <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-red-900">Failed to load transfer rates</h3>
+                <p className="mt-2 text-red-800">
+                  {error instanceof Error ? error.message : 'An unexpected error occurred'}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outline"
+                  className="border-red-300 text-red-700 hover:bg-red-100"
+                >
+                  Retry
+                </Button>
+                <Link href={`/${locale}/suppliers/transfers`}>
+                  <Button variant="ghost">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Transfers
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!offeringId || offeringId <= 0) {
+    return (
+      <div className="p-8">
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-yellow-900">Invalid Service Offering</h3>
+                <p className="mt-2 text-yellow-800">
+                  No valid service offering ID was provided. Please select a valid transfer service.
+                </p>
+              </div>
+              <Link href={`/${locale}/suppliers/transfers`}>
+                <Button variant="outline">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Transfers
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -326,7 +403,7 @@ export default function TransferRatesPage({ offeringId, offering }: TransferRate
                   <Label htmlFor="pricingModel">Pricing Model *</Label>
                   <Select
                     value={formData.pricingModel}
-                    onValueChange={(value) =>
+                    onValueChange={(value: string) =>
                       setFormData({ ...formData, pricingModel: value as PricingModel })
                     }
                   >

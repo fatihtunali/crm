@@ -18,7 +18,7 @@ import {
   Download,
   Loader2,
   File as FileIcon,
-  Image,
+  Image as ImageIcon,
   FileArchive,
 } from 'lucide-react';
 
@@ -87,7 +87,7 @@ export default function FilesPage() {
   };
 
   const getFileIcon = (mimeType: string) => {
-    if (mimeType.startsWith('image/')) return <Image className="h-5 w-5" />;
+    if (mimeType.startsWith('image/')) return <ImageIcon className="h-5 w-5" />;
     if (mimeType === 'application/pdf') return <FileText className="h-5 w-5" />;
     if (mimeType.includes('zip') || mimeType.includes('archive'))
       return <FileArchive className="h-5 w-5" />;

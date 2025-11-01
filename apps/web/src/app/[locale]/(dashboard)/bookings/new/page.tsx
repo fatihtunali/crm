@@ -38,7 +38,20 @@ export default function NewBookingPage() {
     e.preventDefault();
 
     try {
-      const data: any = {
+      const data: {
+        clientId: number;
+        bookingCode: string;
+        startDate: string;
+        endDate: string;
+        lockedExchangeRate: number;
+        status: BookingStatus;
+        quotationId?: number;
+        totalCostTry?: number;
+        totalSellEur?: number;
+        depositDueEur?: number;
+        balanceDueEur?: number;
+        notes?: string;
+      } = {
         clientId: parseInt(formData.clientId),
         bookingCode: formData.bookingCode,
         startDate: formData.startDate,

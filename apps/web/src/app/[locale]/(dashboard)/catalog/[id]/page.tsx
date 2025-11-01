@@ -129,7 +129,7 @@ export default function EditServiceOfferingPage() {
                 <Label htmlFor="serviceType">Service Type *</Label>
                 <Select
                   value={formData.serviceType}
-                  onValueChange={(value) =>
+                  onValueChange={(value: string) =>
                     setFormData({ ...formData, serviceType: value as ServiceType })
                   }
                 >
@@ -149,7 +149,7 @@ export default function EditServiceOfferingPage() {
                 <Label htmlFor="supplierId">Supplier *</Label>
                 <Select
                   value={formData.supplierId}
-                  onValueChange={(value) => setFormData({ ...formData, supplierId: value })}
+                  onValueChange={(value: string) => setFormData({ ...formData, supplierId: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select supplier" />

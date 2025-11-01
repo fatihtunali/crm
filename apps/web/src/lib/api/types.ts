@@ -1,5 +1,5 @@
 // API Response Types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T;
   message?: string;
 }
@@ -242,7 +242,7 @@ export interface Quotation {
   lead?: Lead;
   tourId?: number;
   tour?: Tour;
-  customJson?: any;
+  customJson?: Record<string, unknown>;
   calcCostTry: number;
   sellPriceEur: number;
   exchangeRateUsed: number;
@@ -256,7 +256,7 @@ export interface Quotation {
 export interface CreateQuotationDto {
   leadId?: number;
   tourId?: number;
-  customJson?: any;
+  customJson?: Record<string, unknown>;
   calcCostTry?: number;
   sellPriceEur?: number;
   exchangeRateUsed: number;
@@ -546,7 +546,7 @@ export interface WebhookEvent {
   provider: string;
   eventType: WebhookEventType;
   status: WebhookEventStatus;
-  payloadJson: any;
+  payloadJson: Record<string, unknown>;
   signatureHeader?: string;
   isVerified: boolean;
   processedAt?: string;
@@ -597,7 +597,7 @@ export interface AuditLog {
   action: string;
   entity_type: string;
   entity_id: number;
-  changes?: Record<string, any>;
+  changes?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
   tenant_id: number;
@@ -696,3 +696,283 @@ export interface FilterParams {
 }
 
 export type QueryParams = PaginationParams & FilterParams;
+
+// Catalog Types
+export interface City {
+  id: number;
+  name: string;
+  code?: string;
+  country?: string;
+  isActive: boolean;
+  isAirportCity: boolean;
+  tenantId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuoteHotelPricing {
+  id: number;
+  hotelId: number;
+  ppDblRate: number;
+  ppSglRate?: number;
+  ppTrpRate?: number;
+  ppChdRate?: number;
+  startDate?: string;
+  endDate?: string;
+  seasonName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuoteHotel {
+  id: number;
+  name: string;
+  category: string;
+  isBoutique: boolean;
+  cityId: number;
+  city?: City;
+  roomType?: string;
+  boardTypes?: string[];
+  isActive: boolean;
+  tenantId: number;
+  pricing?: QuoteHotelPricing[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SICTourPricing {
+  id: number;
+  tourId: number;
+  ppRate: number;
+  startDate?: string;
+  endDate?: string;
+  seasonName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SICTour {
+  id: number;
+  name: string;
+  description?: string;
+  cityId: number;
+  city?: City;
+  duration?: string;
+  isActive: boolean;
+  tenantId: number;
+  pricing?: SICTourPricing[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IntercityTransfer {
+  id: number;
+  fromCityId: number;
+  toCityId: number;
+  fromCity?: City;
+  toCity?: City;
+  vehicleType?: string;
+  capacity?: number;
+  pricePerVehicle: number;
+  isActive: boolean;
+  tenantId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Manual Quote Types
+export type TourType = 'SIC' | 'PRIVATE';
+export type QuoteCategory = 'B2C' | 'B2B' | 'B2B_FIT' | 'B2B_GROUPS' | 'INTERNAL';
+export type ExpenseCategory =
+  | 'hotelAccommodation'
+  | 'meals'
+  | 'entranceFees'
+  | 'sicTourCost'
+  | 'tips'
+  | 'transportation'
+  | 'guide'
+  | 'guideDriverAccommodation'
+  | 'parking';
+
+export interface ManualQuoteExpense {
+  id: number;
+  dayId: number;
+  category: ExpenseCategory;
+  hotelCategory?: string;
+  location?: string;
+  description?: string;
+  price: number;
+  singleSupplement?: number;
+  child0to2?: number;
+  child3to5?: number;
+  child6to11?: number;
+  vehicleCount?: number;
+  pricePerVehicle?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ManualQuoteDay {
+  id: number;
+  quoteId: number;
+  dayNumber: number;
+  date: string;
+  expenses: ManualQuoteExpense[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PricingTier {
+  totalCost: number;
+  markup: number;
+  tax: number;
+  totalPrice: number;
+  pricePerPerson: number;
+}
+
+export interface PricingTable {
+  pax2?: PricingTier;
+  pax4?: PricingTier;
+  pax6?: PricingTier;
+  pax8?: PricingTier;
+  pax10?: PricingTier;
+}
+
+export interface ManualQuote {
+  id: number;
+  tenantId: number;
+  quoteName: string;
+  category?: QuoteCategory;
+  seasonName?: string;
+  validFrom?: string;
+  validTo?: string;
+  startDate: string;
+  endDate: string;
+  tourType: TourType;
+  pax: number;
+  markup: number;
+  tax: number;
+  transportPricingMode: string;
+  days: ManualQuoteDay[];
+  pricingTable?: PricingTable;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateManualQuoteDto {
+  quoteName: string;
+  category?: QuoteCategory;
+  seasonName?: string;
+  validFrom?: string;
+  validTo?: string;
+  startDate: string;
+  endDate: string;
+  tourType: TourType;
+  pax: number;
+  markup: number;
+  tax: number;
+  transportPricingMode?: string;
+  days?: CreateManualQuoteDayDto[];
+}
+
+export interface UpdateManualQuoteDto extends Partial<CreateManualQuoteDto> {}
+
+export interface CreateManualQuoteDayDto {
+  dayNumber: number;
+  date: string;
+  expenses?: CreateManualQuoteExpenseDto[];
+}
+
+export interface UpdateManualQuoteDayDto extends Partial<CreateManualQuoteDayDto> {}
+
+export interface CreateManualQuoteExpenseDto {
+  category: ExpenseCategory;
+  hotelCategory?: string;
+  location?: string;
+  description?: string;
+  price: number;
+  singleSupplement?: number;
+  child0to2?: number;
+  child3to5?: number;
+  child6to11?: number;
+  vehicleCount?: number;
+  pricePerVehicle?: number;
+}
+
+export interface UpdateManualQuoteExpenseDto extends Partial<CreateManualQuoteExpenseDto> {}
+
+// Customer Itinerary Types
+export type ItineraryStatus = 'PENDING' | 'CONFIRMED' | 'BOOKED' | 'COMPLETED' | 'CANCELLED';
+export type ItinerarySource = 'ONLINE' | 'AGENT' | 'API';
+
+export interface CityNight {
+  city: string;
+  nights: number;
+}
+
+export interface CustomerItinerary {
+  id: number;
+  uuid: string;
+  tenantId: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  destination?: string;
+  cityNights: CityNight[];
+  startDate: string;
+  endDate: string;
+  adults: number;
+  children: number;
+  hotelCategory?: string;
+  tourType?: TourType;
+  specialRequests?: string;
+  itineraryData?: Record<string, unknown>;
+  totalPrice: number;
+  pricePerPerson: number;
+  status: ItineraryStatus;
+  source: ItinerarySource;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GenerateItineraryDto {
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  destination: string;
+  cityNights: string;
+  startDate: string;
+  endDate: string;
+  adults: number;
+  children?: number;
+  hotelCategory?: string;
+  tourType?: 'SIC' | 'PRIVATE';
+  specialRequests?: string;
+}
+
+export interface UpdateItineraryStatusDto {
+  status: ItineraryStatus;
+}
+
+// Catalog Query Params
+export interface CatalogHotelParams {
+  cityId: number;
+  startDate: string;
+  endDate: string;
+  category?: string;
+  isBoutique?: boolean;
+}
+
+export interface CatalogTourParams {
+  cityId: number;
+  startDate: string;
+  endDate: string;
+  tourType?: TourType;
+}
+
+export interface CatalogTransferParams {
+  fromCityId: number;
+  toCityId: number;
+  startDate: string;
+  endDate: string;
+}

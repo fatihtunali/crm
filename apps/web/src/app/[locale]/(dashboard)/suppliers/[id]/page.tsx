@@ -166,7 +166,7 @@ export default function EditSupplierPage() {
                 <Label htmlFor="type">Supplier Type *</Label>
                 <Select
                   value={formData.type}
-                  onValueChange={(value) =>
+                  onValueChange={(value: string) =>
                     setFormData({ ...formData, type: value as SupplierType })
                   }
                 >
@@ -186,7 +186,7 @@ export default function EditSupplierPage() {
                 <Label htmlFor="defaultCurrency">Default Currency</Label>
                 <Select
                   value={formData.defaultCurrency}
-                  onValueChange={(value) =>
+                  onValueChange={(value: string) =>
                     setFormData({ ...formData, defaultCurrency: value })
                   }
                 >

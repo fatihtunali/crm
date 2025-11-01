@@ -1,10 +1,13 @@
 import { redirect } from 'next/navigation';
 
-export default function LocaleRootPage({
-  params: { locale },
+export default async function LocaleRootPage({
+  params,
 }: {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
+  // In Next.js 15, params is now async
+  const { locale } = await params;
+
   // Redirect to dashboard
   redirect(`/${locale}/dashboard`);
 }

@@ -79,8 +79,11 @@ export default function EditLeadPage() {
 
       await updateLeadMutation.mutateAsync({ id: leadId, data: payload });
       router.push(`/${locale}/leads/${leadId}`);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update lead');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error && 'response' in err
+        ? (err.response as { data?: { message?: string } })?.data?.message
+        : undefined;
+      setError(errorMessage || 'Failed to update lead');
     }
   };
 

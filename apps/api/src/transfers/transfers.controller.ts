@@ -78,43 +78,8 @@ export class TransfersController {
     return this.transfersService.searchTransfers(tenantId, searchTerm);
   }
 
-  @Get(':serviceOfferingId')
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS)
-  @ApiOperation({ summary: 'Get transfer by service offering ID' })
-  findOneTransfer(
-    @Param('serviceOfferingId', ParseIntPipe) serviceOfferingId: number,
-    @TenantId() tenantId: number,
-  ) {
-    return this.transfersService.findOneTransfer(serviceOfferingId, tenantId);
-  }
-
-  @Patch(':serviceOfferingId')
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update transfer' })
-  updateTransfer(
-    @Param('serviceOfferingId', ParseIntPipe) serviceOfferingId: number,
-    @TenantId() tenantId: number,
-    @Body() updateTransferDto: UpdateTransferDto,
-  ) {
-    return this.transfersService.updateTransfer(
-      serviceOfferingId,
-      tenantId,
-      updateTransferDto,
-    );
-  }
-
-  @Delete(':serviceOfferingId')
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Delete transfer (soft delete)' })
-  removeTransfer(
-    @Param('serviceOfferingId', ParseIntPipe) serviceOfferingId: number,
-    @TenantId() tenantId: number,
-  ) {
-    return this.transfersService.removeTransfer(serviceOfferingId, tenantId);
-  }
-
   // ============================================
-  // TRANSFER RATES
+  // TRANSFER RATES (Must come before generic :serviceOfferingId route)
   // ============================================
 
   @Post('rates')
@@ -183,5 +148,44 @@ export class TransfersController {
     @TenantId() tenantId: number,
   ) {
     return this.transfersService.removeTransferRate(id, tenantId);
+  }
+
+  // ============================================
+  // TRANSFERS (Generic routes - must come after specific routes)
+  // ============================================
+
+  @Get(':serviceOfferingId')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AGENT, UserRole.OPERATIONS)
+  @ApiOperation({ summary: 'Get transfer by service offering ID' })
+  findOneTransfer(
+    @Param('serviceOfferingId', ParseIntPipe) serviceOfferingId: number,
+    @TenantId() tenantId: number,
+  ) {
+    return this.transfersService.findOneTransfer(serviceOfferingId, tenantId);
+  }
+
+  @Patch(':serviceOfferingId')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update transfer' })
+  updateTransfer(
+    @Param('serviceOfferingId', ParseIntPipe) serviceOfferingId: number,
+    @TenantId() tenantId: number,
+    @Body() updateTransferDto: UpdateTransferDto,
+  ) {
+    return this.transfersService.updateTransfer(
+      serviceOfferingId,
+      tenantId,
+      updateTransferDto,
+    );
+  }
+
+  @Delete(':serviceOfferingId')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete transfer (soft delete)' })
+  removeTransfer(
+    @Param('serviceOfferingId', ParseIntPipe) serviceOfferingId: number,
+    @TenantId() tenantId: number,
+  ) {
+    return this.transfersService.removeTransfer(serviceOfferingId, tenantId);
   }
 }

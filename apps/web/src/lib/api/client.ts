@@ -19,13 +19,21 @@ const apiClient: AxiosInstance = axios.create({
   },
 });
 
+// JWT token payload interface
+interface JwtPayload {
+  tenant_id?: number;
+  sub?: string;
+  iat?: number;
+  exp?: number;
+}
+
 // Helper to get tenant ID from JWT
 function getTenantId(): number | null {
   const token = storage.getAccessToken();
   if (!token) return null;
 
   try {
-    const decoded: any = jwtDecode(token);
+    const decoded = jwtDecode<JwtPayload>(token);
     return decoded.tenant_id || null;
   } catch {
     return null;
@@ -84,8 +92,8 @@ apiClient.interceptors.request.use(
 // Response interceptor: handle token refresh on 401
 let isRefreshing = false;
 let failedQueue: Array<{
-  resolve: (value?: any) => void;
-  reject: (reason?: any) => void;
+  resolve: (value?: string | null) => void;
+  reject: (reason?: Error) => void;
 }> = [];
 
 const processQueue = (error: Error | null, token: string | null = null) => {

@@ -112,7 +112,7 @@ export default function SuppliersPage() {
                 className="pl-10"
               />
             </div>
-            <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as SupplierType | 'all')}>
+            <Select value={typeFilter} onValueChange={(value: string) => setTypeFilter(value as SupplierType | 'all')}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
