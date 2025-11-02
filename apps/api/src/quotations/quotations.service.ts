@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { UpdateQuotationDto } from './dto/update-quotation.dto';
@@ -75,6 +75,7 @@ export class QuotationsService {
             name: true,
             description: true,
             itineraries: {
+              take: 10, // Limit to first 10 days to prevent N+1 issues with large tours
               orderBy: { dayNumber: 'asc' },
             },
           },
@@ -300,6 +301,7 @@ export class QuotationsService {
           },
         },
         tour: true,
+        bookings: true,
       },
     });
 
@@ -307,9 +309,23 @@ export class QuotationsService {
       throw new NotFoundException(`Quotation with ID ${id} not found`);
     }
 
+    // Validate quotation hasn't been accepted already
+    if (quotation.status === QuotationStatus.ACCEPTED) {
+      throw new ConflictException(
+        `Quotation has already been accepted. Use the existing booking instead.`,
+      );
+    }
+
+    // Validate no booking exists for this quotation
+    if (quotation.bookings && quotation.bookings.length > 0) {
+      throw new ConflictException(
+        `A booking already exists for this quotation (Booking Code: ${quotation.bookings[0].bookingCode}).`,
+      );
+    }
+
     // Validate status transition
     if (quotation.status !== QuotationStatus.SENT) {
-      throw new Error(
+      throw new BadRequestException(
         `Cannot accept quotation with status ${quotation.status}. Only SENT quotations can be accepted.`,
       );
     }

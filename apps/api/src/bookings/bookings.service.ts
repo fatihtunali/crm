@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -132,6 +133,29 @@ export class BookingsService {
       throw new ConflictException(
         `Booking with code ${createBookingDto.bookingCode} already exists`,
       );
+    }
+
+    // Issue #30: Validate exchange rate exists before creating booking
+    if (!createBookingDto.lockedExchangeRate || Number(createBookingDto.lockedExchangeRate) === 0) {
+      // Attempt to get latest TRY→EUR exchange rate
+      const latestRate = await this.prisma.exchangeRate.findFirst({
+        where: {
+          tenantId,
+          fromCurrency: 'TRY',
+          toCurrency: 'EUR',
+          rateDate: { lte: new Date() },
+        },
+        orderBy: { rateDate: 'desc' },
+      });
+
+      if (!latestRate) {
+        throw new BadRequestException(
+          'No exchange rate available for booking creation. Please add a TRY→EUR exchange rate first before creating bookings.',
+        );
+      }
+
+      // Use the latest rate if not provided (convert Decimal to number)
+      createBookingDto.lockedExchangeRate = Number(latestRate.rate);
     }
 
     const booking = await this.prisma.booking.create({

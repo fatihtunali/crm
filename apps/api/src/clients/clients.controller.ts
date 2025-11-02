@@ -20,6 +20,7 @@ import {
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { BulkImportClientsDto } from './dto/bulk-import-clients.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { TenantId } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -40,6 +41,48 @@ export class ClientsController {
   @ApiResponse({ status: 409, description: 'Client with this email already exists' })
   create(@Body() createClientDto: CreateClientDto, @TenantId() tenantId: number) {
     return this.clientsService.create(createClientDto, tenantId);
+  }
+
+  @Post('bulk-import')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Bulk import clients from array',
+    description: `
+      Import multiple clients at once with support for:
+      - Dry-run mode: Validate without importing
+      - Atomic transactions: All succeed or all fail
+      - Duplicate handling: Skip or fail on duplicates
+      - Progress reporting: Returns detailed results
+      - Batch processing: Handles large imports efficiently (max 1000 records)
+    `,
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Bulk import completed',
+    schema: {
+      example: {
+        totalProcessed: 100,
+        successCount: 95,
+        failedCount: 3,
+        skippedCount: 2,
+        errors: [
+          { row: 5, client: { name: 'John Doe' }, error: 'Invalid email format' },
+        ],
+        imported: [
+          { row: 1, id: 101, name: 'Alice Smith', email: 'alice@example.com' },
+        ],
+        skipped: [
+          { row: 10, client: { name: 'Bob Jones' }, reason: 'Duplicate email' },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Validation failed or atomic import failed' })
+  bulkImport(
+    @Body() bulkImportDto: BulkImportClientsDto,
+    @TenantId() tenantId: number,
+  ) {
+    return this.clientsService.bulkImport(bulkImportDto, tenantId);
   }
 
   @Get()

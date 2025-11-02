@@ -2,10 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsInt,
   IsEnum,
-  IsDecimal,
+  IsNumber,
   IsString,
   IsDateString,
   IsOptional,
+  Min,
+  Max,
 } from 'class-validator';
 import { PaymentStatus } from '@tour-crm/shared';
 
@@ -19,7 +21,9 @@ export class CreatePaymentVendorDto {
   vendorId!: number;
 
   @ApiProperty({ example: 5000.0 })
-  @IsDecimal()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  @Max(10000000)
   amountTry!: number;
 
   @ApiProperty({ example: '2024-11-30T00:00:00Z' })

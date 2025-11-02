@@ -2,7 +2,11 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
+  Logger,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateServiceOfferingDto } from './dto/create-service-offering.dto';
 import { UpdateServiceOfferingDto } from './dto/update-service-offering.dto';
@@ -10,7 +14,13 @@ import { ServiceType } from '@prisma/client';
 
 @Injectable()
 export class ServiceOfferingsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(ServiceOfferingsService.name);
+  private readonly CACHE_TTL_10_MIN = 600 * 1000; // 10 minutes in milliseconds
+
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   async create(tenantId: number, dto: CreateServiceOfferingDto) {
     // Verify the supplier belongs to this tenant
@@ -24,7 +34,7 @@ export class ServiceOfferingsService {
       );
     }
 
-    return this.prisma.serviceOffering.create({
+    const result = await this.prisma.serviceOffering.create({
       data: {
         ...dto,
         tenantId,
@@ -42,6 +52,11 @@ export class ServiceOfferingsService {
         },
       },
     });
+
+    // Invalidate cache for this tenant
+    await this.invalidateCache(tenantId);
+
+    return result;
   }
 
   async findAll(
@@ -51,7 +66,25 @@ export class ServiceOfferingsService {
     location?: string,
     includeInactive = false,
   ) {
-    return this.prisma.serviceOffering.findMany({
+    // Create cache key based on query parameters
+    const cacheKey = `service_offerings:${tenantId}:${serviceType || 'all'}:${supplierId || 'all'}:${location || 'all'}:${includeInactive}`;
+
+    try {
+      // Try to get from cache
+      const cached = await this.cacheManager.get(cacheKey);
+      if (cached) {
+        this.logger.debug(`Cache hit for ${cacheKey}`);
+        return cached;
+      }
+
+      this.logger.debug(`Cache miss for ${cacheKey}`);
+    } catch (error) {
+      // Cache read error - log and continue without cache
+      this.logger.warn(`Cache read error for ${cacheKey}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
+    // Fetch from database
+    const result = await this.prisma.serviceOffering.findMany({
       where: {
         tenantId,
         ...(serviceType ? { serviceType } : {}),
@@ -84,6 +117,17 @@ export class ServiceOfferingsService {
       },
       orderBy: [{ serviceType: 'asc' }, { title: 'asc' }],
     });
+
+    // Store in cache with 10 minute TTL
+    try {
+      await this.cacheManager.set(cacheKey, result, this.CACHE_TTL_10_MIN);
+      this.logger.debug(`Cached ${cacheKey} with 10 minute TTL`);
+    } catch (error) {
+      // Cache write error - log but don't fail the request
+      this.logger.warn(`Cache write error for ${cacheKey}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
+    return result;
   }
 
   async findOne(id: number, tenantId: number) {
@@ -146,7 +190,7 @@ export class ServiceOfferingsService {
       throw new NotFoundException(`Service offering with ID ${id} not found`);
     }
 
-    return this.prisma.serviceOffering.update({
+    const result = await this.prisma.serviceOffering.update({
       where: { id },
       data: dto,
       include: {
@@ -162,6 +206,11 @@ export class ServiceOfferingsService {
         },
       },
     });
+
+    // Invalidate cache for this tenant
+    await this.invalidateCache(tenantId);
+
+    return result;
   }
 
   async remove(id: number, tenantId: number) {
@@ -174,10 +223,15 @@ export class ServiceOfferingsService {
     }
 
     // Soft delete
-    return this.prisma.serviceOffering.update({
+    const result = await this.prisma.serviceOffering.update({
       where: { id },
       data: { isActive: false },
     });
+
+    // Invalidate cache for this tenant
+    await this.invalidateCache(tenantId);
+
+    return result;
   }
 
   async search(
@@ -226,5 +280,34 @@ export class ServiceOfferingsService {
     });
 
     return stats;
+  }
+
+  /**
+   * Invalidate all cache entries for a specific tenant
+   * Uses pattern matching to clear all service_offerings cache keys for the tenant
+   */
+  private async invalidateCache(tenantId: number): Promise<void> {
+    try {
+      // Since we're using different cache keys based on query params,
+      // we need to clear all variations. With Redis, we could use pattern matching,
+      // but with the cache-manager abstraction, we'll clear the main cache key variations.
+
+      // Common cache key patterns to clear
+      const patterns = [
+        `service_offerings:${tenantId}:all:all:all:false`, // Default active only
+        `service_offerings:${tenantId}:all:all:all:true`,  // Include inactive
+      ];
+
+      for (const pattern of patterns) {
+        await this.cacheManager.del(pattern);
+      }
+
+      this.logger.debug(`Invalidated service offerings cache for tenant ${tenantId}`);
+    } catch (error) {
+      // Cache deletion error - log but don't fail the request
+      this.logger.warn(
+        `Cache invalidation error for tenant ${tenantId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 }

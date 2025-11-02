@@ -2,7 +2,11 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Inject,
+  Logger,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateExchangeRateDto } from './dto/create-exchange-rate.dto';
 import { UpdateExchangeRateDto } from './dto/update-exchange-rate.dto';
@@ -12,7 +16,13 @@ import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces
 
 @Injectable()
 export class ExchangeRatesService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(ExchangeRatesService.name);
+  private readonly CACHE_TTL_1_HOUR = 3600 * 1000; // 1 hour in milliseconds
+
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   async findAll(tenantId: number, paginationDto: PaginationDto): Promise<PaginatedResponse<any>> {
     const { skip, take, sortBy = 'rateDate', order = 'desc' } = paginationDto;
@@ -48,6 +58,23 @@ export class ExchangeRatesService {
     fromCurrency: string,
     toCurrency: string,
   ) {
+    const cacheKey = `exchange_rate:${tenantId}:${fromCurrency}:${toCurrency}`;
+
+    try {
+      // Try to get from cache
+      const cached = await this.cacheManager.get(cacheKey);
+      if (cached) {
+        this.logger.debug(`Cache hit for ${cacheKey}`);
+        return cached;
+      }
+
+      this.logger.debug(`Cache miss for ${cacheKey}`);
+    } catch (error) {
+      // Cache read error - log and continue without cache
+      this.logger.warn(`Cache read error for ${cacheKey}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
+    // Fetch from database
     const rate = await this.prisma.exchangeRate.findFirst({
       where: {
         tenantId,
@@ -61,6 +88,15 @@ export class ExchangeRatesService {
       throw new NotFoundException(
         `No exchange rate found for ${fromCurrency} to ${toCurrency}`,
       );
+    }
+
+    // Store in cache with 1 hour TTL
+    try {
+      await this.cacheManager.set(cacheKey, rate, this.CACHE_TTL_1_HOUR);
+      this.logger.debug(`Cached ${cacheKey} with 1 hour TTL`);
+    } catch (error) {
+      // Cache write error - log but don't fail the request
+      this.logger.warn(`Cache write error for ${cacheKey}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
     return rate;
@@ -94,6 +130,13 @@ export class ExchangeRatesService {
       },
     });
 
+    // Invalidate cache for this currency pair
+    await this.invalidateCache(
+      tenantId,
+      createExchangeRateDto.fromCurrency || 'TRY',
+      createExchangeRateDto.toCurrency || 'EUR',
+    );
+
     return exchangeRate;
   }
 
@@ -120,6 +163,24 @@ export class ExchangeRatesService {
         source: updateExchangeRateDto.source,
       },
     });
+
+    // Invalidate cache for both old and new currency pairs if currencies changed
+    await this.invalidateCache(
+      tenantId,
+      exchangeRate.fromCurrency,
+      exchangeRate.toCurrency,
+    );
+
+    if (
+      updateExchangeRateDto.fromCurrency &&
+      updateExchangeRateDto.fromCurrency !== exchangeRate.fromCurrency
+    ) {
+      await this.invalidateCache(
+        tenantId,
+        updateExchangeRateDto.fromCurrency,
+        updateExchangeRateDto.toCurrency || exchangeRate.toCurrency,
+      );
+    }
 
     return updatedExchangeRate;
   }
@@ -248,5 +309,26 @@ export class ExchangeRatesService {
       skipped,
       errors,
     };
+  }
+
+  /**
+   * Invalidate cache for a specific currency pair
+   */
+  private async invalidateCache(
+    tenantId: number,
+    fromCurrency: string,
+    toCurrency: string,
+  ): Promise<void> {
+    const cacheKey = `exchange_rate:${tenantId}:${fromCurrency}:${toCurrency}`;
+
+    try {
+      await this.cacheManager.del(cacheKey);
+      this.logger.debug(`Invalidated cache for ${cacheKey}`);
+    } catch (error) {
+      // Cache deletion error - log but don't fail the request
+      this.logger.warn(
+        `Cache invalidation error for ${cacheKey}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 }

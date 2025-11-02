@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuoteRequestDto } from './dto/quote-request.dto';
+import { BusinessRules, BusinessRulesHelper } from '../config/business-rules.config';
 
 @Injectable()
 export class PricingService {
@@ -56,8 +57,19 @@ export class PricingService {
     const nights = dto.nights || 1;
     const adults = (dto.pax || 2) - (dto.children || 0);
     const children = dto.children || 0;
+    const totalPax = adults + children;
+
+    // Issue #31: Validate capacity against maxOccupancy
+    if (offering.hotelRoom?.maxOccupancy && totalPax > offering.hotelRoom.maxOccupancy) {
+      throw new BadRequestException(
+        `Requested occupancy (${totalPax} pax) exceeds room maximum capacity (${offering.hotelRoom.maxOccupancy} pax)`,
+      );
+    }
 
     // Find applicable rate
+    // Note: Rate selection assumes no overlapping date ranges per service offering.
+    // If multiple rates match the date range, this indicates a data integrity issue
+    // that should be prevented at the creation/update level (see Issue #32).
     const rate = await this.prisma.hotelRoomRate.findFirst({
       where: {
         tenantId,
@@ -66,22 +78,25 @@ export class PricingService {
         seasonTo: { gte: serviceDate },
         isActive: true,
       },
-      orderBy: { id: 'desc' },
+      orderBy: [
+        { seasonFrom: 'desc' }, // Prefer more recent season start
+        { createdAt: 'desc' },  // If seasons match, prefer newest rate
+      ],
     });
 
     if (!rate) {
       throw new NotFoundException('No active rate found for the selected date');
     }
 
-    // Simplified calculation assuming double occupancy
-    // For a proper implementation, you'd need detailed room configuration and child ages
+    // Calculate costs based on business rules
+    // Assumption: Double occupancy for adults, child1 age bracket for children
     const adultCost = adults * Number(rate.pricePerPersonDouble) * nights;
 
-    // Use middle child age bracket as default (3-5.99 years)
+    // Use child1 age bracket (2-5.99 years) as default
     const childCost = children * Number(rate.childPrice3to5) * nights;
 
     const totalCost = adultCost + childCost;
-    const rooms = Math.ceil(adults / 2); // Rough estimate
+    const rooms = BusinessRulesHelper.calculateRoomsNeeded(adults);
 
     return {
       serviceOfferingId: offering.id,
@@ -118,6 +133,13 @@ export class PricingService {
     serviceDate: Date,
     dto: QuoteRequestDto,
   ) {
+    // Issue #31: Validate passenger count against maxPassengers
+    if (offering.transfer?.maxPassengers && dto.pax && dto.pax > offering.transfer.maxPassengers) {
+      throw new BadRequestException(
+        `Requested passengers (${dto.pax}) exceeds transfer maximum capacity (${offering.transfer.maxPassengers} passengers)`,
+      );
+    }
+
     const rate = await this.prisma.transferRate.findFirst({
       where: {
         tenantId,
@@ -126,7 +148,10 @@ export class PricingService {
         seasonTo: { gte: serviceDate },
         isActive: true,
       },
-      orderBy: { id: 'desc' },
+      orderBy: [
+        { seasonFrom: 'desc' },
+        { createdAt: 'desc' },
+      ],
     });
 
     if (!rate) {
@@ -182,6 +207,13 @@ export class PricingService {
     serviceDate: Date,
     dto: QuoteRequestDto,
   ) {
+    // Issue #31: Validate passenger count against maxPassengers
+    if (offering.vehicle?.maxPassengers && dto.pax && dto.pax > offering.vehicle.maxPassengers) {
+      throw new BadRequestException(
+        `Requested passengers (${dto.pax}) exceeds vehicle maximum capacity (${offering.vehicle.maxPassengers} passengers)`,
+      );
+    }
+
     const rate = await this.prisma.vehicleRate.findFirst({
       where: {
         tenantId,
@@ -190,7 +222,10 @@ export class PricingService {
         seasonTo: { gte: serviceDate },
         isActive: true,
       },
-      orderBy: { id: 'desc' },
+      orderBy: [
+        { seasonFrom: 'desc' },
+        { createdAt: 'desc' },
+      ],
     });
 
     if (!rate) {
@@ -276,7 +311,10 @@ export class PricingService {
         seasonTo: { gte: serviceDate },
         isActive: true,
       },
-      orderBy: { id: 'desc' },
+      orderBy: [
+        { seasonFrom: 'desc' },
+        { createdAt: 'desc' },
+      ],
     });
 
     if (!rate) {
@@ -326,6 +364,19 @@ export class PricingService {
   ) {
     const pax = dto.pax || 1;
 
+    // Issue #31: Validate participant count against min/max limits
+    if (offering.activity?.minParticipants && pax < offering.activity.minParticipants) {
+      throw new BadRequestException(
+        `Requested participants (${pax}) is below minimum requirement (${offering.activity.minParticipants} participants)`,
+      );
+    }
+
+    if (offering.activity?.maxParticipants && pax > offering.activity.maxParticipants) {
+      throw new BadRequestException(
+        `Requested participants (${pax}) exceeds maximum capacity (${offering.activity.maxParticipants} participants)`,
+      );
+    }
+
     const rate = await this.prisma.activityRate.findFirst({
       where: {
         tenantId,
@@ -334,7 +385,10 @@ export class PricingService {
         seasonTo: { gte: serviceDate },
         isActive: true,
       },
-      orderBy: { id: 'desc' },
+      orderBy: [
+        { seasonFrom: 'desc' },
+        { createdAt: 'desc' },
+      ],
     });
 
     if (!rate) {

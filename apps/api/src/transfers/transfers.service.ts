@@ -219,6 +219,38 @@ export class TransfersService {
       );
     }
 
+    // Issue #32: Check for overlapping rate seasons
+    const seasonFrom = new Date(dto.seasonFrom);
+    const seasonTo = new Date(dto.seasonTo);
+
+    const overlappingRate = await this.prisma.transferRate.findFirst({
+      where: {
+        tenantId,
+        serviceOfferingId: dto.serviceOfferingId,
+        isActive: true,
+        OR: [
+          {
+            seasonFrom: { lte: seasonFrom },
+            seasonTo: { gte: seasonFrom },
+          },
+          {
+            seasonFrom: { lte: seasonTo },
+            seasonTo: { gte: seasonTo },
+          },
+          {
+            seasonFrom: { gte: seasonFrom },
+            seasonTo: { lte: seasonTo },
+          },
+        ],
+      },
+    });
+
+    if (overlappingRate) {
+      throw new ConflictException(
+        `Rate season overlaps with existing rate (ID: ${overlappingRate.id}, ${overlappingRate.seasonFrom.toISOString().split('T')[0]} - ${overlappingRate.seasonTo.toISOString().split('T')[0]})`,
+      );
+    }
+
     return this.prisma.transferRate.create({
       data: {
         ...dto,

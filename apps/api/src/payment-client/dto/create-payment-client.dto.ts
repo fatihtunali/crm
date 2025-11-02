@@ -2,10 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsInt,
   IsEnum,
-  IsDecimal,
+  IsNumber,
   IsString,
   IsDateString,
   IsOptional,
+  Min,
+  Max,
 } from 'class-validator';
 import { PaymentMethod, PaymentStatus } from '@tour-crm/shared';
 
@@ -15,7 +17,9 @@ export class CreatePaymentClientDto {
   bookingId!: number;
 
   @ApiProperty({ example: 1500.0 })
-  @IsDecimal()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  @Max(1000000)
   amountEur!: number;
 
   @ApiProperty({ enum: PaymentMethod, example: PaymentMethod.BANK_TRANSFER })

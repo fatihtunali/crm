@@ -59,6 +59,51 @@ export class AuditLogsController {
     return this.auditLogsService.getStats(tenantId);
   }
 
+  @Get('reports/pii-access')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Generate PII access report (GDPR compliance)',
+    description:
+      'Report showing who accessed personally identifiable information (PII) and when. Includes passport numbers, tax IDs, bank details, etc.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'PII access report generated successfully',
+  })
+  getPiiAccessReport(
+    @TenantId() tenantId: number,
+    @Query('userId', new ParseIntPipe({ optional: true })) userId?: number,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('entity') entity?: string,
+  ) {
+    return this.auditLogsService.getPiiAccessReport(tenantId, {
+      userId,
+      dateFrom,
+      dateTo,
+      entity,
+    });
+  }
+
+  @Get('reports/gdpr-compliance')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Generate GDPR compliance report',
+    description:
+      'Comprehensive report on GDPR-related activities: data exports, deletions, consent changes, and privacy policy acceptances',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'GDPR compliance report generated successfully',
+  })
+  getGdprComplianceReport(
+    @TenantId() tenantId: number,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.auditLogsService.getGdprComplianceReport(tenantId, dateFrom, dateTo);
+  }
+
   @Get(':id')
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get audit log by ID' })

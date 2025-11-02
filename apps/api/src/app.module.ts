@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
+import { CacheModule } from './common/cache/cache.module';
+import { DataRetentionService } from './common/services/data-retention.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ClientsModule } from './clients/clients.module';
@@ -38,6 +42,9 @@ import { PricingModule } from './pricing/pricing.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { ManualQuotesModule } from './manual-quotes/manual-quotes.module';
 import { CustomerItinerariesModule } from './customer-itineraries/customer-itineraries.module';
+import { GdprModule } from './gdpr/gdpr.module';
+import { ConsentModule } from './consent/consent.module';
+import { PrivacyPolicyModule } from './privacy-policy/privacy-policy.module';
 
 @Module({
   imports: [
@@ -45,7 +52,21 @@ import { CustomerItinerariesModule } from './customer-itineraries/customer-itine
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60000, // 60 seconds
+        limit: 100, // 100 requests per minute (general)
+      },
+      {
+        name: 'auth',
+        ttl: 60000, // 60 seconds
+        limit: 5, // 5 login attempts per minute
+      },
+    ]),
     PrismaModule,
+    CacheModule,
     CatalogModule,
     ManualQuotesModule,
     CustomerItinerariesModule,
@@ -80,8 +101,17 @@ import { CustomerItinerariesModule } from './customer-itineraries/customer-itine
     GuidesModule,
     ActivitiesModule,
     PricingModule,
+    GdprModule,
+    ConsentModule,
+    PrivacyPolicyModule,
   ],
   providers: [
+    // Throttler guard (rate limiting) - applied first
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    // JWT authentication guard - applied second
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
@@ -90,6 +120,8 @@ import { CustomerItinerariesModule } from './customer-itineraries/customer-itine
       provide: APP_INTERCEPTOR,
       useClass: IdempotencyInterceptor,
     },
+    // Data retention service for scheduled cleanup jobs
+    DataRetentionService,
   ],
 })
 export class AppModule {}

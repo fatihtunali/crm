@@ -221,6 +221,42 @@ export class HotelsService {
       );
     }
 
+    // Issue #32: Check for overlapping rate seasons
+    const seasonFrom = new Date(dto.seasonFrom);
+    const seasonTo = new Date(dto.seasonTo);
+
+    const overlappingRate = await this.prisma.hotelRoomRate.findFirst({
+      where: {
+        tenantId,
+        serviceOfferingId: dto.serviceOfferingId,
+        boardType: dto.boardType,
+        isActive: true,
+        OR: [
+          {
+            // New range starts within existing range
+            seasonFrom: { lte: seasonFrom },
+            seasonTo: { gte: seasonFrom },
+          },
+          {
+            // New range ends within existing range
+            seasonFrom: { lte: seasonTo },
+            seasonTo: { gte: seasonTo },
+          },
+          {
+            // New range completely contains existing range
+            seasonFrom: { gte: seasonFrom },
+            seasonTo: { lte: seasonTo },
+          },
+        ],
+      },
+    });
+
+    if (overlappingRate) {
+      throw new ConflictException(
+        `Rate season overlaps with existing rate (ID: ${overlappingRate.id}, ${overlappingRate.seasonFrom.toISOString().split('T')[0]} - ${overlappingRate.seasonTo.toISOString().split('T')[0]}) for board type ${dto.boardType}`,
+      );
+    }
+
     return this.prisma.hotelRoomRate.create({
       data: {
         ...dto,

@@ -30,6 +30,8 @@ Content-Type: application/json
 }
 ```
 
+**Rate Limit:** 5 requests per minute per IP
+
 **Response:**
 ```json
 {
@@ -44,6 +46,31 @@ Content-Type: application/json
   }
 }
 ```
+
+**Security:**
+- Implements rate limiting (5 attempts per minute) to prevent brute force attacks
+- JWT tokens expire after 24 hours (access token) and 7 days (refresh token)
+- All passwords are hashed using Argon2 (industry-leading algorithm)
+
+### Password Requirements
+
+All passwords must meet the following complexity requirements:
+
+- **Minimum Length:** 8 characters
+- **Uppercase Letter:** At least one (A-Z)
+- **Lowercase Letter:** At least one (a-z)
+- **Number:** At least one (0-9)
+- **Special Character:** At least one (@$!%*?&)
+
+**Example Valid Passwords:**
+- `SecurePass123!`
+- `MyP@ssw0rd`
+- `Admin123!`
+
+**Example Invalid Passwords:**
+- `password` (no uppercase, number, or special character)
+- `Pass123` (no special character)
+- `Pass!` (too short, no number)
 
 ---
 
@@ -117,12 +144,35 @@ Transitions quotation from `SENT` → `ACCEPTED`.
 POST /quotations/:id/accept
 ```
 
-**Response:**
+**Validation:**
+- Prevents accepting quotations that are already accepted
+- Prevents accepting quotations that already have a booking
+- Creates a booking with locked exchange rate upon acceptance
+
+**Response (Success):**
 ```json
 {
   "id": 1,
   "status": "ACCEPTED",
   "message": "Quotation accepted successfully"
+}
+```
+
+**Response (Already Accepted):**
+```json
+{
+  "statusCode": 409,
+  "message": "Quotation has already been accepted and cannot be accepted again",
+  "error": "Conflict"
+}
+```
+
+**Response (Booking Exists):**
+```json
+{
+  "statusCode": 409,
+  "message": "A booking already exists for this quotation (Booking Code: BK-2024-001). Cannot accept quotation again.",
+  "error": "Conflict"
 }
 ```
 
@@ -386,6 +436,20 @@ Idempotency-Key: unique-key-12345
 }
 ```
 
+**Payment Validation:**
+- System validates payment amount doesn't exceed booking total
+- Calculates total paid (COMPLETED + PENDING payments)
+- Returns error if new payment would cause overpayment
+
+**Response (Overpayment Attempt):**
+```json
+{
+  "statusCode": 400,
+  "message": "Payment amount 500.00 EUR would exceed booking total. Booking total: 1500.00 EUR, Already paid: 1200.00 EUR, Remaining balance: 300.00 EUR",
+  "error": "Bad Request"
+}
+```
+
 ### Vendor Payments
 
 ```http
@@ -406,9 +470,9 @@ Idempotency-Key: unique-key-67890
 - `Idempotency-Key`: Required, unique string (UUID recommended)
 
 **Behavior:**
-- If the key has been used before (within 24h), the cached response is returned
+- If the key has been used before (within 30 days), the cached response is returned
 - If the key is new, the payment is created normally
-- Keys expire after 24 hours
+- Keys expire after 30 days (automatically cleaned up by data retention policies)
 
 ---
 
@@ -512,13 +576,18 @@ The API automatically converts Prisma database errors to user-friendly messages:
 Required environment variables:
 
 ```env
-# Database
+# Database - PostgreSQL
 DATABASE_URL="postgresql://user:pass@localhost:5432/tour_crm"
 
-# JWT
-JWT_SECRET="your-super-secret-jwt-key-min-32-characters-long"
+# Database Connection Pool Settings
+DATABASE_POOL_MIN=2
+DATABASE_POOL_MAX=10
+DATABASE_POOL_TIMEOUT=20
+
+# JWT - IMPORTANT: Use strong secrets (minimum 32 characters) in production
+JWT_SECRET="your-super-secret-jwt-key-change-in-production-min-32-chars"
 JWT_EXPIRES_IN="24h"
-JWT_REFRESH_SECRET="your-super-secret-refresh-key-min-32-characters-long"
+JWT_REFRESH_SECRET="your-super-secret-refresh-key-change-in-production-min-32-chars"
 JWT_REFRESH_EXPIRES_IN="7d"
 
 # AWS S3 (for file uploads)
@@ -535,18 +604,356 @@ MAX_FILE_SIZE="10485760"  # 10MB
 NODE_ENV="development"
 PORT=3001
 API_PREFIX="api/v1"
-CORS_ORIGIN="http://localhost:3000"
+
+# CORS - Comma-separated list of allowed origins (supports multiple domains)
+CORS_ORIGIN="http://localhost:3000,http://localhost:3001"
 ```
+
+**Security Requirements:**
+
+1. **JWT Secrets:**
+   - Must be at least 32 characters long
+   - Application validates on startup and throws error if too short
+   - Production check: ensures secrets don't contain "change-in-production" placeholder text
+
+2. **Database:**
+   - Production warning if DATABASE_URL contains "localhost"
+   - Connection pooling configured for optimal performance
+
+3. **CORS:**
+   - Supports multiple origins separated by commas
+   - Origins are validated against the whitelist
+   - Requests from unauthorized origins are blocked
 
 ---
 
 ## Rate Limiting
 
-Currently not implemented. Recommended for production:
+The API implements rate limiting using `@nestjs/throttler` to protect against abuse:
 
-- Authentication endpoints: 5 requests per minute
-- File upload: 10 requests per minute
-- General API: 100 requests per minute
+### Limits
+
+| Endpoint Type | Limit | Time Window |
+|---------------|-------|-------------|
+| Authentication (`/auth/login`, `/auth/forgot-password`) | 5 requests | 60 seconds |
+| General API endpoints | 100 requests | 60 seconds |
+
+### Rate Limit Headers
+
+When rate limited, the API returns:
+
+**Response (429 Too Many Requests):**
+```json
+{
+  "statusCode": 429,
+  "message": "ThrottlerException: Too Many Requests",
+  "error": "Too Many Requests"
+}
+```
+
+**Best Practices:**
+- Monitor response headers for rate limit information
+- Implement exponential backoff for retries
+- Cache responses when appropriate to reduce API calls
+- Use webhooks instead of polling where possible
+
+---
+
+## GDPR Compliance
+
+The API provides comprehensive GDPR compliance features for data protection and privacy.
+
+### Export My Personal Data
+
+Export all data for the authenticated user (GDPR Article 20 - Right to Data Portability).
+
+```http
+GET /gdpr/export/me
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "exportedAt": "2024-01-15T10:30:00.000Z",
+  "format": "JSON",
+  "dataSubject": {
+    "type": "USER",
+    "id": 1,
+    "email": "user@example.com"
+  },
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "name": "John Agent",
+    "role": "AGENT",
+    "phone": "+1234567890",
+    "preferredLanguage": "en",
+    "tenantId": 1,
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2024-01-15T10:00:00Z",
+    "auditLogs": [...]
+  },
+  "client": {
+    "id": 123,
+    "name": "John Doe",
+    "email": "user@example.com",
+    "leads": [...],
+    "bookings": [...]
+  },
+  "metadata": {
+    "totalLeads": 5,
+    "totalBookings": 3,
+    "totalPayments": 8
+  }
+}
+```
+
+### Export Client Data
+
+Export all personal data for a specific client (requires ADMIN, OWNER, or AGENT role).
+
+```http
+GET /gdpr/export/client/:id
+Authorization: Bearer <access_token>
+```
+
+**Access:** OWNER, ADMIN, AGENT
+
+**Response:**
+```json
+{
+  "exportedAt": "2024-01-15T10:30:00.000Z",
+  "format": "JSON",
+  "dataSubject": {
+    "type": "CLIENT",
+    "id": 123,
+    "name": "John Doe",
+    "email": "client@example.com"
+  },
+  "personalData": {
+    "name": "John Doe",
+    "email": "client@example.com",
+    "phone": "+1234567890",
+    "nationality": "US",
+    "passportNumber": "AB123456",
+    "dateOfBirth": "1985-05-15",
+    "preferredLanguage": "en",
+    "tags": ["VIP", "Returning"],
+    "notes": "Prefers luxury hotels",
+    "createdAt": "2023-06-01T00:00:00Z",
+    "updatedAt": "2024-01-10T00:00:00Z"
+  },
+  "bookingHistory": [
+    {
+      "bookingCode": "BK-2024-001",
+      "startDate": "2024-03-01",
+      "endDate": "2024-03-10",
+      "status": "CONFIRMED",
+      "totalAmount": 3500.00,
+      "items": 5,
+      "payments": 2,
+      "invoices": 1,
+      "createdAt": "2024-01-05T00:00:00Z"
+    }
+  ],
+  "leadHistory": [
+    {
+      "id": 45,
+      "source": "Website",
+      "status": "WON",
+      "inquiryDate": "2024-01-01",
+      "quotations": 2
+    }
+  ],
+  "metadata": {
+    "totalLeads": 3,
+    "totalBookings": 2,
+    "totalPayments": 5,
+    "totalSpent": 7500.00
+  }
+}
+```
+
+**Note:** This action is logged in audit logs for compliance tracking.
+
+### Anonymize Client Data
+
+Anonymize client personal data (GDPR Article 17 - Right to be Forgotten).
+
+```http
+DELETE /gdpr/client/:id
+Authorization: Bearer <access_token>
+```
+
+**Access:** OWNER, ADMIN
+
+**Behavior:**
+- Checks for active bookings (PENDING or CONFIRMED status)
+- If active bookings exist, returns 403 Forbidden
+- Anonymizes personal information while preserving booking history for legal/financial purposes
+- Marks client as inactive
+- Creates audit log entry
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "message": "Client data has been anonymized successfully",
+  "clientId": 123,
+  "anonymizedAt": "2024-01-15T10:30:00.000Z",
+  "preservedRecords": {
+    "bookings": 5,
+    "reason": "Legal and financial record-keeping requirements"
+  }
+}
+```
+
+**Response (Active Bookings):**
+```json
+{
+  "statusCode": 403,
+  "message": "Cannot anonymize client with 2 active booking(s). Please complete or cancel bookings first: BK-2024-001, BK-2024-002",
+  "error": "Forbidden"
+}
+```
+
+**Anonymization Process:**
+- Name → `Deleted User {clientId}`
+- Email → `deleted-{clientId}-{timestamp}@anonymized.local`
+- Phone → `null`
+- Passport Number → `null`
+- Date of Birth → `null`
+- Nationality → `null`
+- Notes → `[Personal data deleted per GDPR request]`
+- Tags → `["ANONYMIZED"]`
+- isActive → `false`
+
+### Delete User Account
+
+Soft delete (deactivate) a user account.
+
+```http
+DELETE /gdpr/user/:id
+Authorization: Bearer <access_token>
+```
+
+**Access:** OWNER, ADMIN
+
+**Restrictions:**
+- Cannot delete OWNER accounts
+- User can delete their own account, or admins can delete others
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "User account has been deactivated successfully",
+  "userId": 5,
+  "deletedAt": "2024-01-15T10:30:00.000Z"
+}
+```
+
+**Response (Cannot Delete OWNER):**
+```json
+{
+  "statusCode": 403,
+  "message": "Cannot delete OWNER account. Transfer ownership first.",
+  "error": "Forbidden"
+}
+```
+
+### Get GDPR Compliance Status
+
+Get current GDPR compliance status and statistics for the tenant.
+
+```http
+GET /gdpr/compliance-status
+Authorization: Bearer <access_token>
+```
+
+**Access:** OWNER, ADMIN
+
+**Response:**
+```json
+{
+  "tenantId": 1,
+  "checkedAt": "2024-01-15T10:30:00.000Z",
+  "clients": {
+    "total": 500,
+    "active": 450,
+    "inactive": 50,
+    "anonymized": 15
+  },
+  "users": {
+    "total": 25,
+    "active": 23,
+    "inactive": 2
+  },
+  "gdprCompliance": {
+    "dataExportAvailable": true,
+    "dataPortabilityAvailable": true,
+    "rightToErasureAvailable": true,
+    "dataMinimizationEnabled": true,
+    "retentionPolicyActive": true
+  }
+}
+```
+
+---
+
+## Data Retention Policies
+
+The API implements automated data retention policies to ensure GDPR compliance and optimize database performance.
+
+### Retention Schedules
+
+| Data Type | Retention Period | Action | Schedule |
+|-----------|------------------|--------|----------|
+| Inactive Clients | 3 years | Archive (set `isActive=false`) | Daily at 2 AM |
+| Audit Logs | 7 years | Delete | Weekly (Sunday at 3 AM) |
+| Idempotency Keys | 30 days | Delete | Weekly (Sunday at 3 AM) |
+| Old Leads | 2 years | Delete (LOST status, no quotations) | Weekly (Sunday at 3 AM) |
+
+### Retention Logic
+
+**Inactive Clients:**
+- Clients with no activity (updates or bookings) for 3 years
+- Automatically marked as inactive
+- Can be reactivated if client returns
+
+**Audit Logs:**
+- Logs older than 7 years are permanently deleted
+- Maintains compliance with data retention regulations
+
+**Idempotency Keys:**
+- Keys older than 30 days are deleted
+- Active keys are used for payment deduplication
+
+**Old Leads:**
+- Only deletes leads with:
+  - Status: LOST
+  - No associated quotations
+  - Older than 2 years
+
+### Manual Data Retention
+
+Administrators can manually trigger data retention cleanup (endpoint not publicly exposed, available for internal use):
+
+```typescript
+// Internal service method
+await dataRetentionService.runDataRetentionNow();
+```
+
+**Returns:**
+```json
+{
+  "archivedClients": 12,
+  "deletedAuditLogs": 450,
+  "deletedIdempotencyKeys": 89,
+  "deletedLeads": 34
+}
+```
 
 ---
 
@@ -833,6 +1240,8 @@ Content-Type: application/json
 }
 ```
 
+**Rate Limit:** 5 requests per minute per IP (same as login endpoint)
+
 **Response:**
 ```json
 {
@@ -840,7 +1249,11 @@ Content-Type: application/json
 }
 ```
 
-**Note:** Always returns success to prevent email enumeration. Reset token is logged to console (stub).
+**Security Notes:**
+- Always returns success to prevent email enumeration attacks
+- Rate limited to prevent abuse
+- In development mode, reset token is logged to console (stub implementation)
+- In production, reset token should be sent via email (implementation required)
 
 ### Reset Password
 
@@ -854,10 +1267,24 @@ Content-Type: application/json
 }
 ```
 
+**Password Requirements:** New password must meet complexity requirements (see Password Requirements section above)
+
 **Response:**
 ```json
 {
   "message": "Password reset successful. You can now login with your new password."
+}
+```
+
+**Response (Invalid Password):**
+```json
+{
+  "statusCode": 400,
+  "message": [
+    "Password must be at least 8 characters long",
+    "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)"
+  ],
+  "error": "Bad Request"
 }
 ```
 
@@ -1014,13 +1441,804 @@ Payment webhooks (Priority 9) - Coming soon
 
 ## Best Practices
 
-1. **Always use pagination** for list endpoints
-2. **Use idempotency keys** for all payment operations
+### API Usage
+1. **Always use pagination** for list endpoints to avoid performance issues
+2. **Use idempotency keys** for all payment operations to prevent duplicate charges
 3. **Store file metadata** in your database after confirming uploads
-4. **Monitor audit logs** for security and compliance
-5. **Implement exponential backoff** for retries
-6. **Cache health check results** (max 30 seconds)
-7. **Validate file sizes** on client-side before requesting upload URLs
+4. **Implement exponential backoff** for retries on failed requests
+5. **Cache health check results** (max 30 seconds) to reduce unnecessary requests
+6. **Validate file sizes** on client-side before requesting upload URLs
+
+### Security
+7. **Respect rate limits** - Implement proper error handling for 429 responses
+8. **Never log or expose** JWT tokens, refresh tokens, or password reset tokens
+9. **Use strong passwords** that meet complexity requirements
+10. **Rotate JWT secrets** periodically in production environments
+11. **Validate CORS origins** - Only add trusted domains to CORS_ORIGIN
+12. **Monitor failed login attempts** through audit logs
+
+### GDPR Compliance
+13. **Document data processing** - Keep records of what data you collect and why
+14. **Implement data export** - Allow users to download their data via GDPR endpoints
+15. **Respect deletion requests** - Use anonymization endpoints when clients request deletion
+16. **Monitor retention policies** - Review GDPR compliance status regularly
+17. **Audit data access** - Review audit logs for data export and deletion operations
+18. **Inform users** - Provide clear privacy policies about data retention periods
+
+### Business Logic
+19. **Monitor audit logs** for security and compliance tracking
+20. **Validate booking dates** - Ensure end date is after start date
+21. **Check quotation status** - Prevent accepting quotations multiple times
+22. **Verify payment amounts** - System prevents overpayments but validate on frontend too
+23. **Handle active bookings** - Cannot anonymize clients with active bookings
+
+### Performance
+24. **Use search endpoints** for complex queries instead of fetching all records
+25. **Leverage database indexes** - Filter queries use indexed columns where possible
+26. **Batch operations** - Use bulk import endpoints where available (e.g., exchange rates)
+
+---
+
+## Bulk Import
+
+Import multiple clients at once from CSV data.
+
+### Bulk Import Clients
+
+```http
+POST /clients/bulk-import
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "clients": [
+    {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+905551234567",
+      "nationality": "US"
+    },
+    {
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "phone": "+905557654321",
+      "nationality": "UK"
+    }
+  ],
+  "mode": "normal",
+  "onDuplicateEmail": "skip"
+}
+```
+
+**Access:** OWNER, ADMIN, AGENT
+
+**Import Modes:**
+- `normal` - Import with validation, continue on errors
+- `atomic` - All or nothing (transaction)
+- `dry-run` - Validate only, don't save
+
+**Duplicate Handling:**
+- `skip` - Skip duplicates, continue importing
+- `update` - Update existing records
+- `fail` - Fail entire import on duplicate
+
+**Response:**
+```json
+{
+  "summary": {
+    "total": 2,
+    "successful": 2,
+    "failed": 0,
+    "skipped": 0
+  },
+  "successful": [
+    {
+      "id": 101,
+      "name": "John Doe",
+      "email": "john@example.com"
+    },
+    {
+      "id": 102,
+      "name": "Jane Smith",
+      "email": "jane@example.com"
+    }
+  ],
+  "failed": [],
+  "skipped": []
+}
+```
+
+**Validation:**
+- Email format validated (RFC 5322)
+- Phone format validated (E.164: +[country][number])
+- Maximum 1000 clients per import
+- Duplicate detection by email address
+
+**CSV Import Example:**
+```csv
+name,email,phone,nationality
+John Doe,john@example.com,+905551234567,US
+Jane Smith,jane@example.com,+905557654321,UK
+```
+
+---
+
+## Email Templates
+
+Manage communication templates for automated emails.
+
+### List Templates
+
+```http
+GET /email-templates
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "QUOTATION_SENT",
+      "subject": "Your Tour Quotation from {{companyName}}",
+      "bodyHtml": "<p>Dear {{customerName}},</p>...",
+      "bodyText": "Dear {{customerName}},...",
+      "variables": ["customerName", "companyName", "quotationCode"],
+      "isActive": true
+    }
+  ]
+}
+```
+
+### Create Template
+
+```http
+POST /email-templates
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "name": "BOOKING_CONFIRMED",
+  "subject": "Booking Confirmation - {{bookingCode}}",
+  "bodyHtml": "<h1>Booking Confirmed</h1><p>Dear {{customerName}},</p>...",
+  "bodyText": "Booking Confirmed\n\nDear {{customerName}},...",
+  "variables": ["customerName", "bookingCode", "startDate", "endDate"]
+}
+```
+
+**Access:** OWNER, ADMIN
+
+**Default Templates:**
+- `QUOTATION_SENT` - Quotation sent to client
+- `BOOKING_CONFIRMED` - Booking confirmation
+- `PAYMENT_RECEIVED` - Payment receipt
+- `PAYMENT_REMINDER` - Payment reminder
+- `TOUR_REMINDER` - Upcoming tour reminder
+
+**Supported Variables:**
+- `{{customerName}}` - Client full name
+- `{{companyName}}` - Your company name
+- `{{bookingCode}}` - Booking reference code
+- `{{quotationCode}}` - Quotation reference
+- `{{amount}}` - Payment amount
+- `{{startDate}}` - Tour start date
+- `{{endDate}}` - Tour end date
+- `{{dueDate}}` - Payment due date
+
+### Update Template
+
+```http
+PATCH /email-templates/:id
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "subject": "Updated Subject Line",
+  "bodyHtml": "<p>Updated content</p>"
+}
+```
+
+### Delete Template
+
+```http
+DELETE /email-templates/:id
+Authorization: Bearer <access_token>
+```
+
+**Note:** Cannot delete system default templates, only custom ones.
+
+---
+
+## Consent Management
+
+Manage GDPR consent for data processing, marketing, and analytics.
+
+### Grant Consent
+
+```http
+POST /consent
+Authorization: Bearer <access_token>
+Content-Type: application/json
+X-Forwarded-For: 192.168.1.100
+
+{
+  "clientId": 123,
+  "purpose": "MARKETING_EMAIL",
+  "version": "1.0"
+}
+```
+
+**Consent Purposes:**
+- `DATA_PROCESSING` - Core data processing for services
+- `MARKETING_EMAIL` - Marketing communications via email
+- `MARKETING_SMS` - Marketing communications via SMS
+- `MARKETING_PHONE` - Marketing communications via phone
+- `ANALYTICS` - Usage analytics and tracking
+- `THIRD_PARTY_SHARING` - Sharing data with partners
+- `PROFILING` - User profiling for personalization
+
+**Response:**
+```json
+{
+  "id": 456,
+  "clientId": 123,
+  "purpose": "MARKETING_EMAIL",
+  "granted": true,
+  "version": "1.0",
+  "grantedAt": "2024-01-15T10:30:00.000Z",
+  "ipAddress": "192.168.1.100",
+  "userAgent": "Mozilla/5.0..."
+}
+```
+
+**Automatic Tracking:**
+- IP address captured from request
+- User agent captured from headers
+- Timestamp automatically recorded
+- Audit log created
+
+### Bulk Grant Consent
+
+```http
+POST /consent/bulk-grant
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "clientId": 123,
+  "purposes": ["DATA_PROCESSING", "MARKETING_EMAIL", "ANALYTICS"],
+  "version": "1.0"
+}
+```
+
+### Revoke Consent
+
+```http
+DELETE /consent/:id
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "id": 456,
+  "clientId": 123,
+  "purpose": "MARKETING_EMAIL",
+  "granted": false,
+  "revokedAt": "2024-01-20T14:00:00.000Z"
+}
+```
+
+### Get Client Consents
+
+```http
+GET /consent/client/:clientId
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "clientId": 123,
+  "consents": [
+    {
+      "id": 456,
+      "purpose": "MARKETING_EMAIL",
+      "granted": true,
+      "version": "1.0",
+      "grantedAt": "2024-01-15T10:30:00.000Z"
+    },
+    {
+      "id": 457,
+      "purpose": "DATA_PROCESSING",
+      "granted": true,
+      "version": "1.0",
+      "grantedAt": "2024-01-15T10:30:00.000Z"
+    }
+  ],
+  "statistics": {
+    "total": 2,
+    "granted": 2,
+    "revoked": 0
+  }
+}
+```
+
+### Check Consent
+
+```http
+GET /consent/check?clientId=123&purpose=MARKETING_EMAIL
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "hasConsent": true,
+  "consent": {
+    "id": 456,
+    "purpose": "MARKETING_EMAIL",
+    "granted": true,
+    "version": "1.0"
+  }
+}
+```
+
+---
+
+## Privacy Policy
+
+Track privacy policy acceptance for GDPR compliance.
+
+### Accept Privacy Policy
+
+```http
+POST /privacy-policy/accept
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "version": "1.0"
+}
+```
+
+**Captures:**
+- IP address from request
+- User agent from headers
+- Timestamp of acceptance
+- User or client ID from JWT
+
+**Response:**
+```json
+{
+  "id": 789,
+  "userId": 5,
+  "version": "1.0",
+  "acceptedAt": "2024-01-15T10:30:00.000Z",
+  "ipAddress": "192.168.1.100"
+}
+```
+
+### Get Latest Acceptance
+
+```http
+GET /privacy-policy/acceptance
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "userId": 5,
+  "latestAcceptance": {
+    "id": 789,
+    "version": "1.0",
+    "acceptedAt": "2024-01-15T10:30:00.000Z"
+  },
+  "currentVersion": "1.0",
+  "requiresReAcceptance": false
+}
+```
+
+### Check if Re-Acceptance Required
+
+```http
+GET /privacy-policy/requires-acceptance
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "required": false,
+  "currentVersion": "1.0",
+  "userAcceptedVersion": "1.0",
+  "message": "User has accepted the latest privacy policy"
+}
+```
+
+**Use Case:**
+When privacy policy version changes, all users must re-accept before using certain features.
+
+### Get Current Version
+
+```http
+GET /privacy-policy/current-version
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "version": "1.0",
+  "effectiveDate": "2024-01-01T00:00:00.000Z"
+}
+```
+
+### Get Acceptance History
+
+```http
+GET /privacy-policy/history
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "acceptances": [
+    {
+      "id": 789,
+      "version": "1.0",
+      "acceptedAt": "2024-01-15T10:30:00.000Z",
+      "ipAddress": "192.168.1.100"
+    },
+    {
+      "id": 788,
+      "version": "0.9",
+      "acceptedAt": "2023-12-01T09:00:00.000Z",
+      "ipAddress": "192.168.1.99"
+    }
+  ]
+}
+```
+
+---
+
+## Enhanced Audit Logs
+
+Extended audit logging with PII access tracking and GDPR compliance reports.
+
+### PII Access Report
+
+Get detailed report of who accessed personally identifiable information.
+
+```http
+GET /audit-logs/pii-access-report
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+- `startDate` (optional) - Filter from date (ISO 8601)
+- `endDate` (optional) - Filter to date (ISO 8601)
+- `userId` (optional) - Filter by specific user
+- `entityType` (optional) - Filter by entity (Client, Vendor, User)
+- `piiField` (optional) - Filter by field (passportNumber, taxId, etc.)
+
+**Access:** OWNER, ADMIN
+
+**Response:**
+```json
+{
+  "period": {
+    "from": "2024-01-01T00:00:00.000Z",
+    "to": "2024-01-31T23:59:59.000Z"
+  },
+  "summary": {
+    "totalAccesses": 156,
+    "uniqueUsers": 8,
+    "piiFieldsAccessed": {
+      "passportNumber": 45,
+      "taxId": 32,
+      "dateOfBirth": 79
+    }
+  },
+  "accesses": [
+    {
+      "id": 1001,
+      "timestamp": "2024-01-15T14:30:00.000Z",
+      "user": {
+        "id": 5,
+        "name": "John Agent",
+        "email": "agent@example.com",
+        "role": "AGENT"
+      },
+      "action": "PII_ACCESSED",
+      "entityType": "Client",
+      "entityId": 123,
+      "piiFields": ["passportNumber", "dateOfBirth"],
+      "endpoint": "/api/v1/clients/123",
+      "method": "GET",
+      "ipAddress": "192.168.1.100",
+      "userAgent": "Mozilla/5.0..."
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 50,
+    "total": 156
+  }
+}
+```
+
+**PII Fields Tracked:**
+- `passportNumber` - Passport number
+- `taxId` - Tax identification number
+- `dateOfBirth` - Date of birth
+- `ssn` - Social security number
+- `creditCard` - Credit card information
+- `bankAccount` - Bank account details
+- `drivingLicense` - Driver's license number
+- `nationalId` - National ID number
+- `healthInfo` - Health-related information
+- `biometric` - Biometric data
+- `email` - Personal email addresses
+- `phone` - Phone numbers
+
+### GDPR Compliance Report
+
+Get comprehensive GDPR compliance status and activity report.
+
+```http
+GET /audit-logs/gdpr-compliance-report
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+- `startDate` (optional) - Report period start
+- `endDate` (optional) - Report period end
+
+**Access:** OWNER, ADMIN
+
+**Response:**
+```json
+{
+  "period": {
+    "from": "2024-01-01T00:00:00.000Z",
+    "to": "2024-01-31T23:59:59.000Z"
+  },
+  "dataExports": {
+    "total": 12,
+    "byType": {
+      "USER": 5,
+      "CLIENT": 7
+    },
+    "recent": [
+      {
+        "timestamp": "2024-01-15T10:30:00.000Z",
+        "userId": 5,
+        "dataSubjectId": 123,
+        "dataSubjectType": "CLIENT"
+      }
+    ]
+  },
+  "dataDeletions": {
+    "total": 3,
+    "clients": 2,
+    "users": 1,
+    "recent": [
+      {
+        "timestamp": "2024-01-10T14:00:00.000Z",
+        "entityId": 45,
+        "entityType": "Client",
+        "method": "ANONYMIZED"
+      }
+    ]
+  },
+  "consentChanges": {
+    "total": 89,
+    "granted": 67,
+    "revoked": 22,
+    "byPurpose": {
+      "MARKETING_EMAIL": 45,
+      "MARKETING_SMS": 22,
+      "ANALYTICS": 22
+    }
+  },
+  "piiAccesses": {
+    "total": 156,
+    "uniqueUsers": 8,
+    "topAccessedFields": [
+      { "field": "dateOfBirth", "count": 79 },
+      { "field": "passportNumber", "count": 45 },
+      { "field": "taxId", "count": 32 }
+    ]
+  },
+  "retentionCompliance": {
+    "clientsArchived": 5,
+    "auditLogsDeleted": 1250,
+    "leadsDeleted": 34
+  },
+  "complianceScore": {
+    "overall": 95,
+    "breakdown": {
+      "dataExport": 100,
+      "consentManagement": 98,
+      "auditLogging": 95,
+      "dataRetention": 90,
+      "encryption": 92
+    }
+  }
+}
+```
+
+---
+
+## Field-Level Encryption
+
+Sensitive data is encrypted at rest using AES-256-GCM encryption.
+
+### Encrypted Fields
+
+The following fields are automatically encrypted:
+
+**Client Model:**
+- `passportNumber` - Passport identification
+- `taxId` - Tax identification number
+- `bankAccount` - Bank account details (if provided)
+
+**Vendor Model:**
+- `taxId` - Tax identification number
+
+**Encryption Details:**
+- **Algorithm:** AES-256-GCM (authenticated encryption)
+- **Key Management:** Environment variable `ENCRYPTION_KEY`
+- **Format:** `iv:authTag:encryptedData` (hex encoded)
+- **Automatic:** Encryption/decryption handled transparently by API
+
+### How It Works
+
+**On Write (Create/Update):**
+```http
+POST /clients
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "passportNumber": "AB123456",  // Plain text input
+  "taxId": "123-45-6789"
+}
+```
+
+**Stored in Database:**
+```
+passportNumber: "a1b2c3d4:e5f6g7h8:9i0j1k2l..."  // Encrypted
+taxId: "d4c3b2a1:8h7g6f5e:l2k1j0i9..."
+```
+
+**On Read (Get):**
+```http
+GET /clients/123
+```
+
+**Response:**
+```json
+{
+  "id": 123,
+  "name": "John Doe",
+  "passportNumber": "AB123456",  // Automatically decrypted
+  "taxId": "123-45-6789"
+}
+```
+
+### Migration of Existing Data
+
+For existing unencrypted data, run the migration script:
+
+```bash
+npx ts-node src/scripts/encrypt-existing-data.ts
+```
+
+**What It Does:**
+- Detects unencrypted fields (no `:` separator)
+- Encrypts them with current ENCRYPTION_KEY
+- Idempotent - safe to run multiple times
+- Logs progress and errors
+
+**Backward Compatibility:**
+- API automatically detects encrypted vs unencrypted data
+- Gracefully handles mixed states during migration
+- No API changes required
+
+### Security Considerations
+
+**Key Management:**
+- Store `ENCRYPTION_KEY` securely (e.g., AWS Secrets Manager, HashiCorp Vault)
+- Minimum 32 characters required
+- Rotate keys periodically (requires re-encryption)
+- Never commit keys to version control
+
+**Performance:**
+- Encryption overhead: ~1-2ms per field
+- Decryption overhead: ~1-2ms per field
+- Minimal impact on API response times
+
+---
+
+## Performance & Caching
+
+The API implements Redis caching for optimal performance.
+
+### Cached Resources
+
+**Exchange Rates** (TTL: 1 hour)
+- Cache key: `exchange_rate:{tenantId}:{from}:{to}`
+- Auto-invalidated on rate creation/update
+- Fallback to database if cache miss
+
+**Service Offerings** (TTL: 10 minutes)
+- Cache key: `service_offerings:{tenantId}:{filters...}`
+- Auto-invalidated on create/update/delete
+- Reduces catalog loading time by 98%
+
+**Cache Status:**
+Check cache health via health endpoint:
+```http
+GET /health/readyz
+```
+
+**Response:**
+```json
+{
+  "status": "ready",
+  "checks": {
+    "database": "connected",
+    "cache": "connected"  // or "unavailable (using fallback)"
+  }
+}
+```
+
+**Cache Behavior:**
+- **Redis Available:** Fast in-memory caching
+- **Redis Unavailable:** Automatic fallback to in-memory cache
+- **No Configuration Required:** Works out of the box
+
+---
+
+## Performance Optimizations
+
+### Connection Pooling
+
+Database connections are pooled for optimal performance:
+
+**Configuration:**
+```
+DATABASE_URL="postgresql://user:pass@host:5432/db?connection_limit=10&pool_timeout=20"
+```
+
+**Settings:**
+- Maximum connections: 10
+- Pool timeout: 20 seconds
+- Minimum connections: 2
+
+### Query Timeouts
+
+All database queries have a 30-second timeout to prevent runaway queries:
+
+**Automatic Behavior:**
+- Queries exceeding 30s are automatically cancelled
+- Logs slow queries (>1 second) in development
+- Returns 408 Request Timeout error
+
+### Slow Query Logging
+
+In development mode, queries taking >1 second are logged:
+
+```
+[SLOW QUERY] 1.234s - SELECT * FROM bookings WHERE...
+```
+
+**Production:** Slow query logging disabled for performance.
 
 ---
 

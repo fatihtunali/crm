@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
@@ -9,6 +10,8 @@ import { UpdateLeadDto } from './dto/update-lead.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { LeadStatus } from '@tour-crm/shared';
+import { ErrorMessages } from '../common/errors/error-messages';
+import { BusinessRules, BusinessRulesHelper } from '../config/business-rules.config';
 
 @Injectable()
 export class LeadsService {
@@ -73,7 +76,26 @@ export class LeadsService {
       });
 
       if (!client) {
-        throw new BadRequestException('Client not found');
+        throw new BadRequestException(ErrorMessages.CLIENT_NOT_FOUND(createLeadDto.clientId));
+      }
+
+      // Check for duplicate active leads within deduplication window
+      const deduplicationDate = new Date();
+      deduplicationDate.setDate(
+        deduplicationDate.getDate() - BusinessRules.lead.deduplicationWindowDays
+      );
+
+      const existingLead = await this.prisma.lead.findFirst({
+        where: {
+          tenantId,
+          clientId: createLeadDto.clientId,
+          status: { in: [LeadStatus.NEW, LeadStatus.CONTACTED, LeadStatus.QUOTED] },
+          inquiryDate: { gte: deduplicationDate },
+        },
+      });
+
+      if (existingLead) {
+        throw new ConflictException(ErrorMessages.LEAD_DUPLICATE(existingLead.id));
       }
     }
 

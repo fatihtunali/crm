@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePaymentClientDto } from './dto/create-payment-client.dto';
 import { UpdatePaymentClientDto } from './dto/update-payment-client.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { createPaginatedResponse, PaginatedResponse } from '../common/interfaces/paginated-response.interface';
+import { PaymentStatus } from '@tour-crm/shared';
 
 @Injectable()
 export class PaymentClientService {
@@ -90,6 +91,39 @@ export class PaymentClientService {
       throw new NotFoundException(
         `Booking with ID ${createPaymentClientDto.bookingId} not found`,
       );
+    }
+
+    // Calculate total payments already made (excluding FAILED and REFUNDED)
+    const existingPayments = await this.prisma.paymentClient.aggregate({
+      where: {
+        bookingId: createPaymentClientDto.bookingId,
+        tenantId,
+        status: {
+          in: [PaymentStatus.COMPLETED, PaymentStatus.PENDING],
+        },
+      },
+      _sum: {
+        amountEur: true,
+      },
+    });
+
+    const totalPaid = Number(existingPayments._sum.amountEur || 0);
+    const newPaymentAmount = Number(createPaymentClientDto.amountEur);
+    const bookingTotal = Number(booking.totalSellEur);
+
+    // Validate payment amount doesn't exceed booking total
+    if (totalPaid + newPaymentAmount > bookingTotal) {
+      throw new BadRequestException(
+        `Payment amount ${newPaymentAmount.toFixed(2)} EUR would exceed booking total. ` +
+        `Booking total: ${bookingTotal.toFixed(2)} EUR, ` +
+        `Already paid: ${totalPaid.toFixed(2)} EUR, ` +
+        `Remaining balance: ${(bookingTotal - totalPaid).toFixed(2)} EUR`,
+      );
+    }
+
+    // Validate payment amount is positive
+    if (newPaymentAmount <= 0) {
+      throw new BadRequestException('Payment amount must be greater than zero');
     }
 
     const payment = await this.prisma.paymentClient.create({

@@ -3,18 +3,121 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
+import { json, urlencoded } from 'express';
+import helmet from 'helmet';
 
 async function bootstrap() {
+  // Validate critical environment variables
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    throw new Error(
+      'JWT_SECRET must be at least 32 characters. Please update your .env file with a strong secret.',
+    );
+  }
+
+  if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET.length < 32) {
+    throw new Error(
+      'JWT_REFRESH_SECRET must be at least 32 characters. Please update your .env file with a strong secret.',
+    );
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    // Additional production checks
+    if (process.env.JWT_SECRET.includes('change-in-production')) {
+      throw new Error(
+        'JWT_SECRET contains placeholder text. Please use a secure random secret in production.',
+      );
+    }
+
+    if (process.env.JWT_REFRESH_SECRET.includes('change-in-production')) {
+      throw new Error(
+        'JWT_REFRESH_SECRET contains placeholder text. Please use a secure random secret in production.',
+      );
+    }
+
+    if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('localhost')) {
+      console.warn(
+        'WARNING: DATABASE_URL appears to be using localhost in production. Ensure you are using a production database.',
+      );
+    }
+  }
+
   const app = await NestFactory.create(AppModule);
+
+  // Security: Request size limits (prevents DoS attacks via large payloads)
+  app.use(json({ limit: '1mb' }));
+  app.use(urlencoded({ extended: true, limit: '1mb' }));
+
+  // Security: Helmet - HTTP security headers
+  app.use(
+    helmet({
+      // HSTS - Force HTTPS
+      hsts: {
+        maxAge: 31536000, // 1 year in seconds
+        includeSubDomains: true,
+        preload: true,
+      },
+      // Content Security Policy
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for Swagger UI
+          scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for Swagger UI
+          imgSrc: ["'self'", 'data:', 'https:', 'http:'], // Allow images from various sources
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'", 'data:'],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
+        },
+      },
+      // X-Frame-Options: Prevent clickjacking
+      frameguard: { action: 'deny' },
+      // X-Content-Type-Options: Prevent MIME type sniffing
+      noSniff: true,
+      // X-XSS-Protection: Enable XSS filter
+      xssFilter: true,
+      // Referrer-Policy
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      // Hide X-Powered-By header
+      hidePoweredBy: true,
+    }),
+  );
 
   // Global prefix
   const apiPrefix = process.env.API_PREFIX || 'api/v1';
   app.setGlobalPrefix(apiPrefix);
 
-  // CORS
+  // CORS - Support multiple origins
+  const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+    : ['http://localhost:3000'];
+
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, Postman, curl)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked request from origin: ${origin}`);
+        callback(new Error(`Origin ${origin} not allowed by CORS policy`));
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Idempotency-Key',
+      'X-Tenant-Id',
+      'Accept-Language',
+    ],
+    exposedHeaders: ['X-Total-Count'],
+    maxAge: 86400, // 24 hours
   });
 
   // Global validation pipe
@@ -42,6 +145,25 @@ Multi-tenant Tour Operator CRM API for Turkish tourism agencies.
 - All routes require JWT authentication except login, password reset, health checks, and webhooks
 - Tenant ID is extracted from JWT; never accepted in request bodies
 - Multi-tenancy enforced at database level via row-level security
+
+## Security Features
+- **Password Requirements**: Minimum 8 characters with complexity requirements (uppercase, lowercase, number, special character)
+- **Rate Limiting**:
+  - Authentication endpoints: 5 requests per minute (login, forgot-password)
+  - General API endpoints: 100 requests per minute
+- **JWT Validation**: Environment variable validation on startup with minimum 32 character secrets
+- **CORS Security**: Multi-origin support with domain validation
+- **Idempotency**: Payment endpoints require \`Idempotency-Key\` header to prevent duplicate charges
+
+## GDPR Compliance
+- **Data Export (Article 20)**: Users and clients can export all personal data in JSON format
+- **Right to be Forgotten (Article 17)**: Client data anonymization while preserving legal records
+- **Data Retention Policies**: Automated cleanup of old data:
+  - Inactive clients archived after 3 years
+  - Audit logs deleted after 7 years
+  - Idempotency keys deleted after 30 days
+  - Old unconverted leads deleted after 2 years
+- **Compliance Status**: Real-time GDPR compliance reporting for administrators
 
 ## Supplier Catalog System
 The API includes a comprehensive supplier catalog for managing service offerings:

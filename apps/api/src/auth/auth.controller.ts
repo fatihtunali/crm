@@ -1,5 +1,6 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, Get, Patch } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto, RefreshTokenDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -13,9 +14,10 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @Throttle({ auth: { limit: 5, ttl: 60000 } }) // 5 login attempts per minute
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiOperation({ summary: 'Login with email and password (Rate limit: 5 attempts/min)' })
   @ApiResponse({
     status: 200,
     description: 'Login successful',
@@ -101,10 +103,11 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ auth: { limit: 3, ttl: 60000 } }) // 3 attempts per minute
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Request password reset',
+    summary: 'Request password reset (Rate limit: 3 attempts/min)',
     description: 'Send password reset email (stub implementation). Always returns success to prevent email enumeration.',
   })
   @ApiResponse({
@@ -121,10 +124,11 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ auth: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Reset password with token',
+    summary: 'Reset password with token (Rate limit: 5 attempts/min)',
     description: 'Reset user password using the token received via email',
   })
   @ApiResponse({

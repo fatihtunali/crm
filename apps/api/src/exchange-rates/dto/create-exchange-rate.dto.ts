@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsDecimal, IsDateString, IsOptional } from 'class-validator';
+import { IsString, IsNumber, IsDateString, IsOptional, Min, Max } from 'class-validator';
 
 export class CreateExchangeRateDto {
   @ApiProperty({ example: 'TRY', description: 'From currency code', required: false })
@@ -13,7 +13,9 @@ export class CreateExchangeRateDto {
   toCurrency?: string;
 
   @ApiProperty({ example: 32.5, description: 'Exchange rate' })
-  @IsDecimal()
+  @IsNumber({ maxDecimalPlaces: 6 })
+  @Min(0.000001)
+  @Max(1000000)
   rate!: number;
 
   @ApiProperty({ example: '2024-10-31T00:00:00Z', description: 'Rate date' })

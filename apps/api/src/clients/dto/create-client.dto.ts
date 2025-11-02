@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail, IsOptional, IsDateString } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsDateString, Matches } from 'class-validator';
 
 export class CreateClientDto {
   @ApiProperty({ example: 'John Smith' })
@@ -7,12 +7,18 @@ export class CreateClientDto {
   name!: string;
 
   @ApiProperty({ example: 'john.smith@email.com', required: false })
-  @IsEmail()
+  @IsEmail({}, { message: 'Invalid email format' })
   @IsOptional()
   email?: string;
 
-  @ApiProperty({ example: '+1 555 123 4567', required: false })
-  @IsString()
+  @ApiProperty({
+    example: '+905551234567',
+    description: 'Phone number in E.164 format (e.g., +905551234567)',
+    required: false
+  })
+  @Matches(/^\+?[1-9]\d{1,14}$/, {
+    message: 'Phone must be in E.164 format (e.g., +905551234567)'
+  })
   @IsOptional()
   phone?: string;
 
