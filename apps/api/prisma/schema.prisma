@@ -195,6 +195,7 @@ model Lead {
   budgetEur   Decimal?   @map("budget_eur") @db.Decimal(12, 2)
   status      LeadStatus @default(NEW)
   notes       String?    @db.Text
+  deletedAt   DateTime?  @map("deleted_at") // Issue #33: Soft delete timestamp
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
@@ -205,6 +206,7 @@ model Lead {
   @@index([clientId])
   @@index([status])
   @@index([inquiryDate])
+  @@index([deletedAt])
   @@map("leads")
 }
 
@@ -224,6 +226,7 @@ model Tour {
   seasonEnd        DateTime? @map("season_end") @db.Date
   defaultMarkupPct Decimal   @default(25.00) @map("default_markup_pct") @db.Decimal(5, 2)
   isActive         Boolean   @default(true) @map("is_active")
+  deletedAt        DateTime? @map("deleted_at") // Issue #33: Soft delete timestamp
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
 
@@ -234,6 +237,7 @@ model Tour {
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([isActive])
+  @@index([deletedAt])
   @@map("tours")
 }
 

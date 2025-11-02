@@ -15,7 +15,8 @@ export class ToursService {
 
   async findAll(tenantId: number, paginationDto: PaginationDto): Promise<PaginatedResponse<any>> {
     const { skip, take, sortBy = 'code', order = 'asc' } = paginationDto;
-    const where = { tenantId };
+    // Issue #33: Exclude soft-deleted tours
+    const where = { tenantId, deletedAt: null };
 
     const [data, total] = await Promise.all([
       this.prisma.tour.findMany({
@@ -154,20 +155,23 @@ export class ToursService {
   async remove(id: number, tenantId: number) {
     // Check if tour exists
     const tour = await this.prisma.tour.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantId, deletedAt: null },
     });
 
     if (!tour) {
       throw new NotFoundException(`Tour with ID ${id} not found`);
     }
 
-    // Soft delete by setting isActive to false
+    // Issue #33: Soft delete by setting isActive to false and deletedAt timestamp
     await this.prisma.tour.update({
       where: { id },
-      data: { isActive: false },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+      },
     });
 
-    return { message: 'Tour deactivated successfully' };
+    return { message: 'Tour soft deleted successfully' };
   }
 
   async search(query: string, tenantId: number) {
@@ -175,6 +179,7 @@ export class ToursService {
       where: {
         tenantId,
         isActive: true,
+        deletedAt: null, // Issue #33: Exclude soft-deleted records
         OR: [
           { code: { contains: query, mode: 'insensitive' } },
           { name: { contains: query, mode: 'insensitive' } },

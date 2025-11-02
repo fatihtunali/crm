@@ -23,8 +23,8 @@ export class VendorsService {
     const where = {
       tenantId,
       ...(type && { type }),
-      // Soft delete: exclude inactive vendors by default
-      ...(!includeInactive && { isActive: true }),
+      // Issue #33: Soft delete - exclude deleted vendors by default
+      ...(!includeInactive && { isActive: true, deletedAt: null }),
     };
 
     const [data, total] = await Promise.all([
@@ -108,20 +108,23 @@ export class VendorsService {
   async remove(id: number, tenantId: number) {
     // Check if vendor exists
     const vendor = await this.prisma.vendor.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantId, deletedAt: null },
     });
 
     if (!vendor) {
       throw new NotFoundException(`Vendor with ID ${id} not found`);
     }
 
-    // Soft delete by setting isActive to false
+    // Issue #33: Soft delete by setting isActive to false and deletedAt timestamp
     await this.prisma.vendor.update({
       where: { id },
-      data: { isActive: false },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+      },
     });
 
-    return { message: 'Vendor deactivated successfully' };
+    return { message: 'Vendor soft deleted successfully' };
   }
 
   async search(query: string, tenantId: number) {
@@ -129,6 +132,7 @@ export class VendorsService {
       where: {
         tenantId,
         isActive: true,
+        deletedAt: null, // Issue #33: Exclude soft-deleted records
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
           { contactName: { contains: query, mode: 'insensitive' } },

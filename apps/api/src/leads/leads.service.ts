@@ -21,6 +21,7 @@ export class LeadsService {
     const { skip, take, sortBy = 'inquiryDate', order = 'desc' } = paginationDto;
     const where = {
       tenantId,
+      deletedAt: null, // Issue #33: Exclude soft-deleted leads
       ...(status && { status }),
     };
 
@@ -182,19 +183,20 @@ export class LeadsService {
   async remove(id: number, tenantId: number) {
     // Check if lead exists
     const lead = await this.prisma.lead.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantId, deletedAt: null },
     });
 
     if (!lead) {
       throw new NotFoundException(`Lead with ID ${id} not found`);
     }
 
-    // Hard delete for leads (no isActive field in schema)
-    await this.prisma.lead.delete({
+    // Issue #33: Soft delete for leads using deletedAt timestamp
+    await this.prisma.lead.update({
       where: { id },
+      data: { deletedAt: new Date() },
     });
 
-    return { message: 'Lead deleted successfully' };
+    return { message: 'Lead soft deleted successfully' };
   }
 
   async getStatsByStatus(tenantId: number) {

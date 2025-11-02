@@ -90,7 +90,8 @@ export class ServiceOfferingsService {
         ...(serviceType ? { serviceType } : {}),
         ...(supplierId ? { supplierId } : {}),
         ...(location ? { location: { contains: location, mode: 'insensitive' } } : {}),
-        ...(includeInactive ? {} : { isActive: true }),
+        // Issue #33: Soft delete - exclude deleted service offerings
+        ...(includeInactive ? {} : { isActive: true, deletedAt: null }),
       },
       include: {
         supplier: {
@@ -215,17 +216,20 @@ export class ServiceOfferingsService {
 
   async remove(id: number, tenantId: number) {
     const offering = await this.prisma.serviceOffering.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantId, deletedAt: null },
     });
 
     if (!offering) {
       throw new NotFoundException(`Service offering with ID ${id} not found`);
     }
 
-    // Soft delete
+    // Issue #33: Soft delete with both isActive and deletedAt
     const result = await this.prisma.serviceOffering.update({
       where: { id },
-      data: { isActive: false },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+      },
     });
 
     // Invalidate cache for this tenant
@@ -243,6 +247,7 @@ export class ServiceOfferingsService {
       where: {
         tenantId,
         isActive: true,
+        deletedAt: null, // Issue #33: Exclude soft-deleted records
         ...(serviceType ? { serviceType } : {}),
         OR: [
           { title: { contains: searchTerm, mode: 'insensitive' } },
@@ -273,6 +278,7 @@ export class ServiceOfferingsService {
       where: {
         tenantId,
         isActive: true,
+        deletedAt: null, // Issue #33: Exclude soft-deleted records
       },
       _count: {
         id: true,

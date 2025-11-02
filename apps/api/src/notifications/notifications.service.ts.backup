@@ -43,7 +43,7 @@ export class NotificationsService {
     content: { subject?: string; body: string },
     tenantId: number,
   ) {
-    // FUTURE: Email integration will use SendGrid, AWS SES, or similar service
+    // TODO: Implement actual email sending using a service like SendGrid, AWS SES, etc.
     this.logger.log(`[EMAIL STUB] Would send email to: ${recipient}`);
     this.logger.log(`[EMAIL STUB] Subject: ${content.subject}`);
     this.logger.log(`[EMAIL STUB] Body preview: ${content.body.substring(0, 100)}...`);
@@ -62,7 +62,7 @@ export class NotificationsService {
     content: { subject?: string; body: string },
     tenantId: number,
   ) {
-    // FUTURE: WhatsApp integration will use Twilio or WhatsApp Business API
+    // TODO: Implement actual WhatsApp sending using a service like Twilio, WhatsApp Business API, etc.
     this.logger.log(`[WHATSAPP STUB] Would send WhatsApp message to: ${recipient}`);
     this.logger.log(`[WHATSAPP STUB] Message preview: ${content.body.substring(0, 100)}...`);
 

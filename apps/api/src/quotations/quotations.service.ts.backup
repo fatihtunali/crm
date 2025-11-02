@@ -280,9 +280,9 @@ export class QuotationsService {
       },
     });
 
-    // FUTURE: Email notification integration using NotificationsService
-    
-    // await this.notificationsService.sendQuotation(updatedQuotation);
+    // TODO: Send email notification to client
+    // For now, we'll just log it
+    // await this.emailService.sendQuotation(updatedQuotation);
 
     return {
       ...updatedQuotation,

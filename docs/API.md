@@ -2242,6 +2242,406 @@ In development mode, queries taking >1 second are logged:
 
 ---
 
+## Rate Management
+
+Complete CRUD operations for managing rates across all service types.
+
+### Hotel Room Rates
+
+Manage seasonal rates for hotel rooms with board type support.
+
+#### List Hotel Room Rates
+
+```http
+GET /hotel-room-rates?serviceOfferingId=1
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+- `serviceOfferingId` (optional) - Filter by service offering
+- `isActive` (optional) - Filter by active status
+- `boardType` (optional) - Filter by board type (BB, HB, FB, AI)
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "tenantId": 1,
+      "serviceOfferingId": 5,
+      "boardType": "BB",
+      "seasonFrom": "2025-01-01",
+      "seasonTo": "2025-03-31",
+      "pricePerRoomNight": 120.00,
+      "currencyCode": "EUR",
+      "isActive": true,
+      "createdAt": "2025-01-15T10:00:00Z",
+      "updatedAt": "2025-01-15T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 50,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+#### Create Hotel Room Rate
+
+```http
+POST /hotel-room-rates
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "serviceOfferingId": 5,
+  "boardType": "BB",
+  "seasonFrom": "2025-04-01",
+  "seasonTo": "2025-06-30",
+  "pricePerRoomNight": 150.00,
+  "currencyCode": "EUR"
+}
+```
+
+**Validation:**
+- Prevents overlapping seasons for same service offering + board type
+- Returns 409 Conflict if overlap detected
+
+**Error Response (Overlap):**
+```json
+{
+  "statusCode": 409,
+  "message": "Rate season overlaps with existing rate (2025-01-01 - 2025-03-31)",
+  "error": "Conflict"
+}
+```
+
+---
+
+### Transfer Rates
+
+Manage rates for transfer services.
+
+#### Create Transfer Rate
+
+```http
+POST /transfer-rates
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "serviceOfferingId": 10,
+  "seasonFrom": "2025-01-01",
+  "seasonTo": "2025-12-31",
+  "pricePerTransfer": 50.00,
+  "pricePerKm": 1.50,
+  "includedKm": 20,
+  "currencyCode": "EUR"
+}
+```
+
+**Fields:**
+- `pricePerTransfer` - Fixed price per transfer
+- `pricePerKm` - Price per kilometer (if using km-based pricing)
+- `includedKm` - Kilometers included in base price
+
+---
+
+### Vehicle Hire Rates
+
+Manage daily rates for vehicle rentals.
+
+#### Create Vehicle Rate
+
+```http
+POST /vehicle-rates
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "serviceOfferingId": 15,
+  "seasonFrom": "2025-01-01",
+  "seasonTo": "2025-12-31",
+  "pricePerDay": 80.00,
+  "currencyCode": "EUR"
+}
+```
+
+---
+
+### Guide Service Rates
+
+Manage hourly/daily rates for tour guides.
+
+#### Create Guide Rate
+
+```http
+POST /guide-rates
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "serviceOfferingId": 20,
+  "seasonFrom": "2025-01-01",
+  "seasonTo": "2025-12-31",
+  "pricePerHour": 25.00,
+  "pricePerDay": 180.00,
+  "languageSurcharge": 10.00,
+  "currencyCode": "EUR"
+}
+```
+
+**Fields:**
+- `pricePerHour` - Hourly rate (optional)
+- `pricePerDay` - Daily rate (optional)
+- `languageSurcharge` - Additional charge for special languages
+
+---
+
+### Activity Rates
+
+Manage per-person rates for activities and tours.
+
+#### Create Activity Rate
+
+```http
+POST /activity-rates
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "serviceOfferingId": 25,
+  "seasonFrom": "2025-01-01",
+  "seasonTo": "2025-12-31",
+  "pricePerPerson": 45.00,
+  "childDiscount": 15.00,
+  "groupDiscount": 10.00,
+  "currencyCode": "EUR"
+}
+```
+
+**Fields:**
+- `pricePerPerson` - Standard price per adult
+- `childDiscount` - Discount amount for children
+- `groupDiscount` - Discount for group bookings
+
+---
+
+### Rate Management Features
+
+**Season Overlap Prevention:**
+- System prevents creating overlapping rate seasons
+- Each service offering can only have one active rate per date range
+- Hotel rates check overlaps per board type separately
+
+**Soft Delete:**
+- Rates use `isActive` flag for soft deletion
+- Deleted rates remain in database for audit purposes
+- Can be restored by setting `isActive: true`
+
+**Access Control:**
+- OWNER, ADMIN: Full CRUD access
+- OPERATIONS: Create and update rates
+- AGENT, GUIDE, VENDOR: Read-only access
+
+---
+
+## Soft Delete Functionality
+
+The API implements soft delete for critical entities to preserve data for audit and recovery.
+
+### Supported Entities
+
+Entities with soft delete support:
+- Clients (`isActive` + `deletedAt`)
+- Vendors (`isActive` + `deletedAt`)
+- Leads (`deletedAt`)
+- Tours (`isActive` + `deletedAt`)
+- Service Offerings (`deletedAt`)
+- All Rate types (`isActive`)
+
+### How Soft Delete Works
+
+**Delete Operation:**
+```http
+DELETE /clients/123
+Authorization: Bearer <access_token>
+```
+
+**Database Result:**
+- Record NOT removed from database
+- `isActive` set to `false` (if applicable)
+- `deletedAt` set to current timestamp
+- Relationships preserved
+
+**List Operations:**
+All list endpoints automatically filter out soft-deleted records:
+
+```http
+GET /clients
+```
+
+Only returns records where:
+- `deletedAt IS NULL` OR
+- `isActive = true`
+
+### Benefits
+
+1. **Data Recovery**: Accidentally deleted records can be restored
+2. **Audit Trail**: Complete history preserved
+3. **Referential Integrity**: Foreign key relationships maintained
+4. **Compliance**: Required for GDPR and financial regulations
+
+### Restoration
+
+To restore a soft-deleted record:
+
+```http
+PATCH /clients/123
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "isActive": true,
+  "deletedAt": null
+}
+```
+
+**Note:** Restoration requires OWNER or ADMIN role.
+
+---
+
+## Client Activity Timeline
+
+Get comprehensive activity history for a client.
+
+### Get Client Timeline
+
+```http
+GET /clients/:clientId/timeline?limit=50
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+- `limit` (optional) - Number of timeline entries to return (default: 100, max: 500)
+
+**Response:**
+```json
+{
+  "timeline": [
+    {
+      "type": "PAYMENT",
+      "date": "2024-11-01T10:30:00Z",
+      "title": "Payment received: €500.00",
+      "description": "Method: BANK_TRANSFER | Booking: BK-2024-001 | Status: COMPLETED",
+      "data": {
+        "id": 15,
+        "amountEur": 500,
+        "method": "BANK_TRANSFER",
+        "paidAt": "2024-11-01T10:30:00Z",
+        "status": "COMPLETED",
+        "txnRef": "TXN-12345"
+      }
+    },
+    {
+      "type": "BOOKING",
+      "date": "2024-10-28T14:20:00Z",
+      "title": "Booking BK-2024-001 - CONFIRMED",
+      "description": "2024-12-15 to 2024-12-20 | €1500.00",
+      "data": {
+        "id": 5,
+        "bookingCode": "BK-2024-001",
+        "status": "CONFIRMED",
+        "startDate": "2024-12-15",
+        "endDate": "2024-12-20",
+        "totalSellEur": 1500
+      }
+    },
+    {
+      "type": "QUOTATION",
+      "date": "2024-10-25T09:15:00Z",
+      "title": "Quotation QT-2024-001 - ACCEPTED",
+      "description": "Total: €1500.00",
+      "data": {
+        "id": 3,
+        "code": "QT-2024-001",
+        "status": "ACCEPTED",
+        "totalSellEur": 1500
+      }
+    },
+    {
+      "type": "LEAD",
+      "date": "2024-10-20T16:45:00Z",
+      "title": "Lead created: WEBSITE",
+      "description": "Looking for honeymoon package in Turkey",
+      "data": {
+        "id": 2,
+        "source": "WEBSITE",
+        "status": "CONVERTED",
+        "notes": "Looking for honeymoon package in Turkey"
+      }
+    },
+    {
+      "type": "AUDIT",
+      "date": "2024-10-20T16:45:00Z",
+      "title": "CLIENT_CREATED",
+      "description": "Client account created",
+      "data": {
+        "id": 100,
+        "action": "CLIENT_CREATED",
+        "entityType": "Client",
+        "entityId": 1
+      }
+    }
+  ],
+  "total": 5,
+  "clientId": 1
+}
+```
+
+### Timeline Entry Types
+
+| Type | Description | Data Source |
+|------|-------------|-------------|
+| `LEAD` | Lead inquiry created | Leads table |
+| `QUOTATION` | Quotation sent/accepted/rejected | Quotations table |
+| `BOOKING` | Booking created/confirmed/cancelled | Bookings table |
+| `PAYMENT` | Payment received | Client Payments table |
+| `AUDIT` | System audit events | Audit Logs table (last 50 only) |
+
+### Timeline Features
+
+**Chronological Order:**
+- Entries sorted by date descending (most recent first)
+- Each entry includes exact timestamp
+
+**Comprehensive View:**
+- Aggregates data from 5 different sources
+- Shows complete customer journey
+- Includes system audit events
+
+**Performance:**
+- Parallel data fetching for optimal speed
+- Limited audit log entries (last 50) to prevent performance issues
+- Configurable limit parameter
+
+**Security:**
+- JWT authentication required
+- Tenant isolation enforced
+- Only shows data for authorized client
+
+### Use Cases
+
+1. **Customer Service**: Quickly view entire customer history
+2. **Sales**: Track lead-to-customer conversion journey
+3. **Accounting**: See all payments and bookings at a glance
+4. **Compliance**: Complete audit trail for GDPR requests
+
+---
+
 ## Support
 
 For detailed interactive documentation, visit the Swagger UI at:

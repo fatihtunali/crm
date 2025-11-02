@@ -80,7 +80,7 @@ export class CustomerItinerariesService {
     startDate: Date,
   ): Promise<DayItinerary[]> {
     const itinerary: DayItinerary[] = [];
-    let currentDate = new Date(startDate);
+    const currentDate = new Date(startDate);
     let dayNumber = 1;
 
     // Get city IDs

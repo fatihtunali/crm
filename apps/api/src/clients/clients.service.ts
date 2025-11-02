@@ -21,7 +21,8 @@ export class ClientsService {
 
   async findAll(tenantId: number, paginationDto: PaginationDto): Promise<PaginatedResponse<any>> {
     const { skip, take, sortBy = 'createdAt', order = 'desc' } = paginationDto;
-    const where = { tenantId };
+    // Issue #33: Soft delete - exclude deleted clients by default
+    const where = { tenantId, deletedAt: null };
 
     const [data, total] = await Promise.all([
       this.prisma.client.findMany({
@@ -136,20 +137,23 @@ export class ClientsService {
   async remove(id: number, tenantId: number) {
     // Check if client exists
     const client = await this.prisma.client.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantId, deletedAt: null },
     });
 
     if (!client) {
       throw new NotFoundException(`Client with ID ${id} not found`);
     }
 
-    // Soft delete by setting isActive to false
+    // Issue #33: Soft delete by setting isActive to false and deletedAt timestamp
     await this.prisma.client.update({
       where: { id },
-      data: { isActive: false },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+      },
     });
 
-    return { message: 'Client deactivated successfully' };
+    return { message: 'Client soft deleted successfully' };
   }
 
   async search(query: string, tenantId: number) {
@@ -157,6 +161,7 @@ export class ClientsService {
       where: {
         tenantId,
         isActive: true,
+        deletedAt: null, // Issue #33: Exclude soft-deleted records
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
           { email: { contains: query, mode: 'insensitive' } },
