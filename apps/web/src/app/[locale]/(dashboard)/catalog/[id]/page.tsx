@@ -155,7 +155,7 @@ export default function EditServiceOfferingPage() {
                     <SelectValue placeholder="Select supplier" />
                   </SelectTrigger>
                   <SelectContent>
-                    {suppliers?.data?.map((supplier) => (
+                    {suppliers?.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id.toString()}>
                         {supplier.party?.name} ({supplier.type})
                       </SelectItem>

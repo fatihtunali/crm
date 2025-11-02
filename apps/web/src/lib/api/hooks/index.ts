@@ -13,8 +13,8 @@ export * from './use-suppliers';
 // Party hooks
 export * from './use-parties';
 
-// Tour hooks
-export * from './use-tours';
+// Tour hooks (now in use-suppliers.ts to avoid duplication)
+// export * from './use-tours';
 
 // Quotation hooks
 export * from './use-quotations';

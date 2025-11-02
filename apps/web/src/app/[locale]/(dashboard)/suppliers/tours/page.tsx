@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAllTransfersFromSuppliers, useDeleteTransfer } from '@/lib/api/hooks/use-suppliers';
+import { useAllToursFromSuppliers, useDeleteTour } from '@/lib/api/hooks/use-suppliers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Search, Trash2, Edit, DollarSign } from 'lucide-react';
@@ -19,29 +19,30 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 
-export default function TransfersPage() {
+export default function ToursPage() {
   const params = useParams();
   const locale = params.locale as string;
   const [search, setSearch] = useState('');
   const [showInactive, setShowInactive] = useState(false);
 
-  const { data: transfers = [], isLoading } = useAllTransfersFromSuppliers(showInactive);
-  const deleteTransfer = useDeleteTransfer();
+  const { data: tours = [], isLoading } = useAllToursFromSuppliers(showInactive);
+  const deleteTour = useDeleteTour();
 
-  const filteredTransfers = transfers?.filter((transfer) => {
+  const filteredTours = tours?.filter((tour) => {
     if (!search) return true;
     const searchLower = search.toLowerCase();
     return (
-      transfer.fromCity?.name?.toLowerCase().includes(searchLower) ||
-      transfer.toCity?.name?.toLowerCase().includes(searchLower) ||
-      transfer.supplier?.name?.toLowerCase().includes(searchLower) ||
-      transfer.vehicleClass?.toLowerCase().includes(searchLower)
+      tour.tourName?.toLowerCase().includes(searchLower) ||
+      tour.city?.name?.toLowerCase().includes(searchLower) ||
+      tour.supplier?.name?.toLowerCase().includes(searchLower) ||
+      tour.duration?.toLowerCase().includes(searchLower) ||
+      tour.tourType?.toLowerCase().includes(searchLower)
     );
   });
 
-  const handleDelete = (transferId: number, routeName: string) => {
-    if (confirm(`Are you sure you want to deactivate "${routeName}"?`)) {
-      deleteTransfer.mutate(transferId);
+  const handleDelete = (tourId: number, tourName: string) => {
+    if (confirm(`Are you sure you want to deactivate "${tourName}"?`)) {
+      deleteTour.mutate(tourId);
     }
   };
 
@@ -57,15 +58,15 @@ export default function TransfersPage() {
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Intercity Transfers</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Tours</h1>
           <p className="text-gray-700 mt-1 text-base">
-            Manage your transfer routes - {filteredTransfers?.length || 0} transfers
+            Manage your tour catalog - {filteredTours?.length || 0} tours
           </p>
         </div>
-        <Link href={`/${locale}/suppliers/transfers/new`}>
+        <Link href={`/${locale}/suppliers/tours/new`}>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Add New Transfer
+            Add New Tour
           </Button>
         </Link>
       </div>
@@ -78,7 +79,7 @@ export default function TransfersPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 type="text"
-                placeholder="Search by city, supplier, or vehicle class..."
+                placeholder="Search by tour name, city, supplier, duration, or type..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -97,74 +98,59 @@ export default function TransfersPage() {
       {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle>{filteredTransfers?.length || 0} Transfers</CardTitle>
+          <CardTitle>{filteredTours?.length || 0} Tours</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Route</TableHead>
-                <TableHead>Vehicle Class</TableHead>
-                <TableHead>Pricing</TableHead>
+                <TableHead>Tour Name</TableHead>
+                <TableHead>City</TableHead>
                 <TableHead>Duration</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Supplier</TableHead>
+                <TableHead>Pricing</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTransfers?.length === 0 ? (
+              {filteredTours?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-gray-500 py-8">
-                    No transfers found
+                  <TableCell colSpan={8} className="text-center text-gray-500 py-8">
+                    No tours found
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredTransfers?.map((transfer) => (
-                  <TableRow key={transfer.id}>
+                filteredTours?.map((tour) => (
+                  <TableRow key={tour.id}>
                     <TableCell>
-                      <div className="font-medium">
-                        {transfer.fromCity?.name} → {transfer.toCity?.name}
-                      </div>
-                      {transfer.notes && (
+                      <div className="font-medium">{tour.tourName}</div>
+                      {tour.description && (
                         <div className="text-xs text-gray-500 mt-1 line-clamp-1">
-                          {transfer.notes}
+                          {tour.description}
                         </div>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{transfer.vehicleClass || '-'}</Badge>
+                      <span className="text-sm">{tour.city?.name || '-'}</span>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        {transfer.priceOneway && (
-                          <div>One-way: €{Number(transfer.priceOneway).toFixed(2)}</div>
-                        )}
-                        {transfer.priceRoundtrip && (
-                          <div className="text-gray-500">
-                            Round-trip: €{Number(transfer.priceRoundtrip).toFixed(2)}
-                          </div>
-                        )}
-                        {!transfer.priceOneway && !transfer.priceRoundtrip && (
-                          <Badge variant="secondary">No Pricing</Badge>
-                        )}
-                      </div>
+                      <span className="text-sm">{tour.duration || '-'}</span>
                     </TableCell>
                     <TableCell>
-                      {transfer.estimatedDurationHours ? (
-                        <span className="text-sm">
-                          {Number(transfer.estimatedDurationHours).toFixed(1)}h
-                        </span>
+                      {tour.tourType ? (
+                        <Badge variant="outline">{tour.tourType}</Badge>
                       ) : (
                         <span className="text-sm text-gray-400">-</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      {transfer.supplier ? (
+                      {tour.supplier ? (
                         <div className="text-sm">
-                          <div className="font-medium">{transfer.supplier.name}</div>
+                          <div className="font-medium">{tour.supplier.name}</div>
                           <div className="text-gray-500 text-xs">
-                            {transfer.supplier.type?.replace('_', ' ')}
+                            {tour.supplier.type?.replace('_', ' ')}
                           </div>
                         </div>
                       ) : (
@@ -172,33 +158,35 @@ export default function TransfersPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={transfer.isActive ? 'default' : 'secondary'}>
-                        {transfer.isActive ? 'Active' : 'Inactive'}
+                      {tour.hasPricing ? (
+                        <Badge variant="default" className="bg-green-500">Has Pricing</Badge>
+                      ) : (
+                        <Badge variant="secondary">No Pricing</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={tour.isActive ? 'default' : 'secondary'}>
+                        {tour.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Link href={`/${locale}/suppliers/transfers/${transfer.id}/pricing`}>
+                        <Link href={`/${locale}/suppliers/tours/${tour.id}/pricing`}>
                           <Button variant="ghost" size="sm" title="Manage Pricing">
                             <DollarSign className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <Link href={`/${locale}/suppliers/transfers/${transfer.id}`}>
-                          <Button variant="ghost" size="sm" title="Edit Transfer">
+                        <Link href={`/${locale}/suppliers/tours/${tour.id}`}>
+                          <Button variant="ghost" size="sm" title="Edit Tour">
                             <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Button
                           variant="ghost"
                           size="sm"
-                          title="Deactivate Transfer"
-                          disabled={!transfer.isActive || deleteTransfer.isPending}
-                          onClick={() =>
-                            handleDelete(
-                              transfer.id,
-                              `${transfer.fromCity?.name} → ${transfer.toCity?.name}`
-                            )
-                          }
+                          title="Deactivate Tour"
+                          disabled={!tour.isActive || deleteTour.isPending}
+                          onClick={() => handleDelete(tour.id, tour.tourName)}
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>

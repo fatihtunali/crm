@@ -18,6 +18,14 @@ export const catalogApi = {
     return response.data.data;
   },
 
+  // Get all hotels for management (no date filtering)
+  getAllHotels: async (includeInactive: boolean = false): Promise<QuoteHotel[]> => {
+    const response = await apiClient.get<{ success: boolean; data: QuoteHotel[] }>('/catalog/hotels/all', {
+      params: { includeInactive },
+    });
+    return response.data.data;
+  },
+
   // Get hotels for a city with date range and filters
   getHotels: async (params: CatalogHotelParams): Promise<QuoteHotel[]> => {
     const response = await apiClient.get<{ success: boolean; data: QuoteHotel[] }>('/catalog/hotels', {

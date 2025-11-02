@@ -1,6 +1,11 @@
 import {
   Controller,
   Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
   Query,
   UseGuards,
   ParseIntPipe,
@@ -38,6 +43,19 @@ export class CatalogController {
   ) {
     const cities = await this.catalogService.getCities(tenantId, includeAirports);
     return { success: true, data: cities };
+  }
+
+  @Get('hotels/all')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.OPERATIONS)
+  @ApiOperation({ summary: 'Get all hotels for management (no date filtering)' })
+  @ApiResponse({ status: 200, description: 'All hotels retrieved successfully' })
+  @ApiQuery({ name: 'includeInactive', required: false, type: Boolean })
+  async getAllHotels(
+    @TenantId() tenantId: number,
+    @Query('includeInactive', new DefaultValuePipe(false), ParseBoolPipe) includeInactive: boolean,
+  ) {
+    const hotels = await this.catalogService.getAllHotels(tenantId, includeInactive);
+    return { success: true, data: hotels, count: hotels.length };
   }
 
   @Get('hotels')

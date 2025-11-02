@@ -343,7 +343,11 @@ model Supplier {
   updatedAt       DateTime     @updatedAt @map("updated_at")
 
   // Relations
-  serviceOfferings ServiceOffering[]
+  serviceOfferings    ServiceOffering[]
+  quoteHotels         QuoteHotel[]
+  sicTours            SICTour[]
+  intercityTransfers  IntercityTransfer[]
+  restaurants         Restaurant[]
 
   @@unique([tenantId, partyId])
   @@index([tenantId])
@@ -1180,10 +1184,11 @@ model QuoteHotel {
   id               Int      @id @default(autoincrement())
   tenantId         Int      @map("tenant_id")
   tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cityId           Int      @map("city_id")
-  city             City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  supplierId       Int?     @map("supplier_id") // Optional link to supplier catalog
-  hotelName        String   @map("hotel_name") @db.VarChar(255)
+  cityId           Int       @map("city_id")
+  city             City      @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  supplierId       Int?      @map("supplier_id") // Optional link to supplier catalog
+  supplier         Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  hotelName        String    @map("hotel_name") @db.VarChar(255)
   category         String   @db.VarChar(50) // "3 stars", "4 stars", "5 stars"
   address          String?  @db.Text
   // TQA Extended Fields (Google Places Integration)
@@ -1253,9 +1258,11 @@ model Restaurant {
   id        Int      @id @default(autoincrement())
   tenantId  Int      @map("tenant_id")
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cityId    Int      @map("city_id")
-  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  name      String   @db.VarChar(255)
+  cityId     Int       @map("city_id")
+  city       City      @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  supplierId Int?      @map("supplier_id") // Optional link to supplier
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  name       String    @db.VarChar(255)
   category  String?  @db.VarChar(100) // "Lunch", "Dinner", "Fast Food", etc.
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
@@ -1266,6 +1273,7 @@ model Restaurant {
 
   @@index([tenantId])
   @@index([cityId])
+  @@index([supplierId])
   @@index([name])
   @@map("restaurants")
 }
@@ -1296,9 +1304,11 @@ model SICTour {
   id               Int      @id @default(autoincrement())
   tenantId         Int      @map("tenant_id")
   tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cityId           Int      @map("city_id")
-  city             City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  tourName         String   @map("tour_name") @db.VarChar(255)
+  cityId           Int       @map("city_id")
+  city             City      @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  supplierId       Int?      @map("supplier_id") // Optional link to supplier
+  supplier         Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  tourName         String    @map("tour_name") @db.VarChar(255)
   description      String?  @db.Text
   duration         String?  @db.VarChar(100) // "Full Day", "Half Day", "3 hours", etc.
   // TQA Extended Fields (Google Places Integration)
@@ -1328,6 +1338,7 @@ model SICTour {
 
   @@index([tenantId])
   @@index([cityId])
+  @@index([supplierId])
   @@index([tourName])
   @@map("sic_tours")
 }
@@ -1413,6 +1424,8 @@ model IntercityTransfer {
   fromCity                City          @relation("CityFrom", fields: [fromCityId], references: [id], onDelete: Cascade)
   toCityId                Int              @map("to_city_id")
   toCity                  City             @relation("CityTo", fields: [toCityId], references: [id], onDelete: Cascade)
+  supplierId              Int?             @map("supplier_id") // Optional link to supplier
+  supplier                Supplier?        @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   catalogVehicleId        Int?             @map("catalog_vehicle_id")
   catalogVehicle          CatalogVehicle?  @relation(fields: [catalogVehicleId], references: [id], onDelete: SetNull)
   vehicleClass            VehicleClass? @map("vehicle_class") // VITO, SPRINTER, ISUZU, COACH (legacy)
@@ -1432,6 +1445,7 @@ model IntercityTransfer {
   @@index([tenantId])
   @@index([fromCityId])
   @@index([toCityId])
+  @@index([supplierId])
   @@index([catalogVehicleId])
   @@index([vehicleClass])
   @@index([startDate, endDate])

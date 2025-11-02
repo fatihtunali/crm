@@ -155,20 +155,238 @@ export interface UpdateServiceOfferingDto {
 
 // Suppliers API
 export const suppliersApi = {
-  getAll: (params?: { type?: SupplierType; includeInactive?: boolean }) =>
-    api.get<Supplier[]>('/suppliers', { params }),
+  getAll: async (params?: { type?: SupplierType; includeInactive?: boolean }) => {
+    const response = await api.get<Supplier[]>('/suppliers', { params });
+    return response.data;
+  },
 
-  getOne: (id: number) =>
-    api.get<Supplier>(`/suppliers/${id}`),
+  getOne: async (id: number) => {
+    const response = await api.get<Supplier>(`/suppliers/${id}`);
+    return response.data;
+  },
 
-  create: (data: CreateSupplierDto) =>
-    api.post<Supplier>('/suppliers', data),
+  create: async (data: CreateSupplierDto) => {
+    const response = await api.post<Supplier>('/suppliers', data);
+    return response.data;
+  },
 
-  update: (id: number, data: UpdateSupplierDto) =>
-    api.patch<Supplier>(`/suppliers/${id}`, data),
+  update: async (id: number, data: UpdateSupplierDto) => {
+    const response = await api.patch<Supplier>(`/suppliers/${id}`, data);
+    return response.data;
+  },
 
-  delete: (id: number) =>
-    api.delete<{ message: string }>(`/suppliers/${id}`),
+  delete: async (id: number) => {
+    const response = await api.delete<{ message: string }>(`/suppliers/${id}`);
+    return response.data;
+  },
+
+  // Hotel Management
+  getAllHotels: async (includeInactive: boolean = false) => {
+    const response = await api.get<any[]>('/suppliers/hotels', { params: { includeInactive } });
+    return response.data;
+  },
+
+  getHotel: async (id: number) => {
+    const response = await api.get<any>(`/suppliers/hotels/${id}`);
+    return response.data;
+  },
+
+  createHotel: async (data: any) => {
+    const response = await api.post<any>('/suppliers/hotels', data);
+    return response.data;
+  },
+
+  updateHotel: async (id: number, data: any) => {
+    const response = await api.patch<any>(`/suppliers/hotels/${id}`, data);
+    return response.data;
+  },
+
+  deleteHotel: async (id: number) => {
+    const response = await api.delete<any>(`/suppliers/hotels/${id}`);
+    return response.data;
+  },
+
+  // Hotel Pricing Management
+  getAllHotelPricing: async (hotelId: number) => {
+    const response = await api.get<any[]>(`/suppliers/hotels/${hotelId}/pricing`);
+    return response.data;
+  },
+
+  getHotelPricing: async (hotelId: number, id: number) => {
+    const response = await api.get<any>(`/suppliers/hotels/${hotelId}/pricing/${id}`);
+    return response.data;
+  },
+
+  createHotelPricing: async (hotelId: number, data: any) => {
+    const response = await api.post<any>(`/suppliers/hotels/${hotelId}/pricing`, data);
+    return response.data;
+  },
+
+  updateHotelPricing: async (hotelId: number, id: number, data: any) => {
+    const response = await api.patch<any>(`/suppliers/hotels/${hotelId}/pricing/${id}`, data);
+    return response.data;
+  },
+
+  deleteHotelPricing: async (hotelId: number, id: number) => {
+    const response = await api.delete<any>(`/suppliers/hotels/${hotelId}/pricing/${id}`);
+    return response.data;
+  },
+
+  // Transfer (Intercity Transfer) Management
+  getAllTransfers: async (includeInactive: boolean = false) => {
+    const response = await api.get<any[]>('/suppliers/intercity-transfers', { params: { includeInactive } });
+    return response.data;
+  },
+
+  getTransfer: async (id: number) => {
+    const response = await api.get<any>(`/suppliers/intercity-transfers/${id}`);
+    return response.data;
+  },
+
+  createTransfer: async (data: any) => {
+    const response = await api.post<any>('/suppliers/intercity-transfers', data);
+    return response.data;
+  },
+
+  updateTransfer: async (id: number, data: any) => {
+    const response = await api.patch<any>(`/suppliers/intercity-transfers/${id}`, data);
+    return response.data;
+  },
+
+  deleteTransfer: async (id: number) => {
+    const response = await api.delete<any>(`/suppliers/intercity-transfers/${id}`);
+    return response.data;
+  },
+
+  // Transfer Pricing Management
+  getAllTransferPricing: async (transferId: number) => {
+    const response = await api.get<any[]>(`/suppliers/intercity-transfers/${transferId}/pricing`);
+    return response.data;
+  },
+
+  getTransferPricing: async (transferId: number, id: number) => {
+    const response = await api.get<any>(`/suppliers/intercity-transfers/${transferId}/pricing/${id}`);
+    return response.data;
+  },
+
+  createTransferPricing: async (transferId: number, data: any) => {
+    const response = await api.post<any>(`/suppliers/intercity-transfers/${transferId}/pricing`, data);
+    return response.data;
+  },
+
+  updateTransferPricing: async (transferId: number, id: number, data: any) => {
+    const response = await api.patch<any>(`/suppliers/intercity-transfers/${transferId}/pricing/${id}`, data);
+    return response.data;
+  },
+
+  deleteTransferPricing: async (transferId: number, id: number) => {
+    const response = await api.delete<any>(`/suppliers/intercity-transfers/${transferId}/pricing/${id}`);
+    return response.data;
+  },
+
+  // Tour Management
+  getAllTours: async (includeInactive: boolean = false) => {
+    const response = await api.get<any[]>('/suppliers/tours', { params: { includeInactive } });
+    return response.data;
+  },
+
+  getTour: async (id: number) => {
+    const response = await api.get<any>(`/suppliers/tours/${id}`);
+    return response.data;
+  },
+
+  createTour: async (data: any) => {
+    const response = await api.post<any>('/suppliers/tours', data);
+    return response.data;
+  },
+
+  updateTour: async (id: number, data: any) => {
+    const response = await api.patch<any>(`/suppliers/tours/${id}`, data);
+    return response.data;
+  },
+
+  deleteTour: async (id: number) => {
+    const response = await api.delete<any>(`/suppliers/tours/${id}`);
+    return response.data;
+  },
+
+  // Tour Pricing Management
+  getAllTourPricing: async (tourId: number) => {
+    const response = await api.get<any[]>(`/suppliers/tours/${tourId}/pricing`);
+    return response.data;
+  },
+
+  getTourPricing: async (tourId: number, id: number) => {
+    const response = await api.get<any>(`/suppliers/tours/${tourId}/pricing/${id}`);
+    return response.data;
+  },
+
+  createTourPricing: async (tourId: number, data: any) => {
+    const response = await api.post<any>(`/suppliers/tours/${tourId}/pricing`, data);
+    return response.data;
+  },
+
+  updateTourPricing: async (tourId: number, id: number, data: any) => {
+    const response = await api.patch<any>(`/suppliers/tours/${tourId}/pricing/${id}`, data);
+    return response.data;
+  },
+
+  deleteTourPricing: async (tourId: number, id: number) => {
+    const response = await api.delete<any>(`/suppliers/tours/${tourId}/pricing/${id}`);
+    return response.data;
+  },
+
+  // Restaurant Management
+  getAllRestaurants: async (includeInactive: boolean = false) => {
+    const response = await api.get<any[]>('/suppliers/restaurants', { params: { includeInactive } });
+    return response.data;
+  },
+
+  getRestaurant: async (id: number) => {
+    const response = await api.get<any>(`/suppliers/restaurants/${id}`);
+    return response.data;
+  },
+
+  createRestaurant: async (data: any) => {
+    const response = await api.post<any>('/suppliers/restaurants', data);
+    return response.data;
+  },
+
+  updateRestaurant: async (id: number, data: any) => {
+    const response = await api.patch<any>(`/suppliers/restaurants/${id}`, data);
+    return response.data;
+  },
+
+  deleteRestaurant: async (id: number) => {
+    const response = await api.delete<any>(`/suppliers/restaurants/${id}`);
+    return response.data;
+  },
+
+  // Restaurant Menu Management
+  getAllRestaurantMenus: async (restaurantId: number) => {
+    const response = await api.get<any[]>(`/suppliers/restaurants/${restaurantId}/menus`);
+    return response.data;
+  },
+
+  getRestaurantMenu: async (restaurantId: number, id: number) => {
+    const response = await api.get<any>(`/suppliers/restaurants/${restaurantId}/menus/${id}`);
+    return response.data;
+  },
+
+  createRestaurantMenu: async (restaurantId: number, data: any) => {
+    const response = await api.post<any>(`/suppliers/restaurants/${restaurantId}/menus`, data);
+    return response.data;
+  },
+
+  updateRestaurantMenu: async (restaurantId: number, id: number, data: any) => {
+    const response = await api.patch<any>(`/suppliers/restaurants/${restaurantId}/menus/${id}`, data);
+    return response.data;
+  },
+
+  deleteRestaurantMenu: async (restaurantId: number, id: number) => {
+    const response = await api.delete<any>(`/suppliers/restaurants/${restaurantId}/menus/${id}`);
+    return response.data;
+  },
 };
 
 // Service Offerings API

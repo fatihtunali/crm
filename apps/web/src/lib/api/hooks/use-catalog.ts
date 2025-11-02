@@ -17,6 +17,15 @@ export function useCities(includeAirports: boolean = false) {
   });
 }
 
+// Get all hotels for management (no date filtering)
+export function useAllHotels(includeInactive: boolean = false) {
+  return useQuery({
+    queryKey: [CATALOG_KEY, 'hotels', 'all', includeInactive],
+    queryFn: () => catalogApi.getAllHotels(includeInactive),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
 // Get hotels for a city with filters
 export function useHotels(params: CatalogHotelParams, enabled: boolean = true) {
   return useQuery({

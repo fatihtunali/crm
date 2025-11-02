@@ -48,18 +48,17 @@ export default function EditSupplierPage() {
   });
 
   useEffect(() => {
-    if (supplierResponse?.data) {
-      const supplier = supplierResponse.data;
+    if (supplierResponse) {
       setFormData({
-        type: supplier.type,
-        bankName: supplier.bankName || '',
-        bankAccountNo: supplier.bankAccountNo || '',
-        bankIban: supplier.bankIban || '',
-        bankSwift: supplier.bankSwift || '',
-        paymentTerms: supplier.paymentTerms || '',
-        defaultCurrency: supplier.defaultCurrency,
-        creditLimit: supplier.creditLimit?.toString() || '',
-        commissionPct: supplier.commissionPct?.toString() || '0',
+        type: supplierResponse.type,
+        bankName: supplierResponse.bankName || '',
+        bankAccountNo: supplierResponse.bankAccountNo || '',
+        bankIban: supplierResponse.bankIban || '',
+        bankSwift: supplierResponse.bankSwift || '',
+        paymentTerms: supplierResponse.paymentTerms || '',
+        defaultCurrency: supplierResponse.defaultCurrency,
+        creditLimit: supplierResponse.creditLimit?.toString() || '',
+        commissionPct: supplierResponse.commissionPct?.toString() || '0',
       });
     }
   }, [supplierResponse]);
@@ -93,7 +92,7 @@ export default function EditSupplierPage() {
     );
   }
 
-  if (!supplierResponse?.data) {
+  if (!supplierResponse) {
     return (
       <div className="p-8">
         <div className="text-center">
@@ -106,7 +105,7 @@ export default function EditSupplierPage() {
     );
   }
 
-  const supplier = supplierResponse.data;
+  const supplier = supplierResponse;
 
   return (
     <div className="p-8">

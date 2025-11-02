@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useAllHotelsFromSuppliers, useDeleteHotel } from '@/lib/api/hooks/use-suppliers';
+import { useAllRestaurantsFromSuppliers, useDeleteRestaurant } from '@/lib/api/hooks/use-suppliers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Search, Trash2, Edit, DollarSign } from 'lucide-react';
+import { Plus, Search, Trash2, Edit, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
@@ -19,29 +19,29 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 
-export default function HotelsPage() {
+export default function RestaurantsPage() {
   const params = useParams();
   const locale = params.locale as string;
   const [search, setSearch] = useState('');
   const [showInactive, setShowInactive] = useState(false);
 
-  const { data: hotels = [], isLoading } = useAllHotelsFromSuppliers(showInactive);
-  const deleteHotel = useDeleteHotel();
+  const { data: restaurants = [], isLoading } = useAllRestaurantsFromSuppliers(showInactive);
+  const deleteRestaurant = useDeleteRestaurant();
 
-  const filteredHotels = hotels?.filter((hotel) => {
+  const filteredRestaurants = restaurants?.filter((restaurant) => {
     if (!search) return true;
     const searchLower = search.toLowerCase();
     return (
-      hotel.name?.toLowerCase().includes(searchLower) ||
-      hotel.city?.name?.toLowerCase().includes(searchLower) ||
-      hotel.supplier?.name?.toLowerCase().includes(searchLower) ||
-      hotel.category?.toLowerCase().includes(searchLower)
+      restaurant.name?.toLowerCase().includes(searchLower) ||
+      restaurant.city?.name?.toLowerCase().includes(searchLower) ||
+      restaurant.supplier?.name?.toLowerCase().includes(searchLower) ||
+      restaurant.category?.toLowerCase().includes(searchLower)
     );
   });
 
-  const handleDelete = (hotelId: number, hotelName: string) => {
-    if (confirm(`Are you sure you want to deactivate "${hotelName}"?`)) {
-      deleteHotel.mutate(hotelId);
+  const handleDelete = (restaurantId: number, restaurantName: string) => {
+    if (confirm(`Are you sure you want to deactivate "${restaurantName}"?`)) {
+      deleteRestaurant.mutate(restaurantId);
     }
   };
 
@@ -57,15 +57,15 @@ export default function HotelsPage() {
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Hotels</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Restaurants</h1>
           <p className="text-gray-700 mt-1 text-base">
-            Manage your hotel catalog - {filteredHotels?.length || 0} hotels
+            Manage your restaurant catalog - {filteredRestaurants?.length || 0} restaurants
           </p>
         </div>
-        <Link href={`/${locale}/suppliers/hotels/new`}>
+        <Link href={`/${locale}/suppliers/restaurants/new`}>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Add New Hotel
+            Add New Restaurant
           </Button>
         </Link>
       </div>
@@ -78,7 +78,7 @@ export default function HotelsPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 type="text"
-                placeholder="Search by hotel name, city, supplier, or category..."
+                placeholder="Search by restaurant name, city, supplier, or category..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -97,49 +97,50 @@ export default function HotelsPage() {
       {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle>{filteredHotels?.length || 0} Hotels</CardTitle>
+          <CardTitle>{filteredRestaurants?.length || 0} Restaurants</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Hotel Name</TableHead>
+                <TableHead>Restaurant Name</TableHead>
                 <TableHead>City</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Supplier</TableHead>
-                <TableHead>Pricing</TableHead>
+                <TableHead>Menus</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredHotels?.length === 0 ? (
+              {filteredRestaurants?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-gray-500 py-8">
-                    No hotels found
+                    No restaurants found
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredHotels?.map((hotel) => (
-                  <TableRow key={hotel.id}>
+                filteredRestaurants?.map((restaurant) => (
+                  <TableRow key={restaurant.id}>
                     <TableCell>
-                      <div className="font-medium">{hotel.name}</div>
-                      {hotel.address && (
-                        <div className="text-xs text-gray-500 mt-1">{hotel.address}</div>
+                      <div className="font-medium">{restaurant.name}</div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm">{restaurant.city?.name || '-'}</span>
+                    </TableCell>
+                    <TableCell>
+                      {restaurant.category ? (
+                        <Badge variant="outline">{restaurant.category}</Badge>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm">{hotel.city?.name || '-'}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{hotel.category}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {hotel.supplier ? (
+                      {restaurant.supplier ? (
                         <div className="text-sm">
-                          <div className="font-medium">{hotel.supplier.name}</div>
+                          <div className="font-medium">{restaurant.supplier.name}</div>
                           <div className="text-gray-500 text-xs">
-                            {hotel.supplier.type?.replace('_', ' ')}
+                            {restaurant.supplier.type?.replace('_', ' ')}
                           </div>
                         </div>
                       ) : (
@@ -147,35 +148,35 @@ export default function HotelsPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {hotel.hasPricing ? (
-                        <Badge variant="default" className="bg-green-500">Has Pricing</Badge>
+                      {restaurant.hasMenus ? (
+                        <Badge variant="default" className="bg-green-500">Has Menus</Badge>
                       ) : (
-                        <Badge variant="secondary">No Pricing</Badge>
+                        <Badge variant="secondary">No Menus</Badge>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={hotel.isActive ? 'default' : 'secondary'}>
-                        {hotel.isActive ? 'Active' : 'Inactive'}
+                      <Badge variant={restaurant.isActive ? 'default' : 'secondary'}>
+                        {restaurant.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Link href={`/${locale}/suppliers/hotels/${hotel.id}/rates`}>
-                          <Button variant="ghost" size="sm" title="Manage Rates">
-                            <DollarSign className="h-4 w-4" />
+                        <Link href={`/${locale}/suppliers/restaurants/${restaurant.id}/menus`}>
+                          <Button variant="ghost" size="sm" title="Manage Menus">
+                            <Menu className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <Link href={`/${locale}/suppliers/hotels/${hotel.id}`}>
-                          <Button variant="ghost" size="sm" title="Edit Hotel">
+                        <Link href={`/${locale}/suppliers/restaurants/${restaurant.id}`}>
+                          <Button variant="ghost" size="sm" title="Edit Restaurant">
                             <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Button
                           variant="ghost"
                           size="sm"
-                          title="Deactivate Hotel"
-                          disabled={!hotel.isActive || deleteHotel.isPending}
-                          onClick={() => handleDelete(hotel.id, hotel.name)}
+                          title="Deactivate Restaurant"
+                          disabled={!restaurant.isActive || deleteRestaurant.isPending}
+                          onClick={() => handleDelete(restaurant.id, restaurant.name)}
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>

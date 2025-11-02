@@ -63,7 +63,7 @@ export default function SuppliersPage() {
     }
   };
 
-  const filteredSuppliers = suppliers?.data?.filter((supplier) => {
+  const filteredSuppliers = suppliers?.filter((supplier) => {
     if (!search) return true;
     const searchLower = search.toLowerCase();
     return (
