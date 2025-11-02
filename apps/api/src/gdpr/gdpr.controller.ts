@@ -17,8 +17,7 @@ import {
 import { GdprService } from './gdpr.service';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@tour-crm/shared';
-import { TenantId } from '../common/decorators/tenant-id.decorator';
-import { UserId } from '../common/decorators/current-user.decorator';
+import { TenantId, UserId } from '../common/decorators/current-user.decorator';
 
 @ApiTags('GDPR')
 @Controller('gdpr')

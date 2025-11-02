@@ -112,9 +112,9 @@ export class GdprService {
         tenantId,
         userId: requestingUserId,
         action: 'GDPR_DATA_EXPORT',
-        entityType: 'Client',
+        entity: 'Client',
         entityId: clientId,
-        details: {
+        diffJson: {
           clientEmail: client.email,
           exportDate: new Date().toISOString(),
         },
@@ -226,9 +226,9 @@ export class GdprService {
         tenantId,
         userId: requestingUserId,
         action: 'GDPR_DATA_DELETION',
-        entityType: 'Client',
+        entity: 'Client',
         entityId: clientId,
-        details: {
+        diffJson: {
           originalEmail: client.email,
           originalName: client.name,
           deletionDate: new Date().toISOString(),
@@ -259,7 +259,7 @@ export class GdprService {
       where: { id: requestingUserId },
     });
 
-    if (requestingUser.id !== userId && requestingUser.role !== 'OWNER' && requestingUser.role !== 'ADMIN') {
+    if (!requestingUser || (requestingUser.id !== userId && requestingUser.role !== 'OWNER' && requestingUser.role !== 'ADMIN')) {
       throw new ForbiddenException('You can only delete your own account');
     }
 
@@ -292,9 +292,9 @@ export class GdprService {
         tenantId,
         userId: requestingUserId,
         action: 'USER_ACCOUNT_DELETED',
-        entityType: 'User',
+        entity: 'User',
         entityId: userId,
-        details: {
+        diffJson: {
           originalEmail: user.email,
           originalName: user.name,
           role: user.role,

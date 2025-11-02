@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { ConsentService } from './consent.service';
 import { CreateConsentDto, ConsentPurpose } from './dto/create-consent.dto';
 import { BulkGrantConsentDto } from './dto/bulk-grant-consent.dto';
-import { TenantId } from '../common/decorators/tenant-id.decorator';
+import { TenantId } from '../common/decorators/current-user.decorator';
 import { Request } from 'express';
 
 @ApiTags('Consent Management')

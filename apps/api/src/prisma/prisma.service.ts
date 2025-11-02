@@ -44,7 +44,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
                     // Log slow queries in development
                     if (duration > 1000 && process.env.NODE_ENV === 'development') {
-                      this.logger.warn(`Slow query detected: ${prop}.${String(modelProp)} took ${duration}ms`);
+                      this.logger.warn(`Slow query detected: ${String(prop)}.${String(modelProp)} took ${duration}ms`);
                     }
 
                     return result;

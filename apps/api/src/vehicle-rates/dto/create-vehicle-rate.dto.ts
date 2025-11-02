@@ -4,19 +4,19 @@ import { Type } from 'class-transformer';
 export class CreateVehicleRateDto {
   @IsInt()
   @IsNotEmpty()
-  serviceOfferingId: number;
+  serviceOfferingId!: number;
 
   @Type(() => Date)
   @IsNotEmpty()
-  seasonFrom: Date;
+  seasonFrom!: Date;
 
   @Type(() => Date)
   @IsNotEmpty()
-  seasonTo: Date;
+  seasonTo!: Date;
 
   @IsNumber()
   @IsNotEmpty()
-  dailyRateTry: number;
+  dailyRateTry!: number;
 
   @IsNumber()
   @IsOptional()
@@ -24,7 +24,7 @@ export class CreateVehicleRateDto {
 
   @IsNumber()
   @IsNotEmpty()
-  hourlyRateTry: number;
+  hourlyRateTry!: number;
 
   @IsInt()
   @IsOptional()

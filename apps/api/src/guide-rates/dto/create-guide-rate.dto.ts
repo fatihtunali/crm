@@ -5,15 +5,15 @@ import { PricingModel } from '@prisma/client';
 export class CreateGuideRateDto {
   @IsInt()
   @IsNotEmpty()
-  serviceOfferingId: number;
+  serviceOfferingId!: number;
 
   @Type(() => Date)
   @IsNotEmpty()
-  seasonFrom: Date;
+  seasonFrom!: Date;
 
   @Type(() => Date)
   @IsNotEmpty()
-  seasonTo: Date;
+  seasonTo!: Date;
 
   @IsEnum(PricingModel)
   @IsOptional()

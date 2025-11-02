@@ -5,15 +5,15 @@ import { PricingModel } from '@prisma/client';
 export class CreateTransferRateDto {
   @IsInt()
   @IsNotEmpty()
-  serviceOfferingId: number;
+  serviceOfferingId!: number;
 
   @Type(() => Date)
   @IsNotEmpty()
-  seasonFrom: Date;
+  seasonFrom!: Date;
 
   @Type(() => Date)
   @IsNotEmpty()
-  seasonTo: Date;
+  seasonTo!: Date;
 
   @IsEnum(PricingModel)
   @IsOptional()
@@ -21,7 +21,7 @@ export class CreateTransferRateDto {
 
   @IsNumber()
   @IsNotEmpty()
-  baseCostTry: number;
+  baseCostTry!: number;
 
   @IsNumber()
   @IsOptional()

@@ -10,7 +10,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { PrivacyPolicyService } from './privacy-policy.service';
 import { AcceptPrivacyPolicyDto } from './dto/accept-privacy-policy.dto';
-import { TenantId } from '../common/decorators/tenant-id.decorator';
+import { TenantId } from '../common/decorators/current-user.decorator';
 import { Request } from 'express';
 
 @ApiTags('Privacy Policy')

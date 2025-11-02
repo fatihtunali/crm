@@ -1,4 +1,5 @@
 import { ConflictException } from '@nestjs/common';
+import { BoardType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 /**
@@ -12,7 +13,7 @@ export interface OverlapCheckParams {
   serviceOfferingId: number;
   seasonFrom: Date;
   seasonTo: Date;
-  boardType?: string; // For hotel rates
+  boardType?: BoardType; // For hotel rates
   excludeId?: number; // For update operations
 }
 

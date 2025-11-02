@@ -5,43 +5,43 @@ import { BoardType } from '@prisma/client';
 export class CreateHotelRoomRateDto {
   @IsInt()
   @IsNotEmpty()
-  serviceOfferingId: number;
+  serviceOfferingId!: number;
 
   @Type(() => Date)
   @IsNotEmpty()
-  seasonFrom: Date;
+  seasonFrom!: Date;
 
   @Type(() => Date)
   @IsNotEmpty()
-  seasonTo: Date;
+  seasonTo!: Date;
 
   @IsEnum(BoardType)
   @IsNotEmpty()
-  boardType: BoardType;
+  boardType!: BoardType;
 
   @IsNumber()
   @IsNotEmpty()
-  pricePerPersonDouble: number;
+  pricePerPersonDouble!: number;
 
   @IsNumber()
   @IsNotEmpty()
-  singleSupplement: number;
+  singleSupplement!: number;
 
   @IsNumber()
   @IsNotEmpty()
-  pricePerPersonTriple: number;
+  pricePerPersonTriple!: number;
 
   @IsNumber()
   @IsNotEmpty()
-  childPrice0to2: number;
+  childPrice0to2!: number;
 
   @IsNumber()
   @IsNotEmpty()
-  childPrice3to5: number;
+  childPrice3to5!: number;
 
   @IsNumber()
   @IsNotEmpty()
-  childPrice6to11: number;
+  childPrice6to11!: number;
 
   @IsInt()
   @IsOptional()
