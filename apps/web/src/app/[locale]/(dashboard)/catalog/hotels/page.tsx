@@ -59,7 +59,7 @@ export default function HotelsCatalogPage() {
               onChange={setCityId}
               placeholder="Select city"
             />
-            <Select value={category || undefined} onValueChange={(val) => setCategory(val)}>
+            <Select value={category || undefined} onValueChange={(val: string) => setCategory(val)}>
               <SelectTrigger>
                 <SelectValue placeholder="Hotel Category (All)" />
               </SelectTrigger>
